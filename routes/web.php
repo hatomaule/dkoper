@@ -43,7 +43,9 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::post('/cooperative/loans', [CooperativeController::class, 'storeLoan'])->name('cooperative.loans.store');
     Route::get('/cooperative/payments', [CooperativeController::class, 'payments'])->name('cooperative.payments');
     Route::post('/cooperative/payments', [CooperativeController::class, 'storePayment'])->name('cooperative.payments.store');
+    Route::get('/cooperative/approvals', [CooperativeController::class, 'approvals'])->name('cooperative.approvals');
     Route::post('/cooperative/payments/{payment}/approve', [CooperativeController::class, 'approvePayment'])->name('cooperative.payments.approve');
+    Route::post('/cooperative/payments/{payment}/reject', [CooperativeController::class, 'rejectPayment'])->name('cooperative.payments.reject');
 });
 
 require __DIR__.'/auth.php';

@@ -70,11 +70,41 @@ class CooperativeController extends Controller
         return redirect()->route('cooperative.payments')->with('status', $message);
     }
 
+    public function approvals(): View
+    {
+        abort_unless(auth()->user()?->isManager(), 403);
+        return view('cooperative.approvals', [
+            'approvalRequests' => ApprovalRequest::with(['requester', 'approvable'])->where('status', 'pending')->latest()->get(),
+        ]);
+    }
+
     public function approvePayment(Request $request, Payment $payment, PaymentService $service): RedirectResponse
     {
         if (! $request->user()->isManager()) abort(403);
+
+        $approval = ApprovalRequest::where('approvable_type', Payment::class)
+            ->where('approvable_id', $payment->id)
+            ->where('status', 'pending')
+            ->first();
+
         $service->approvePayment($request->user(), $payment->id);
-        return redirect()->route('cooperative.payments')->with('status', 'Pembayaran berhasil disetujui.');
+
+        if ($approval) {
+            $approval->update(['status' => 'approved', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()]);
+        }
+
+        return redirect()->route('cooperative.approvals')->with('status', 'Pembayaran berhasil disetujui.');
+    }
+
+    public function rejectPayment(Request $request, Payment $payment): RedirectResponse
+    {
+        if (! $request->user()->isManager()) abort(403);
+        $payment->update(['status' => 'rejected']);
+        ApprovalRequest::where('approvable_type', Payment::class)
+            ->where('approvable_id', $payment->id)
+            ->where('status', 'pending')
+            ->update(['status' => 'rejected', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()]);
+        return redirect()->route('cooperative.approvals')->with('status', 'Pembayaran ditolak.');
     }
 
     private function authorizeStaff(): void

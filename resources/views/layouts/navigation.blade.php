@@ -19,6 +19,9 @@
                         <x-nav-link :href="route('cooperative.borrowers')" :active="request()->routeIs('cooperative.borrowers')">{{ __('Nasabah') }}</x-nav-link>
                         <x-nav-link :href="route('cooperative.loans')" :active="request()->routeIs('cooperative.loans')">{{ __('Pinjaman') }}</x-nav-link>
                         <x-nav-link :href="route('cooperative.payments')" :active="request()->routeIs('cooperative.payments')">{{ __('Pembayaran') }}</x-nav-link>
+                        @if (auth()->user()->isManager())
+                            <x-nav-link :href="route('cooperative.approvals')" :active="request()->routeIs('cooperative.approvals')">{{ __('Approval') }}</x-nav-link>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -77,6 +80,9 @@
                 <x-responsive-nav-link :href="route('cooperative.borrowers')" :active="request()->routeIs('cooperative.borrowers')">{{ __('Nasabah') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('cooperative.loans')" :active="request()->routeIs('cooperative.loans')">{{ __('Pinjaman') }}</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('cooperative.payments')" :active="request()->routeIs('cooperative.payments')">{{ __('Pembayaran') }}</x-responsive-nav-link>
+                @if (auth()->user()->isManager())
+                    <x-responsive-nav-link :href="route('cooperative.approvals')" :active="request()->routeIs('cooperative.approvals')">{{ __('Approval') }}</x-responsive-nav-link>
+                @endif
             @endif
         </div>
 
