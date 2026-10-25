@@ -36,7 +36,7 @@
                     </x-nav-link>
                     <x-nav-link :href="route('cooperative.profits')" :active="request()->routeIs('cooperative.profits')">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M15 8.5c-.7-.7-1.6-1-2.8-1-1.4 0-2.4.7-2.4 1.8 0 2.8 5.3 1.1 5.3 4.1 0 1.2-1.1 2.1-2.8 2.1-1.2 0-2.3-.4-3.2-1.2M12 5.5v13"/></svg>
-                        <span>Bonus staf</span>
+                        <span>Bonus Owner/Admin</span>
                     </x-nav-link>
                     <x-nav-link :href="route('cooperative.activity-logs')" :active="request()->routeIs('cooperative.activity-logs')">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v14H5zM8 9h8M8 12.5h8M8 16h5M8 3v5M16 3v5"/></svg>
@@ -71,7 +71,7 @@
                 <div class="dk-mobile-caption dk-mobile-caption-spaced">PENGELOLAAN</div>
                 <x-responsive-nav-link :href="route('cooperative.approvals')" :active="request()->routeIs('cooperative.approvals')">Persetujuan</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('cooperative.finances')" :active="request()->routeIs('cooperative.finances')">Keuangan</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('cooperative.profits')" :active="request()->routeIs('cooperative.profits')">Bonus staf</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('cooperative.profits')" :active="request()->routeIs('cooperative.profits')">Bonus Owner/Admin</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('cooperative.activity-logs')" :active="request()->routeIs('cooperative.activity-logs')">Aktivitas</x-responsive-nav-link>
             @endif
         @endif

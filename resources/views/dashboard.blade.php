@@ -46,7 +46,7 @@
 
         @if (auth()->user()->isManager())
             <div class="dk-dashboard-section">
-                <div class="dk-section-title"><div><span>BONUS STAF</span><h3>Saldo dan proyeksi bonus</h3></div></div>
+                <div class="dk-section-title"><div><span>BONUS OWNER &amp; ADMIN</span><h3>Saldo dan proyeksi bonus</h3></div></div>
                 <div class="grid gap-3 md:grid-cols-2">
                     @foreach ([
                         [$owner_name, $owner_profit, $owner_future_bonus, 'dk-stat-tone-0'],

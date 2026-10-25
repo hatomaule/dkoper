@@ -18,12 +18,12 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 
 - Laravel project and local MariaDB/MySQL connection are operational.
 - All migrations are currently applied. The missing `cash_accounts` table reported on `/dashboard` was created by applying `2026_10_25_010000_add_financial_workflow_fields`; its initial balance was populated from the latest cash-ledger balance (zero when no ledger entries exist).
-- Current local database connection reports `mysql`; staff usernames are `owner` (role `manager`) and `admin` (role `kasir`). Their IDs, roles, and passwords were preserved by the identity migration.
+- Current local database connection reports `mysql`; Alan is the cooperative owner (Owner, username `owner`, internal role `manager`) and Chalo is the employee/admin operator (Admin, username `admin`, internal role `kasir`). Their IDs, roles, and passwords were preserved by the identity migration.
 - Login accepts an identifier (borrower code, username, or phone); public registration is disabled.
 - First-login password change is enforced. The manager account has `must_change_password = false`; the cashier account currently has `must_change_password = true`. Do not inspect or disclose either password.
 - Staff passwords were synchronized with the user's supplied account sheet during this session. Password values are intentionally not recorded here; use private credentials and never retain shared/default passwords for production.
 - Core borrower, loan, installment, payment approval, cash ledger, profit, and activity-log workflows have been implemented in the current worktree.
-- The visual redesign includes a dark, icon-based desktop sidebar with grouped sections and a compact account footer; mobile uses a responsive top bar and slide-down menu. The dashboard uses an emerald hero, operational KPIs, monthly payment chart, daily/weekly/monthly reports, borrower count, and earned/projected staff bonuses. Login, tables, forms, and status badges share the same lightweight glass-inspired design system and system fonts (no external font request or new UI dependency).
+- The visual redesign includes a dark, icon-based desktop sidebar with grouped sections and a compact account footer; mobile uses a responsive top bar and slide-down menu. The dashboard uses an emerald hero, operational KPIs, monthly payment chart, daily/weekly/monthly reports, borrower count, Owner bonus and Admin employee bonus (earned/projected). Login, tables, forms, and status badges share the same lightweight glass-inspired design system and system fonts (no external font request or new UI dependency).
 - Latest visual refinement: the login submit label is the concise “Login” and the button is compact and right-aligned. Cards have more pronounced layered shadows, subtle gradients, and a gentle hover lift to feel elevated from the canvas; common action buttons were reduced in size.
 - A dedicated forced-password-change screen is in `resources/views/profile/edit.blade.php`; its visible “Simpan dan lanjutkan” button submits the first password change.
 - The modern UI is an independent Blade design, not a strict conversion of `index.baseline.html`.
@@ -56,15 +56,15 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 9. Every installment amount remains separate from the actual paid amount.
 10. Borrowers may have multiple active loans.
 11. Payment approval is required by the Manager before financial effects are posted.
-12. Profit from a cleared installment goes to staff profit balances: Owner 60%, Admin 40%.
-13. Staff withdrawals reduce earned staff profit. A withdrawal above available balance creates debt/negative-balance treatment and must be visible to the Manager.
+12. Profit from a cleared installment is allocated to the owner (Owner) at 60% and the employee/admin operator (Admin) at 40%.
+13. Owner/Admin bonus withdrawals reduce their earned bonus balance. A withdrawal above available balance creates debt/negative-balance treatment and must be visible to the Owner.
 14. Bonus and administration amounts may be transferred into modal/cash capital through an explicit financial transaction.
 15. Keuangan history and activity logs are separate modules. Financial history records monetary movements; activity logs record operational actions.
 
 ## Authentication Rules
 
 - Login identifier accepts borrower code, username, or phone.
-- Staff usernames are `owner` and `admin`; roles remain `manager` and `kasir` so existing authorization rules stay intact.
+- Usernames are `owner` and `admin`; `manager` and `kasir` are internal permission roles, not job titles. Alan is the owner; Chalo is the employee/admin operator.
 - Initial staff credentials are development-only and must not be documented in plaintext or used in production.
 - Staff accounts currently require a first-login password change (`must_change_password = true`).
 - Cashier can reset borrower passwords.
@@ -73,8 +73,8 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 
 ## Roles
 
-- `manager`: approvals, dashboard, staff profit visibility, cash transfer to modal, full borrower management.
-- `kasir`: payment/loan entry, limited staff visibility according to policy.
+- `manager`: Owner permissions for approvals, dashboard, Owner/Admin bonus visibility, cash transfer to modal, and full borrower management.
+- `kasir`: Admin employee permissions for payment/loan entry and limited Owner/Admin bonus visibility according to policy.
 - `nasabah`: only own loan and installment information.
 
 ## Database Modules
@@ -137,6 +137,7 @@ Latest verification in this session:
 - Latest `npm run build` and `php artisan view:cache && php artisan view:clear`: passed after the complete redesign and payment updates.
 - Browser check on `/login`: theme toggle switched light → dark → light and the page emitted no JavaScript errors.
 - Latest `git diff --check` passed. Git reports expected CRLF-to-LF normalization warnings on several existing files.
+- After clarifying Alan as Owner and Chalo as the employee/Admin operator, `php artisan test --filter=DashboardAccessTest` passed (3 tests, 10 assertions), `npm run build` passed, and Blade view compilation passed.
 
 ## Resume Sequence
 
@@ -172,7 +173,7 @@ Latest verification in this session:
 
 ## Current Stop Point
 
-The core service and approval flows, borrower data import, cumulative profit allocation, identity/payment migration, and requested visual redesign are implemented. The latest full test suite passes (36 tests, 144 assertions), the frontend production build and Blade compilation pass, and the local database import reconciles. The preview server is running at `http://localhost:8000`; the shared browser tab is at `/login`. Staff usernames are `owner` and `admin`; no password values are saved here.
+The core service and approval flows, borrower data import, cumulative profit allocation, identity/payment migration, and requested visual redesign are implemented. The latest full test suite passes (36 tests, 144 assertions), the frontend production build and Blade compilation pass, and the local database import reconciles. The preview server is running at `http://localhost:8000`; the shared browser tab is at `/login`. Alan is the Owner; Chalo is the employee/Admin operator. Usernames are `owner` and `admin`; no password values are saved here.
 
 Remaining follow-up:
 
