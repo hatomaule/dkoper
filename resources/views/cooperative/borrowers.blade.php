@@ -1,9 +1,9 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Nasabah</h2></x-slot>
     <div class="bg-slate-100 min-h-[calc(100vh-65px)] py-8 px-4">
-        <div class="mx-auto max-w-7xl grid items-stretch gap-6 lg:grid-cols-[minmax(300px,360px)_1fr]" data-table-tools x-data="{ passwordOpen:false, passwordMode:'reset', borrowerId:'', borrowerName:'' }" @borrower-password-open.window="passwordOpen=true; borrowerId=$event.detail.id; borrowerName=$event.detail.name; passwordMode='reset'">
+        <div class="mx-auto max-w-7xl grid items-stretch gap-5 lg:grid-cols-[minmax(240px,290px)_minmax(0,1fr)]" data-table-tools x-data="{ passwordOpen:false, passwordMode:'reset', borrowerId:'', borrowerName:'' }" @borrower-password-open.window="passwordOpen=true; borrowerId=$event.detail.id; borrowerName=$event.detail.name; passwordMode='reset'">
             @if (auth()->user()->isManager())
-                <form method="POST" action="{{ route('cooperative.borrowers.store') }}" class="dk-form-panel h-full">
+                <form method="POST" action="{{ route('cooperative.borrowers.store') }}" class="dk-form-panel self-start">
                     @csrf
                     <h3 class="font-bold text-slate-900">Tambah Nasabah & Akun</h3>
                     <label class="mt-5 block text-xs font-bold uppercase text-slate-600">Nama Lengkap</label>
@@ -15,7 +15,7 @@
                     @if (session('status'))<div class="mt-4 text-sm text-emerald-700">{{ session('status') }}</div>@endif
                 </form>
             @else
-                <div class="dk-form-panel h-full">
+                <div class="dk-form-panel self-start">
                     <h3 class="font-bold text-slate-900">Data Nasabah</h3>
                     @if (session('status'))<p class="mt-3 text-sm text-emerald-700">{{ session('status') }}</p>@endif
                 </div>

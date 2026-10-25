@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Pinjaman</h2></x-slot>
     <div class="bg-slate-100 min-h-[calc(100vh-65px)] py-8 px-4">
-        <div class="mx-auto max-w-7xl grid items-stretch gap-6 lg:grid-cols-[minmax(300px,360px)_1fr]" data-table-tools>
-            <form method="POST" action="{{ route('cooperative.loans.store') }}" class="dk-form-panel h-full">
+        <div class="mx-auto max-w-7xl grid items-stretch gap-5 lg:grid-cols-[minmax(240px,290px)_minmax(0,1fr)]" data-table-tools>
+            <form method="POST" action="{{ route('cooperative.loans.store') }}" class="dk-form-panel self-start">
                 @csrf
                 <h3 class="font-bold text-slate-900">Ajukan Pinjaman</h3>
                 @if (session('status'))<div class="mt-3 text-sm text-emerald-700">{{ session('status') }}</div>@endif
@@ -14,7 +14,7 @@
                     @endforeach
                 </select>
                 <label class="mt-4 block text-xs font-bold uppercase text-slate-600">Pokok Pinjaman</label>
-                <input name="principal_amount" type="number" min="1000" required class="mt-2 w-full rounded-md border-slate-300" placeholder="1000000">
+                <input name="principal_amount" type="text" inputmode="numeric" data-format-rupiah data-min="1000" required class="mt-2 w-full rounded-md border-slate-300" placeholder="1.000.000">
                 <button class="dk-button-primary mt-5 w-fit">Catat</button>
             </form>
             <section class="dk-data-panel min-w-0">

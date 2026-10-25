@@ -118,7 +118,7 @@ class CooperativeController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        return redirect()->route('cooperative.profits')->with('status', "Password akun {$user->name} berhasil diperbarui.");
+        return redirect()->route('dashboard')->with('status', "Password akun {$user->name} berhasil diperbarui.");
     }
 
     public function loans(): View

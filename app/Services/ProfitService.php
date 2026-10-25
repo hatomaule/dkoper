@@ -57,7 +57,7 @@ class ProfitService
                 'action' => 'profit.withdrawn',
                 'entity_type' => ProfitTransaction::class,
                 'entity_id' => $transaction->id,
-                'metadata' => ['staff_id' => $staff->id, 'amount' => $amount],
+                'metadata' => ['staff_id' => $staff->id, 'staff_name' => $staff->name, 'amount' => $amount],
                 'ip_address' => request()?->ip(),
             ]);
 

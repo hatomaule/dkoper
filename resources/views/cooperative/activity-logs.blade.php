@@ -23,11 +23,11 @@
             $formatDetails = fn ($metadata) => collect($metadata ?? [])
                 ->reject(fn ($value, $key) => in_array($key, ['loan_id', 'allocations', 'advance_credit', 'borrower_code', 'username'], true) || is_array($value))
                 ->map(function ($value, $key) {
-                    $label = ['amount' => 'Nominal', 'old_amount' => 'Sebelumnya', 'new_amount' => 'Sesudahnya', 'direction' => 'Arah', 'principal_amount' => 'Pokok pinjaman', 'administration_fee' => 'Biaya administrasi', 'net_disbursement' => 'Pencairan bersih', 'total_receivable' => 'Total tagihan', 'borrowers' => 'Nasabah', 'principal' => 'Pokok', 'collected' => 'Terkumpul', 'outstanding' => 'Sisa tagihan', 'receivable' => 'Tagihan', 'opening_capital' => 'Modal awal', 'ending_cash' => 'Saldo akhir'][ $key] ?? null;
+                    $label = ['amount' => 'Nominal', 'staff_name' => 'Akun bonus', 'old_amount' => 'Sebelumnya', 'new_amount' => 'Sesudahnya', 'direction' => 'Arah', 'principal_amount' => 'Pokok pinjaman', 'administration_fee' => 'Biaya administrasi', 'net_disbursement' => 'Pencairan bersih', 'total_receivable' => 'Total tagihan', 'borrowers' => 'Nasabah', 'principal' => 'Pokok', 'collected' => 'Terkumpul', 'outstanding' => 'Sisa tagihan', 'receivable' => 'Tagihan', 'opening_capital' => 'Modal awal', 'ending_cash' => 'Saldo akhir'][ $key] ?? null;
                     if (! $label) return null;
                     if (in_array($key, ['direction'], true)) $value = $value === 'in' ? 'Kas masuk' : 'Kas keluar';
                     if (in_array($key, ['amount', 'old_amount', 'new_amount', 'principal_amount', 'administration_fee', 'net_disbursement', 'total_receivable', 'principal', 'collected', 'outstanding', 'receivable', 'opening_capital', 'ending_cash'], true)) $value = 'Rp '.number_format((int) $value, 0, ',', '.');
-                    return "{$label}: {$value}";
+                    return $key === 'staff_name' ? "Akun bonus: {$value}" : "{$label}: {$value}";
                 })
                 ->filter()
                 ->implode(' · ');

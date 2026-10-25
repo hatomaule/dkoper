@@ -19,6 +19,28 @@ Alpine.data('dkTheme', () => ({
 Alpine.start();
 
 document.addEventListener('DOMContentLoaded', () => {
+    const formatRupiahInput = (input) => {
+        const digits = input.value.replace(/\D/g, '');
+        input.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        const minimum = Number(input.dataset.min || 0);
+        const maximum = input.dataset.max ? Number(input.dataset.max) : null;
+        const belowMinimum = (input.required && !digits) || (digits && Number(digits) < minimum);
+        const aboveMaximum = digits && maximum !== null && Number(digits) > maximum;
+        input.setCustomValidity(aboveMaximum
+            ? `Nominal maksimal Rp ${new Intl.NumberFormat('id-ID').format(maximum)}.`
+            : belowMinimum
+            ? `Nominal minimal Rp ${new Intl.NumberFormat('id-ID').format(minimum || 1)}.`
+            : '');
+    };
+
+    document.querySelectorAll('[data-format-rupiah]').forEach((input) => {
+        formatRupiahInput(input);
+        input.addEventListener('input', () => formatRupiahInput(input));
+        input.form?.addEventListener('submit', () => {
+            input.value = input.value.replace(/\D/g, '');
+        });
+    });
+
     document.querySelectorAll('[data-table-tools]').forEach((panel) => {
         const search = panel.querySelector('[data-table-search]');
         const rows = [...panel.querySelectorAll('[data-table-row]')];
@@ -68,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.closest('dialog')?.close();
         });
     });
+    document.querySelectorAll('dialog[data-open-on-error]').forEach((dialog) => dialog.showModal());
 
     const loanSelect = document.querySelector('[data-loan-select]');
     const sourceSelect = document.querySelector('[data-nominal-source]');

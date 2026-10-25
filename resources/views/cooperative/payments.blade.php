@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Pembayaran</h2></x-slot>
     <div class="min-h-[calc(100vh-65px)] bg-slate-100 py-8 px-4">
-        <div class="mx-auto grid max-w-7xl items-stretch gap-6 lg:grid-cols-[minmax(300px,360px)_1fr]">
-            <form method="POST" action="{{ route('cooperative.payments.store') }}" enctype="multipart/form-data" class="dk-form-panel h-full" data-payment-form>
+        <div class="mx-auto grid max-w-7xl items-stretch gap-5 lg:grid-cols-[minmax(240px,290px)_minmax(0,1fr)]">
+            <form method="POST" action="{{ route('cooperative.payments.store') }}" enctype="multipart/form-data" class="dk-form-panel self-start" data-payment-form>
                 @csrf
                 <h3 class="font-bold text-slate-900">Catat Setoran</h3>
                 <p class="mt-1 text-xs text-slate-500">{{ auth()->user()->isManager() ? 'Setoran Owner langsung disetujui.' : 'Setoran Admin menunggu persetujuan Owner.' }}</p>
@@ -30,7 +30,7 @@
                 </div>
                 <div class="mt-4 hidden" data-manual-amount>
                     <label class="block text-xs font-bold uppercase text-slate-600" for="payment-amount">Nominal Diterima (Rp)</label>
-                    <input id="payment-amount" name="amount" type="number" min="1" inputmode="numeric" class="mt-2 w-full" disabled>
+                    <input id="payment-amount" name="amount" type="text" inputmode="numeric" data-format-rupiah data-min="1" class="mt-2 w-full" disabled>
                 </div>
                 <label class="mt-4 block text-xs font-bold uppercase text-slate-600" for="payment-method">Jenis Pembayaran</label>
                 <select id="payment-method" name="payment_method" required class="mt-2 w-full" data-payment-method>
@@ -134,7 +134,7 @@
                             <button type="button" class="dk-modal-close" aria-label="Tutup" data-close-dialog>×</button>
                             <p class="dk-eyebrow">KOREKSI SETORAN</p>
                             <h3>Perbarui nominal setoran</h3>
-                            <label>Nominal yang benar (Rp)<input type="number" name="amount" min="1" required inputmode="numeric"></label>
+                            <label>Nominal yang benar (Rp)<input type="text" name="amount" required inputmode="numeric" data-format-rupiah data-min="1"></label>
                             <p class="dk-modal-note">Saldo kas, cicilan, dan bonus akan dihitung ulang sesuai nominal baru.</p>
                             <button type="submit" class="dk-button-primary">Simpan koreksi</button>
                         </form>

@@ -1,4 +1,7 @@
 <nav x-data="{ open: false, showLogout: false }" class="dk-nav">
+    @if (Auth::user()->isManager())
+        @php($adminAccount = \App\Models\User::query()->where('username', 'admin')->where('role', 'kasir')->first())
+    @endif
     <div class="dk-sidebar">
         <a href="{{ route('dashboard') }}" class="dk-brand" aria-label="DKoper, Dashboard">
             <img src="{{ asset('logo.svg') }}" class="dk-brand-mark" alt="">
@@ -36,7 +39,7 @@
                     </x-nav-link>
                     <x-nav-link :href="route('cooperative.profits')" :active="request()->routeIs('cooperative.profits')">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M15 8.5c-.7-.7-1.6-1-2.8-1-1.4 0-2.4.7-2.4 1.8 0 2.8 5.3 1.1 5.3 4.1 0 1.2-1.1 2.1-2.8 2.1-1.2 0-2.3-.4-3.2-1.2M12 5.5v13"/></svg>
-                        <span>Bonus Owner/Admin</span>
+                        <span>Bonus</span>
                     </x-nav-link>
                     <x-nav-link :href="route('cooperative.activity-logs')" :active="request()->routeIs('cooperative.activity-logs')">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v14H5zM8 9h8M8 12.5h8M8 16h5M8 3v5M16 3v5"/></svg>
@@ -71,7 +74,7 @@
                 <div class="dk-mobile-caption dk-mobile-caption-spaced">PENGELOLAAN</div>
                 <x-responsive-nav-link :href="route('cooperative.approvals')" :active="request()->routeIs('cooperative.approvals')">Persetujuan</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('cooperative.finances')" :active="request()->routeIs('cooperative.finances')">Keuangan</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('cooperative.profits')" :active="request()->routeIs('cooperative.profits')">Bonus Owner/Admin</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('cooperative.profits')" :active="request()->routeIs('cooperative.profits')">Bonus</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('cooperative.activity-logs')" :active="request()->routeIs('cooperative.activity-logs')">Aktivitas</x-responsive-nav-link>
             @endif
         @endif
@@ -88,10 +91,27 @@
             <x-slot name="trigger"><button class="dk-user-trigger" type="button" aria-label="Buka menu akun"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="4" cy="10" r="1"/><circle cx="10" cy="10" r="1"/><circle cx="16" cy="10" r="1"/></svg></button></x-slot>
             <x-slot name="content">
                 <x-dropdown-link :href="route('profile.edit')">Profil</x-dropdown-link>
+                @if (Auth::user()->isManager() && $adminAccount)
+                    <button type="button" class="dk-dropdown-action dk-dropdown-neutral" data-open-dialog="#admin-password-dialog">Ganti password Admin</button>
+                @endif
                 <button type="button" class="dk-dropdown-action" @click="showLogout = true">Keluar</button>
             </x-slot>
         </x-dropdown>
     </div>
+
+    @if (Auth::user()->isManager() && $adminAccount)
+        <dialog class="dk-password-native-dialog" id="admin-password-dialog" @if ($errors->has('password')) data-open-on-error @endif>
+            <form method="POST" action="{{ route('cooperative.staff.update-password', $adminAccount) }}" class="dk-password-form">
+                @csrf
+                <button type="button" class="dk-modal-close" aria-label="Tutup" data-close-dialog>×</button>
+                <p class="dk-eyebrow">KEAMANAN AKUN</p>
+                <h3>Ganti password Admin</h3>
+                <label>Password baru<input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+                <label>Ulangi password<input type="password" name="password_confirmation" required minlength="8" autocomplete="new-password"></label>
+                <button type="submit" class="dk-button-primary">Simpan password</button>
+            </form>
+        </dialog>
+    @endif
 
     <div class="dk-logout-backdrop" x-show="showLogout" x-transition.opacity x-cloak @click.self="showLogout = false" @keydown.escape.window="showLogout = false">
         <section class="dk-logout-dialog" role="dialog" aria-modal="true" aria-labelledby="logout-title">

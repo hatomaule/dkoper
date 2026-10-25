@@ -16,16 +16,16 @@
                             <div><dt class="text-slate-500">Saldo tersedia / utang bonus</dt><dd class="font-bold {{ $balance->available_amount < 0 ? 'text-red-700' : 'text-emerald-700' }}">Rp {{ number_format((int) $balance->available_amount, 0, ',', '.') }}</dd></div>
                         </dl>
                         <div class="mt-5 grid gap-4 sm:grid-cols-2">
-                            <form method="POST" action="{{ route('cooperative.profits.withdraw', $balance->user) }}">
+                            <form method="POST" action="{{ route('cooperative.profits.withdraw', $balance->user) }}" class="dk-bonus-action-form">
                                 @csrf<label class="block text-xs font-bold uppercase text-slate-600">Catat penarikan</label>
-                                <input name="amount" type="number" min="1" required class="mt-2 w-full rounded-md border-slate-300" placeholder="Nominal Rp">
-                                <button class="dk-button-secondary mt-2">Tarik</button>
+                                <input name="amount" type="text" inputmode="numeric" data-format-rupiah data-min="1" required value="{{ old('amount') }}" class="mt-2 w-full rounded-md border-slate-300" placeholder="Nominal Rp">
+                                <button class="dk-button-secondary dk-compact-action mt-2">Tarik</button>
                             </form>
                             @if ($balance->user->isManager())
-                                <form method="POST" action="{{ route('cooperative.profits.transfer', $balance->user) }}">
+                                <form method="POST" action="{{ route('cooperative.profits.transfer', $balance->user) }}" class="dk-bonus-action-form">
                                     @csrf<label class="block text-xs font-bold uppercase text-slate-600">Transfer ke modal</label>
-                                    <input name="amount" type="number" min="1" max="{{ max(0, (int) $balance->available_amount) }}" required class="mt-2 w-full rounded-md border-slate-300" placeholder="Nominal Rp">
-                                    <button class="dk-button-secondary dk-button-blue mt-2">Transfer</button>
+                                    <input name="amount" type="text" inputmode="numeric" data-format-rupiah data-min="1" data-max="{{ max(0, (int) $balance->available_amount) }}" required value="{{ old('amount') }}" class="mt-2 w-full rounded-md border-slate-300" placeholder="Nominal Rp">
+                                    <button class="dk-button-secondary dk-button-blue dk-compact-action mt-2">Transfer</button>
                                 </form>
                             @endif
                         </div>

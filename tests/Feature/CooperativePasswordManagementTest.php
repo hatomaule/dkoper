@@ -18,14 +18,21 @@ class CooperativePasswordManagementTest extends TestCase
         $admin = User::factory()->create(['username' => 'admin', 'role' => 'kasir']);
         $newPassword = 'Updated-Staff-Password-2026';
 
+        $this->actingAs($owner)->get('/dashboard')->assertOk()->assertSee('Ganti password Admin');
+
         $this->actingAs($owner)
             ->post(route('cooperative.staff.update-password', $admin), [
                 'password' => $newPassword,
                 'password_confirmation' => $newPassword,
             ])
-            ->assertRedirect(route('cooperative.profits'));
+            ->assertRedirect(route('dashboard'));
 
         $this->assertTrue(Hash::check($newPassword, $admin->fresh()->password));
+
+        $this->actingAs($admin)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertDontSee('Ganti password Admin');
 
         $this->actingAs($admin)
             ->post(route('cooperative.staff.update-password', $owner), [

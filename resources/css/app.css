@@ -2530,10 +2530,348 @@ html[data-theme="dark"] .dk-file-button {
     padding: 9px 16px;
 }
 
+.dk-guest-shell {
+    width: min(100%, 410px);
+}
+
+.dk-guest-brand {
+    margin-bottom: 16px;
+}
+
+.dk-login-card {
+    padding: clamp(23px, 4vw, 32px);
+}
+
+.dk-login-card h1 {
+    max-width: 300px;
+    font-size: clamp(24px, 5vw, 29px);
+}
+
+.dk-login-card .dk-guest-intro {
+    margin-bottom: 22px;
+}
+
+.dk-password-native-dialog {
+    width: min(100% - 28px, 420px);
+    max-width: 420px;
+    max-height: min(90vh, 620px);
+    overflow: auto;
+    border: 1px solid rgb(255 255 255 / 82%);
+    border-radius: 18px;
+    background: linear-gradient(145deg, #fff, #f8fbfa);
+    padding: 0;
+    color: var(--dk-ink);
+    box-shadow: 0 28px 80px rgb(10 25 37 / 24%);
+}
+
+.dk-password-native-dialog::backdrop {
+    background: rgb(15 28 39 / 48%);
+    backdrop-filter: blur(4px);
+}
+
+.dk-password-native-dialog .dk-password-form {
+    position: relative;
+    display: grid;
+    gap: 13px;
+    padding: 25px;
+}
+
+.dk-password-native-dialog .dk-password-form h3 {
+    padding-right: 26px;
+    color: var(--dk-ink);
+    font-size: 18px;
+    font-weight: 780;
+}
+
+.dk-password-native-dialog .dk-password-form label {
+    display: grid;
+    gap: 6px;
+    color: var(--dk-muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.dk-password-native-dialog .dk-password-form input {
+    min-height: 40px;
+    border: 1px solid var(--dk-line);
+    border-radius: 9px;
+    background: var(--dk-paper);
+    padding: 8px 10px;
+    color: var(--dk-ink);
+    font-size: 12px;
+}
+
+.dk-password-native-dialog .dk-password-form .dk-button-primary {
+    justify-self: start;
+    min-height: 37px;
+    padding: 8px 13px;
+}
+
+.dk-password-native-dialog .dk-eyebrow {
+    margin: 0;
+}
+
+.dk-dropdown-neutral {
+    color: var(--dk-ink);
+}
+
+.dk-dropdown-neutral:hover {
+    background: #eef7f3;
+    color: var(--dk-green-dark);
+}
+
+.dk-dashboard-page {
+    display: flex;
+    flex-direction: column;
+    margin-top: -12px;
+}
+
+.dk-dashboard-page > .dk-dashboard-charts {
+    order: -1;
+    margin-top: 0;
+}
+
+.dk-dashboard-page > .dk-dashboard-section {
+    margin-top: 15px;
+}
+
+.dk-dashboard-page .dk-chart-panel {
+    border-color: rgb(207 220 227 / 90%);
+    background:
+        radial-gradient(ellipse at 96% 4%, rgb(20 157 117 / 7%), transparent 50%),
+        linear-gradient(145deg, rgb(255 255 255 / 98%), rgb(246 250 251 / 94%));
+    box-shadow: 0 14px 34px rgb(30 49 68 / 9%), inset 0 1px 0 white;
+}
+
+.dk-stat-card {
+    isolation: isolate;
+    border-color: color-mix(in srgb, var(--dk-stat-color), white 75%);
+    background:
+        radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--dk-stat-tint), transparent 5%), transparent 72%),
+        linear-gradient(145deg, #fff, color-mix(in srgb, var(--dk-stat-tint), white 65%));
+}
+
+.dk-stat-card::after {
+    z-index: -1;
+    right: -20px;
+    bottom: -42px;
+    width: 170px;
+    height: 132px;
+    border-radius: 58% 42% 47% 53% / 40% 62% 38% 60%;
+    background:
+        linear-gradient(142deg, transparent 0 38%, color-mix(in srgb, var(--dk-stat-color), transparent 83%) 39% 52%, transparent 53%),
+        linear-gradient(142deg, transparent 0 56%, color-mix(in srgb, var(--dk-stat-color), transparent 90%) 57% 70%, transparent 71%),
+        radial-gradient(ellipse at 80% 18%, color-mix(in srgb, var(--dk-stat-color), white 78%), transparent 70%);
+    transform: rotate(-12deg);
+}
+
+.dk-stat-card::before {
+    position: absolute;
+    z-index: -1;
+    right: 26px;
+    bottom: -43px;
+    width: 150px;
+    height: 92px;
+    border-radius: 52% 48% 0 0;
+    background: linear-gradient(160deg, transparent 42%, color-mix(in srgb, var(--dk-stat-color), transparent 91%) 43% 58%, transparent 59%);
+    content: "";
+    transform: rotate(10deg);
+}
+
+.dk-stat-tone-0 { --dk-stat-color: #13876d; --dk-stat-tint: #e3f3ed; }
+.dk-stat-tone-1 { --dk-stat-color: #5576be; --dk-stat-tint: #e9eef9; }
+.dk-stat-tone-2 { --dk-stat-color: #bd8438; --dk-stat-tint: #f7f0e3; }
+.dk-stat-tone-3 { --dk-stat-color: #2d8b9d; --dk-stat-tint: #e5f2f4; }
+.dk-stat-tone-4 { --dk-stat-color: #bf6b65; --dk-stat-tint: #f7eae8; }
+.dk-stat-tone-5 { --dk-stat-color: #8c6bbb; --dk-stat-tint: #f0eafa; }
+
+.dk-period-card {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-color: #d6e2e5;
+    background: linear-gradient(145deg, #fff, #f3f8f8);
+}
+
+.dk-period-card::after {
+    position: absolute;
+    z-index: -1;
+    right: -24px;
+    bottom: -48px;
+    width: 130px;
+    height: 105px;
+    border-radius: 60% 40% 52% 48%;
+    background:
+        linear-gradient(145deg, transparent 38%, rgb(20 157 117 / 12%) 39% 52%, transparent 53%),
+        linear-gradient(145deg, transparent 58%, rgb(85 118 190 / 9%) 59% 71%, transparent 72%);
+    transform: rotate(-10deg);
+    content: "";
+}
+
+.dk-bonus-action-form {
+    min-width: 0;
+}
+
+.dk-compact-action {
+    width: fit-content;
+    min-width: 72px;
+    min-height: 32px !important;
+    padding: 6px 11px !important;
+    font-size: 10px !important;
+}
+
+.dk-bonus-action-form .dk-button-secondary {
+    border: 1px solid #d9e7e2;
+    border-radius: 8px;
+    background: #f0f7f4;
+    color: #18755c;
+}
+
+.dk-bonus-action-form .dk-button-blue {
+    border-color: #dbe3f2;
+    background: #f1f4fa;
+    color: #4c689f;
+}
+
+.dk-main table th {
+    padding: 10px 12px;
+}
+
+.dk-main table td {
+    padding: 9px 11px;
+    font-size: 11px;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.dk-main table td.dk-activity-details {
+    white-space: normal;
+}
+
+.dk-main .grid.items-stretch {
+    gap: 17px;
+}
+
+@media (min-width: 640px) {
+    .dk-table-footer nav > div[class~="sm:flex-1"] {
+        min-width: 0;
+        flex-wrap: wrap;
+        gap: 10px 14px;
+    }
+
+    .dk-table-footer nav > div[class~="sm:flex-1"] > div:first-child p {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .dk-table-footer nav > div[class~="sm:flex-1"] > div:last-child {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 800px) {
+    .dk-topbar-name {
+        display: none;
+    }
+
+    .dk-topbar-controls .dk-user-trigger {
+        display: grid;
+        width: 30px;
+        height: 30px;
+    }
+
+    .dk-topbar-controls .dk-user-avatar {
+        display: none;
+    }
+}
+
+html[data-theme="dark"] .dk-password-native-dialog {
+    border-color: #3a4d59;
+    background: linear-gradient(145deg, #22323e, #192a34);
+    color: var(--dk-ink);
+}
+
+html[data-theme="dark"] .dk-password-native-dialog .dk-password-form h3 {
+    color: var(--dk-ink);
+}
+
+html[data-theme="dark"] .dk-password-native-dialog .dk-password-form input {
+    border-color: #3c4c58;
+    background: #182630;
+    color: var(--dk-ink);
+}
+
+html[data-theme="dark"] .dk-dropdown-neutral:hover {
+    background: #203a33;
+    color: #a8e4cb;
+}
+
+html[data-theme="dark"] .dk-dashboard-page .dk-chart-panel {
+    border-color: #3a4e5a;
+    background:
+        radial-gradient(ellipse at 96% 4%, rgb(26 146 115 / 14%), transparent 50%),
+        linear-gradient(145deg, #223440, #1a2a35);
+    box-shadow: 0 16px 34px rgb(0 0 0 / 18%), inset 0 1px 0 rgb(255 255 255 / 4%);
+}
+
+html[data-theme="dark"] .dk-stat-card {
+    border-color: color-mix(in srgb, var(--dk-stat-color), #263843 52%);
+    background:
+        radial-gradient(ellipse at 100% 0%, color-mix(in srgb, var(--dk-stat-color), transparent 86%), transparent 72%),
+        linear-gradient(145deg, #263944, #1b2d38);
+}
+
+html[data-theme="dark"] .dk-stat-card::after {
+    background:
+        linear-gradient(142deg, transparent 0 38%, color-mix(in srgb, var(--dk-stat-color), transparent 72%) 39% 52%, transparent 53%),
+        linear-gradient(142deg, transparent 0 56%, color-mix(in srgb, var(--dk-stat-color), transparent 82%) 57% 70%, transparent 71%),
+        radial-gradient(ellipse at 80% 18%, color-mix(in srgb, var(--dk-stat-color), #263944 58%), transparent 70%);
+}
+
+html[data-theme="dark"] .dk-stat-card::before {
+    background: linear-gradient(160deg, transparent 42%, color-mix(in srgb, var(--dk-stat-color), transparent 80%) 43% 58%, transparent 59%);
+}
+
+html[data-theme="dark"] .dk-period-card {
+    border-color: #3a4d58;
+    background: linear-gradient(145deg, #243742, #1b2d37);
+}
+
+html[data-theme="dark"] .dk-period-card::after {
+    background:
+        linear-gradient(145deg, transparent 38%, rgb(40 174 135 / 20%) 39% 52%, transparent 53%),
+        linear-gradient(145deg, transparent 58%, rgb(110 145 207 / 17%) 59% 71%, transparent 72%);
+}
+
+html[data-theme="dark"] .dk-bonus-action-form .dk-button-secondary {
+    border-color: #3b564c;
+    background: #20382f;
+    color: #a8e4cb;
+}
+
+html[data-theme="dark"] .dk-bonus-action-form .dk-button-blue {
+    border-color: #3f4f6b;
+    background: #253449;
+    color: #b7c8ee;
+}
+
 @media (max-width: 540px) {
     .dk-guest-card .dk-login-button {
         min-height: 39px;
         padding: 0 20px;
+    }
+
+    .dk-guest-shell {
+        width: min(100%, 390px);
+    }
+
+    .dk-login-card {
+        padding: 23px;
+    }
+
+    .dk-dashboard-page {
+        margin-top: -7px;
     }
 
     .dk-main section.rounded-lg,

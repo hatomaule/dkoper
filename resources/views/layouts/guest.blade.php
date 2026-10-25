@@ -22,7 +22,7 @@
                 <img src="{{ asset('logo.svg') }}" class="dk-brand-mark" alt="">
                 <span class="dk-brand-name"><span class="dk-brand-title">DKoper<span>.</span></span><small>KEUANGAN KOPERASI</small></span>
             </a>
-            <section class="dk-guest-card">
+            <section class="dk-guest-card dk-login-card">
                 <p class="dk-eyebrow">RUANG KERJA KOPERASI</p>
                 <h1>Kelola keuangan dengan lebih tenang.</h1>
                 <p class="dk-guest-intro">Masuk untuk melihat ringkasan dan aktivitas koperasi.</p>

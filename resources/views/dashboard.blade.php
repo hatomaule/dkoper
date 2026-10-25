@@ -3,13 +3,52 @@
         <h2 class="font-semibold text-xl text-slate-900 leading-tight">Dashboard</h2>
     </x-slot>
 
-    <div class="min-h-[calc(100vh-65px)]">
+    <div class="dk-dashboard-page min-h-[calc(100vh-65px)]">
+        @if (session('status'))<div class="dk-form-success mb-3">{{ session('status') }}</div>@endif
         @php
             $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
             $maxWeeklyCash = max(1, (int) $weekly_cash_flow->flatMap(fn ($week) => [$week['debit'], $week['credit']])->max());
             $weeklyDebitPoints = $weekly_cash_flow->values()->map(fn ($week, $index) => ($index * (100 / max(1, $weekly_cash_flow->count() - 1))) . ',' . (100 - (int) round(($week['debit'] / $maxWeeklyCash) * 82)))->implode(' ');
             $weeklyCreditPoints = $weekly_cash_flow->values()->map(fn ($week, $index) => ($index * (100 / max(1, $weekly_cash_flow->count() - 1))) . ',' . (100 - (int) round(($week['credit'] / $maxWeeklyCash) * 82)))->implode(' ');
         @endphp
+
+        <div class="dk-dashboard-charts">
+            <section class="dk-chart-panel dk-weekly-chart">
+                <div class="dk-section-title"><div><span>ARUS KAS</span><h3>Debit dan kredit mingguan</h3></div><small>Bulan berjalan</small></div>
+                <div class="dk-chart-axis-labels"><span>{{ $rupiah($maxWeeklyCash) }}</span><span>{{ $rupiah((int) ($maxWeeklyCash / 2)) }}</span><span>Rp 0</span></div>
+                <svg class="dk-weekly-line-chart" viewBox="0 0 400 120" preserveAspectRatio="none" role="img" aria-label="Grafik debit dan kredit per minggu pada bulan berjalan">
+                    <path d="M0 18H400M0 60H400M0 102H400" class="dk-chart-grid"></path>
+                    <polyline points="{{ $weeklyDebitPoints }}" class="dk-chart-line dk-chart-debit"></polyline>
+                    <polyline points="{{ $weeklyCreditPoints }}" class="dk-chart-line dk-chart-credit"></polyline>
+                    @foreach ($weekly_cash_flow->values() as $index => $week)
+                        @php($x = $index * (400 / max(1, $weekly_cash_flow->count() - 1)))
+                        @php($debitY = 102 - (int) round(($week['debit'] / $maxWeeklyCash) * 84))
+                        @php($creditY = 102 - (int) round(($week['credit'] / $maxWeeklyCash) * 84))
+                        <circle cx="{{ $x }}" cy="{{ $debitY }}" r="3" class="dk-chart-point dk-chart-debit-point"><title>{{ $week['label'] }} · Debit {{ $rupiah($week['debit']) }}</title></circle>
+                        <circle cx="{{ $x }}" cy="{{ $creditY }}" r="3" class="dk-chart-point dk-chart-credit-point"><title>{{ $week['label'] }} · Kredit {{ $rupiah($week['credit']) }}</title></circle>
+                    @endforeach
+                </svg>
+                <div class="dk-chart-labels">@foreach ($weekly_cash_flow as $week)<span>{{ $week['label'] }}</span>@endforeach</div>
+                <div class="dk-chart-legend">
+                    <span><i class="dk-legend-debit"></i>Debit · Kas masuk</span>
+                    <span><i class="dk-legend-credit"></i>Kredit · Kas keluar</span>
+                </div>
+            </section>
+
+            <section class="dk-chart-panel dk-monthly-count-chart">
+                <div class="dk-section-title"><div><span>AKTIVITAS</span><h3>Jumlah transaksi per bulan</h3></div><small>12 bulan</small></div>
+                <div class="dk-monthly-bars" role="img" aria-label="Jumlah transaksi kas per bulan selama 12 bulan">
+                    @foreach ($monthly_transaction_counts as $month)
+                        <div class="dk-monthly-bar-row">
+                            <span>{{ $month['label'] }}</span>
+                            <div class="dk-monthly-bar-track"><i style="width: {{ (int) round(($month['count'] / $max_monthly_transactions) * 100) }}%"></i></div>
+                            <b>{{ $month['count'] }}</b>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="dk-chart-legend"><span><i class="dk-legend-transactions"></i>Transaksi kas tercatat</span></div>
+            </section>
+        </div>
 
         <div class="dk-dashboard-section">
             <div class="dk-section-title"><div><span>KEUANGAN</span><h3>Posisi koperasi</h3></div></div>
@@ -55,42 +94,5 @@
             </div>
         </div>
 
-        <div class="dk-dashboard-charts">
-            <section class="dk-chart-panel dk-weekly-chart">
-                <div class="dk-section-title"><div><span>ARUS KAS</span><h3>Debit dan kredit mingguan</h3></div><small>Bulan berjalan</small></div>
-                <div class="dk-chart-axis-labels"><span>{{ $rupiah($maxWeeklyCash) }}</span><span>{{ $rupiah((int) ($maxWeeklyCash / 2)) }}</span><span>Rp 0</span></div>
-                <svg class="dk-weekly-line-chart" viewBox="0 0 400 120" preserveAspectRatio="none" role="img" aria-label="Grafik debit dan kredit per minggu pada bulan berjalan">
-                    <path d="M0 18H400M0 60H400M0 102H400" class="dk-chart-grid"></path>
-                    <polyline points="{{ $weeklyDebitPoints }}" class="dk-chart-line dk-chart-debit"></polyline>
-                    <polyline points="{{ $weeklyCreditPoints }}" class="dk-chart-line dk-chart-credit"></polyline>
-                    @foreach ($weekly_cash_flow->values() as $index => $week)
-                        @php($x = $index * (400 / max(1, $weekly_cash_flow->count() - 1)))
-                        @php($debitY = 102 - (int) round(($week['debit'] / $maxWeeklyCash) * 84))
-                        @php($creditY = 102 - (int) round(($week['credit'] / $maxWeeklyCash) * 84))
-                        <circle cx="{{ $x }}" cy="{{ $debitY }}" r="3" class="dk-chart-point dk-chart-debit-point"><title>{{ $week['label'] }} · Debit {{ $rupiah($week['debit']) }}</title></circle>
-                        <circle cx="{{ $x }}" cy="{{ $creditY }}" r="3" class="dk-chart-point dk-chart-credit-point"><title>{{ $week['label'] }} · Kredit {{ $rupiah($week['credit']) }}</title></circle>
-                    @endforeach
-                </svg>
-                <div class="dk-chart-labels">@foreach ($weekly_cash_flow as $week)<span>{{ $week['label'] }}</span>@endforeach</div>
-                <div class="dk-chart-legend">
-                    <span><i class="dk-legend-debit"></i>Debit · Kas masuk</span>
-                    <span><i class="dk-legend-credit"></i>Kredit · Kas keluar</span>
-                </div>
-            </section>
-
-            <section class="dk-chart-panel dk-monthly-count-chart">
-                <div class="dk-section-title"><div><span>AKTIVITAS</span><h3>Jumlah transaksi per bulan</h3></div><small>12 bulan</small></div>
-                <div class="dk-monthly-bars" role="img" aria-label="Jumlah transaksi kas per bulan selama 12 bulan">
-                    @foreach ($monthly_transaction_counts as $month)
-                        <div class="dk-monthly-bar-row">
-                            <span>{{ $month['label'] }}</span>
-                            <div class="dk-monthly-bar-track"><i style="width: {{ (int) round(($month['count'] / $max_monthly_transactions) * 100) }}%"></i></div>
-                            <b>{{ $month['count'] }}</b>
-                        </div>
-                    @endforeach
-                </div>
-                <div class="dk-chart-legend"><span><i class="dk-legend-transactions"></i>Transaksi kas tercatat</span></div>
-            </section>
-        </div>
     </div>
 </x-app-layout>

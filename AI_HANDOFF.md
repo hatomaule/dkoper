@@ -173,7 +173,7 @@ Latest verification in this session:
 
 ## Current Stop Point
 
-The core service and approval flows, borrower data import, cumulative profit allocation, identity/payment migration, and requested visual redesign are implemented. The latest full test suite passes (41 tests, 168 assertions), the frontend production build and Blade compilation pass, and the local database import reconciles. The preview server is running at `http://localhost:8000`; the shared browser tab is at `/login`. Alan is the Owner; Chalo is the employee/Admin operator. Usernames are `owner` and `admin`; no password values are saved here.
+The core service and approval flows, borrower data import, cumulative profit allocation, identity/payment migration, and requested visual redesign are implemented. The latest full test suite passes (42 tests, 177 assertions), the frontend production build and Blade compilation pass, and the local database import reconciles. The preview server is running at `http://localhost:8000`; the shared browser tab is at `/login`. Alan is the Owner; Chalo is the employee/Admin operator. Usernames are `owner` and `admin`; no password values are saved here.
 
 ### Latest follow-up implementation
 
@@ -185,6 +185,18 @@ The core service and approval flows, borrower data import, cumulative profit all
 - Do not re-import, clear, or reset borrower/payment data. No schema migration is required by this follow-up.
 - Validation after these changes: `php artisan test` passed (41 tests, 168 assertions); `npm run build` passed; `php artisan view:cache` passed; `git diff --check` passed. Focused payment-correction tests cover installment allocation, earned bonus, borrower advance, cash ledger, and audit log.
 - The changes described above are still in the worktree until committed and pushed. Review `git status` and follow the user's established commit/push procedure.
+
+### UI and activity follow-up (26 October 2026)
+
+- Login card was narrowed to a 410px maximum (390px on small screens), with tighter spacing and typography.
+- The Owner's top-right account menu now includes a compact “Ganti password Admin” dialog. Admin does not see the action; backend authorization remains Owner-only. Successful password changes return to Dashboard with a confirmation message.
+- Withdrawal activity entries now include the name of the bonus account being withdrawn from, so an Admin bonus withdrawal is distinguishable in the activity history. A feature test verifies the withdrawal appears with the Admin name and formatted amount.
+- Rupiah entry fields on loan, payment, correction, finance, and bonus forms now group thousands with dots while typing; submission sends only digits to the server. Inputs validate configured minimums and the available bonus maximum.
+- Dashboard cash/transaction charts are now visually first, followed by financial and bonus summaries. KPI cards use soft abstract waves instead of oversized circles; chart and period cards have stronger contrast in light and dark themes.
+- Sidebar bonus label shortened to “Bonus”; bonus withdrawal/transfer controls are compact. Side forms were narrowed to 240–290px at desktop breakpoints to leave more room for their tables. Table cells use smaller, single-line amounts while explanatory details may wrap.
+- Side forms now keep content height instead of stretching to the adjacent table; pagination summary text remains one line with a compact, horizontally scrollable page selector on narrow widths.
+- Do not reset/re-import local borrower/payment data. No migration required for this UI/activity update.
+- Verification after this follow-up: `php artisan test` passed (42 tests, 177 assertions), `npm run build` passed, `php artisan view:cache` passed, and `git diff --check` passed. The login card width was checked in the browser at a 462px viewport and rendered at 390px.
 
 Remaining follow-up:
 
