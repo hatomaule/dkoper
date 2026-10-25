@@ -12,11 +12,11 @@ class StaffAccountSeederTest extends TestCase
     /**
      * A basic feature test example.
      */
-    public function test_staff_seeder_creates_alan_and_chalo(): void
+    public function test_staff_seeder_creates_owner_and_admin(): void
     {
         $this->seed(\Database\Seeders\StaffAccountSeeder::class);
 
-        $this->assertDatabaseHas('users', ['username' => 'alan', 'role' => 'manager']);
-        $this->assertDatabaseHas('users', ['username' => 'chalo', 'role' => 'kasir']);
+        $this->assertDatabaseHas('users', ['username' => 'owner', 'role' => 'manager']);
+        $this->assertDatabaseHas('users', ['username' => 'admin', 'role' => 'kasir']);
     }
 }

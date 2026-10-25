@@ -4,6 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="theme-color" content="#f6f8fb">
+        <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
         <title>DKoper · Keuangan Koperasi</title>
 
@@ -17,7 +19,7 @@
                 @isset($header)
                     <header class="dk-page-heading">
                         <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                            {{ $header }}
+                            <div class="dk-heading-layout">{{ $header }}</div>
                         </div>
                     </header>
                 @endisset

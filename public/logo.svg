@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">DKoper</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#35d6a2"/>
+      <stop offset="1" stop-color="#05845f"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="19" fill="url(#g)"/>
+  <path d="M14 42V22h10.5c7.2 0 12 3.8 12 10s-4.8 10-12 10H14Zm7-5h3.2c3.5 0 5.4-1.8 5.4-5s-1.9-5-5.4-5H21v10Z" fill="#fff"/>
+  <path d="M40 42V22h6v7.1l6.4-7.1h7.5l-8 8.8L60 42h-7.7l-5.1-7.9-1.2 1.3V42h-6Z" fill="#e9fff6"/>
+  <path d="M12 49h40" stroke="#b9ffe7" stroke-linecap="round" stroke-width="2" opacity=".8"/>
+</svg>

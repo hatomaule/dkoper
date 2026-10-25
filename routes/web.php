@@ -44,6 +44,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::post('/cooperative/loans', [CooperativeController::class, 'storeLoan'])->name('cooperative.loans.store');
     Route::get('/cooperative/payments', [CooperativeController::class, 'payments'])->name('cooperative.payments');
     Route::post('/cooperative/payments', [CooperativeController::class, 'storePayment'])->name('cooperative.payments.store');
+    Route::get('/cooperative/payments/{payment}/proof', [CooperativeController::class, 'paymentProof'])->name('cooperative.payments.proof');
     Route::get('/cooperative/approvals', [CooperativeController::class, 'approvals'])->name('cooperative.approvals');
     Route::post('/cooperative/loans/{loan}/approve', [CooperativeController::class, 'approveLoan'])->name('cooperative.loans.approve');
     Route::post('/cooperative/loans/{loan}/reject', [CooperativeController::class, 'rejectLoan'])->name('cooperative.loans.reject');

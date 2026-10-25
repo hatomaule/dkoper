@@ -19,6 +19,7 @@ use App\Services\ProfitService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -27,7 +28,13 @@ class CooperativeController extends Controller
     public function borrowers(): View
     {
         $this->authorizeStaff();
-        return view('cooperative.borrowers', ['borrowers' => Borrower::with('loans')->latest()->get()]);
+        $perPage = $this->perPage(request());
+        $query = Borrower::with('loans')->latest();
+
+        return view('cooperative.borrowers', [
+            'borrowers' => $perPage === 'all' ? $query->get() : $query->paginate($perPage)->withQueryString(),
+            'perPage' => $perPage,
+        ]);
     }
 
     public function storeBorrower(Request $request, BorrowerService $service): RedirectResponse
@@ -66,7 +73,14 @@ class CooperativeController extends Controller
     public function loans(): View
     {
         $this->authorizeStaff();
-        return view('cooperative.loans', ['borrowers' => Borrower::with('user')->orderBy('full_name')->get(), 'loans' => Loan::with('borrower')->latest()->get()]);
+        $perPage = $this->perPage(request());
+        $query = Loan::with('borrower')->latest();
+
+        return view('cooperative.loans', [
+            'borrowers' => Borrower::with('user')->orderBy('full_name')->get(),
+            'loans' => $perPage === 'all' ? $query->get() : $query->paginate($perPage)->withQueryString(),
+            'perPage' => $perPage,
+        ]);
     }
 
     public function storeLoan(Request $request, LoanService $service): RedirectResponse
@@ -76,7 +90,7 @@ class CooperativeController extends Controller
         $loan = $service->createLoan($request->user(), (int) $validated['borrower_id'], (int) $validated['principal_amount']);
         $message = $loan->status === 'active'
             ? "Pinjaman {$loan->loan_code} berhasil disetujui dan dicatat."
-            : "Pinjaman {$loan->loan_code} dikirim ke antrean approval Manager.";
+            : "Pinjaman {$loan->loan_code} dikirim ke antrean persetujuan Owner.";
 
         return redirect()->route('cooperative.loans')->with('status', $message);
     }
@@ -84,7 +98,24 @@ class CooperativeController extends Controller
     public function payments(): View
     {
         $this->authorizeStaff();
-        return view('cooperative.payments', ['loans' => Loan::with(['borrower', 'installments'])->where('status', 'active')->latest()->get(), 'payments' => Payment::with(['loan.borrower'])->latest()->paginate(30)]);
+        $perPage = request()->query('per_page', '10');
+        $perPage = $perPage === 'all' ? 'all' : (int) $perPage;
+        abort_unless($perPage === 'all' || in_array($perPage, [10, 25, 50], true), 422);
+
+        $payments = Payment::with(['loan.borrower', 'installment'])->latest()->when(
+            $perPage !== 'all',
+            fn ($query) => $query->paginate($perPage)->withQueryString(),
+            fn ($query) => $query->get(),
+        );
+
+        $loans = Loan::with(['borrower', 'installments' => fn ($query) => $query->where('outstanding_amount', '>', 0)->orderBy('sequence')])->where('status', 'active')->latest()->get();
+
+        return view('cooperative.payments', [
+            'loans' => $loans,
+            'firstInstallment' => $loans->first()?->installments->first(),
+            'payments' => $payments,
+            'perPage' => $perPage,
+        ]);
     }
 
     public function storePayment(Request $request): RedirectResponse
@@ -92,15 +123,47 @@ class CooperativeController extends Controller
         $this->authorizeStaff();
         $validated = $request->validate([
             'loan_id' => ['required', Rule::exists('loans', 'id')->where('status', 'active')],
-            'amount' => ['required', 'integer', 'min:1'],
             'nominal_source' => ['required', 'in:system,manual'],
+            'payment_method' => ['required', 'in:cash,transfer'],
+            'amount' => ['required_if:nominal_source,manual', 'nullable', 'integer', 'min:1'],
+            'installment_id' => ['required_if:nominal_source,system', 'nullable', 'integer'],
+            'proof' => ['required_if:payment_method,transfer', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ]);
+
+        $installment = null;
+        if ($validated['nominal_source'] === 'system') {
+            $installment = \App\Models\Installment::query()
+                ->where('loan_id', $validated['loan_id'])
+                ->where('id', $validated['installment_id'])
+                ->where('outstanding_amount', '>', 0)
+                ->firstOrFail();
+            $oldestOutstandingId = \App\Models\Installment::query()
+                ->where('loan_id', $validated['loan_id'])
+                ->where('outstanding_amount', '>', 0)
+                ->orderBy('sequence')
+                ->value('id');
+            if ((int) $installment->id !== (int) $oldestOutstandingId) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['installment_id' => 'Nominal sistem hanya berlaku untuk cicilan tertua yang belum lunas.']);
+            }
+            $validated['amount'] = (int) $installment->outstanding_amount;
+        }
+
+        if ($validated['payment_method'] === 'cash' && $request->hasFile('proof')) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['proof' => 'Bukti hanya dapat dilampirkan untuk pembayaran transfer.']);
+        }
+
+        $proofPath = $request->hasFile('proof')
+            ? $request->file('proof')->store('payment-proofs', 'local')
+            : null;
 
         $payment = Payment::create([
             'loan_id' => $validated['loan_id'],
+            'installment_id' => $installment?->id,
             'recorded_by' => $request->user()->id,
             'amount' => $validated['amount'],
             'nominal_source' => $validated['nominal_source'],
+            'payment_method' => $validated['payment_method'],
+            'proof_path' => $proofPath,
             'status' => 'pending',
         ]);
 
@@ -108,7 +171,7 @@ class CooperativeController extends Controller
             app(PaymentService::class)->approvePayment($request->user(), $payment->id);
             $message = 'Pembayaran berhasil dicatat dan disetujui.';
         } else {
-            ApprovalRequest::create(['request_type' => 'payment', 'requested_by' => $request->user()->id, 'approvable_type' => Payment::class, 'approvable_id' => $payment->id, 'payload' => $validated, 'status' => 'pending']);
+            ApprovalRequest::create(['request_type' => 'payment', 'requested_by' => $request->user()->id, 'approvable_type' => Payment::class, 'approvable_id' => $payment->id, 'payload' => ['amount' => $payment->amount, 'loan_id' => $payment->loan_id, 'payment_method' => $payment->payment_method], 'status' => 'pending']);
             ActivityLog::create([
                 'user_id' => $request->user()->id,
                 'action' => 'payment.recorded',
@@ -117,17 +180,33 @@ class CooperativeController extends Controller
                 'metadata' => ['amount' => $payment->amount, 'loan_id' => $payment->loan_id],
                 'ip_address' => $request->ip(),
             ]);
-            $message = 'Pembayaran dikirim ke antrean approval Manager.';
+            $message = 'Pembayaran dikirim ke antrean persetujuan Owner.';
         }
 
         return redirect()->route('cooperative.payments')->with('status', $message);
     }
 
+    public function paymentProof(Request $request, Payment $payment)
+    {
+        $this->authorizeStaff();
+        abort_unless($payment->proof_path && Storage::disk('local')->exists($payment->proof_path), 404);
+
+        return response()->file(Storage::disk('local')->path($payment->proof_path), [
+            'Content-Type' => Storage::disk('local')->mimeType($payment->proof_path),
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     public function approvals(): View
     {
         abort_unless(auth()->user()?->isManager(), 403);
+        $perPage = $this->perPage(request());
+        $query = ApprovalRequest::with(['requester', 'approvable'])->where('status', 'pending')->latest();
+
         return view('cooperative.approvals', [
-            'approvalRequests' => ApprovalRequest::with(['requester', 'approvable'])->where('status', 'pending')->latest()->get(),
+            'approvalRequests' => $perPage === 'all' ? $query->get() : $query->paginate($perPage)->withQueryString(),
+            'perPage' => $perPage,
         ]);
     }
 
@@ -168,7 +247,7 @@ class CooperativeController extends Controller
 
         return view('cooperative.finances', [
             'balance' => $service->balance(),
-            'transactions' => CashTransaction::with(['creator', 'loan.borrower'])->latest()->paginate(30),
+            'transactions' => $this->paginated(CashTransaction::with(['creator', 'loan.borrower'])->latest(), $request),
         ]);
     }
 
@@ -207,8 +286,8 @@ class CooperativeController extends Controller
         abort_unless($request->user()->isManager(), 403);
 
         return view('cooperative.profits', [
-            'balances' => ProfitBalance::with('user')->orderBy('user_id')->get(),
-            'transactions' => ProfitTransaction::with(['user', 'creator'])->latest()->paginate(30),
+            'balances' => ProfitBalance::with('user')->whereHas('user', fn ($query) => $query->whereIn('role', ['manager', 'kasir']))->orderBy('user_id')->get(),
+            'transactions' => $this->paginated(ProfitTransaction::with(['user', 'creator'])->latest(), $request),
         ]);
     }
 
@@ -224,6 +303,7 @@ class CooperativeController extends Controller
     public function transferProfit(Request $request, User $user, ProfitService $service): RedirectResponse
     {
         abort_unless($request->user()->isManager(), 403);
+        abort_unless($user->isManager(), 403, 'Bonus Admin tidak dapat dipindahkan ke modal.');
         $validated = $request->validate(['amount' => ['required', 'integer', 'min:1']]);
         $service->transferToCapital($request->user(), $user->id, (int) $validated['amount']);
 
@@ -235,8 +315,23 @@ class CooperativeController extends Controller
         abort_unless($request->user()->isManager(), 403);
 
         return view('cooperative.activity-logs', [
-            'logs' => ActivityLog::with('user')->latest()->paginate(50),
+            'logs' => $this->paginated(ActivityLog::with('user')->latest(), $request),
         ]);
+    }
+
+    private function perPage(Request $request): int|string
+    {
+        $size = $request->query('per_page', '10');
+        abort_unless(in_array($size, ['10', '25', '50', 'all'], true), 422);
+
+        return $size === 'all' ? 'all' : (int) $size;
+    }
+
+    private function paginated($query, Request $request)
+    {
+        $perPage = $this->perPage($request);
+
+        return $perPage === 'all' ? $query->get() : $query->paginate($perPage)->withQueryString();
     }
 
     private function authorizeStaff(): void

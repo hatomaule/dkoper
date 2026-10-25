@@ -59,7 +59,7 @@ class LoanService
             $loan->update(['loan_code' => 'LN_' . str_pad((string) $loan->id, 4, '0', STR_PAD_LEFT)]);
 
             $cumulativeInterest = 0;
-            $cumulativeAlanProfit = 0;
+            $cumulativeOwnerProfit = 0;
 
             for ($sequence = 1; $sequence <= 12; $sequence++) {
                 $index = $sequence - 1;
@@ -69,18 +69,18 @@ class LoanService
                 $installmentInterest = intdiv($interestAmount, 12) + ($index < $interestAmount % 12 ? 1 : 0);
                 $cumulativeInterest += $installmentInterest;
 
-                $cumulativeAlanTarget = intdiv($cumulativeInterest, 5) * 3
+                $cumulativeOwnerTarget = intdiv($cumulativeInterest, 5) * 3
                     + intdiv(($cumulativeInterest % 5) * 3 + 2, 5);
-                $alanInstallmentProfit = $cumulativeAlanTarget - $cumulativeAlanProfit;
-                $cumulativeAlanProfit = $cumulativeAlanTarget;
+                $ownerInstallmentProfit = $cumulativeOwnerTarget - $cumulativeOwnerProfit;
+                $cumulativeOwnerProfit = $cumulativeOwnerTarget;
 
                 Installment::create([
                     'loan_id' => $loan->id,
                     'sequence' => $sequence,
                     'scheduled_amount' => $amount,
                     'interest_amount' => $installmentInterest,
-                    'alan_profit_amount' => $alanInstallmentProfit,
-                    'chalo_profit_amount' => $installmentInterest - $alanInstallmentProfit,
+                    'alan_profit_amount' => $ownerInstallmentProfit,
+                    'chalo_profit_amount' => $installmentInterest - $ownerInstallmentProfit,
                     'paid_amount' => 0,
                     'outstanding_amount' => $amount,
                     'status' => 'pending',

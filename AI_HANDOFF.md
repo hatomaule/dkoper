@@ -18,15 +18,19 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 
 - Laravel project and local MariaDB/MySQL connection are operational.
 - All migrations are currently applied. The missing `cash_accounts` table reported on `/dashboard` was created by applying `2026_10_25_010000_add_financial_workflow_fields`; its initial balance was populated from the latest cash-ledger balance (zero when no ledger entries exist).
-- Current local database connection reports `mysql`; the `alan` manager and `chalo` cashier accounts exist.
+- Current local database connection reports `mysql`; staff usernames are `owner` (role `manager`) and `admin` (role `kasir`). Their IDs, roles, and passwords were preserved by the identity migration.
 - Login accepts an identifier (borrower code, username, or phone); public registration is disabled.
 - First-login password change is enforced. The manager account has `must_change_password = false`; the cashier account currently has `must_change_password = true`. Do not inspect or disclose either password.
 - Staff passwords were synchronized with the user's supplied account sheet during this session. Password values are intentionally not recorded here; use private credentials and never retain shared/default passwords for production.
 - Core borrower, loan, installment, payment approval, cash ledger, profit, and activity-log workflows have been implemented in the current worktree.
-- A full visual redesign is in progress: authenticated navigation is now a dark, icon-based desktop sidebar with grouped sections and a compact account footer; mobile uses a responsive top bar and slide-down menu. The dashboard uses an emerald hero, refined KPI cards, and calmer card/table styling. Login, tables, forms, and status badges use the same lightweight design system and system fonts (no external font request or new UI dependency).
+- The visual redesign includes a dark, icon-based desktop sidebar with grouped sections and a compact account footer; mobile uses a responsive top bar and slide-down menu. The dashboard uses an emerald hero, operational KPIs, monthly payment chart, daily/weekly/monthly reports, borrower count, and earned/projected staff bonuses. Login, tables, forms, and status badges share the same lightweight glass-inspired design system and system fonts (no external font request or new UI dependency).
 - Latest visual refinement: the login submit label is the concise “Login” and the button is compact and right-aligned. Cards have more pronounced layered shadows, subtle gradients, and a gentle hover lift to feel elevated from the canvas; common action buttons were reduced in size.
 - A dedicated forced-password-change screen is in `resources/views/profile/edit.blade.php`; its visible “Simpan dan lanjutkan” button submits the first password change.
 - The modern UI is an independent Blade design, not a strict conversion of `index.baseline.html`.
+- A DKoper financial logo and SVG favicon are in `public/logo.svg` and `public/favicon.svg`. Dark/light theme selection persists in local storage and is available on guest and authenticated layouts.
+- Payment entry supports server-calculated oldest-outstanding-installment nominal or manual amount, cash/transfer method, private transfer-proof storage, browser-side WebP compression/camera capture, proof viewing for Owner/Admin, and WhatsApp receipt links when a borrower phone number is available. Payment and loan tables support filtering, 10/25/50/all pagination, and table/card views.
+- The local migration `2026_10_26_000000_enhance_payments_and_staff_identity` has been applied. Existing payments were assigned `cash` as their method; no payment, borrower, or loan records were reset. Transfer proofs are stored on the private `local` disk. Production must run the migration before deploying this code.
+- Dashboard date boundaries use the business timezone `Asia/Singapore` (UTC+8) and convert to UTC for database queries; do not compare local wall-clock boundaries directly to UTC timestamps.
 - Preview is currently running with `php artisan serve --host=0.0.0.0 --port=8000`; `http://localhost:8000/login` responds with HTTP 200. Login was visually checked in the browser. The user has another local browser window that reached `/dashboard` after login.
 - The working tree contains uncommitted business-flow and UI changes. Review `git status` before further edits; do not discard unrelated/pre-existing user changes.
 
@@ -36,7 +40,7 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 - Source data totals: Rp19,000,000 principal, Rp22,800,000 total receivable, Rp11,240,000 paid, Rp11,560,000 outstanding, and Rp1,330,000 administration fees.
 - Opening capital was recorded as Rp19,000,000. Cash ledger ending balance and `cash_accounts.balance` both reconcile to Rp12,570,000.
 - The source did not provide actual payment dates. Imported payment records therefore use 26 October 2026 as the import date; this is not represented as the historical payment date.
-- Profit is realized only for cleared installments. The 72 paid installments currently recognize Rp1,650,011 total: Alan Rp990,006 and Chalo Rp660,005. `LoanService` distributes the 60:40 split using cumulative rounding per loan, so each installment's shares sum to its interest and each fully completed loan's total split is exact. This also corrected the earlier per-installment rounding imbalance in the imported profit ledger.
+- Profit is realized only for cleared installments. The 72 paid installments currently recognize Rp1,650,011 total: Owner Rp990,006 and Admin Rp660,005. `LoanService` distributes the 60:40 split using cumulative rounding per loan, so each installment's shares sum to its interest and each fully completed loan's total split is exact. Legacy `alan_profit_amount` and `chalo_profit_amount` columns remain for compatibility.
 - Borrower names and passwords are intentionally not copied into this handoff. Do not rerun the one-time import/reset script; it has been removed after use.
 
 ## Business Rules
@@ -46,13 +50,13 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 3. Administration fee is 7% of principal.
 4. The borrower usually receives principal minus administration fee; the example is Rp1,000,000 principal, Rp70,000 administration fee, Rp930,000 net payout.
 5. Administration fee is income but must be recorded separately from the main principal cash movement.
-6. Payments are recorded by their real cash amount. System nominal and manual nominal are separate input choices.
+6. Payments are recorded by their real cash amount. System nominal is calculated server-side from the oldest outstanding installment; manual nominal is entered separately. Transfer payments require an image proof; cash payments do not.
 7. A shortage is recorded as outstanding without changing future installment schedules.
 8. An overpayment is allocated to oldest outstanding installments, then optionally to a payment-in-advance balance.
 9. Every installment amount remains separate from the actual paid amount.
 10. Borrowers may have multiple active loans.
 11. Payment approval is required by the Manager before financial effects are posted.
-12. Profit from a cleared installment goes to staff profit balances: Alan 60%, Chalo 40%.
+12. Profit from a cleared installment goes to staff profit balances: Owner 60%, Admin 40%.
 13. Staff withdrawals reduce earned staff profit. A withdrawal above available balance creates debt/negative-balance treatment and must be visible to the Manager.
 14. Bonus and administration amounts may be transferred into modal/cash capital through an explicit financial transaction.
 15. Keuangan history and activity logs are separate modules. Financial history records monetary movements; activity logs record operational actions.
@@ -60,7 +64,7 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 ## Authentication Rules
 
 - Login identifier accepts borrower code, username, or phone.
-- Staff usernames are generated or seeded as `alan` and `chalo`.
+- Staff usernames are `owner` and `admin`; roles remain `manager` and `kasir` so existing authorization rules stay intact.
 - Initial staff credentials are development-only and must not be documented in plaintext or used in production.
 - Staff accounts currently require a first-login password change (`must_change_password = true`).
 - Cashier can reset borrower passwords.
@@ -79,7 +83,7 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 - `borrowers`: borrower identity linked to an optional user account.
 - `loans`: principal, administration fee, net payout, interest, receivable, approval state.
 - `installments`: 12 numbered installment rows per loan.
-- `payments`: real cash input, selected/system nominal source, approval state.
+- `payments`: real cash input, selected/system nominal source, cash/transfer method, optional private proof path, approval state.
 - `approval_requests`: normalized pending action instead of text parsing.
 - `cash_transactions`: immutable cash ledger with direction, source, balance after, and references.
 - `profit_balances`: staff total earned, withdrawn, transferred to modal, and available balance.
@@ -128,6 +132,11 @@ Latest verification in this session:
 - `php artisan test --filter=DashboardAccessTest`: passed after the migration was applied.
 - `php artisan view:cache && php artisan view:clear`: passed after status badge changes.
 - The login preview and forced-password-change page were visually checked in the browser; the latest preview was also checked in a narrow mobile viewport.
+- Identity/payment migration applied locally: 13 borrowers, 13 active loans, 84 existing payments, and Rp12,570,000 cash balance remain intact; existing payments default to `cash`.
+- Latest `php artisan test`: 36 tests passed, 144 assertions, including system nominal, private transfer proof, Owner/Admin proof viewing, and business-timezone report boundaries.
+- Latest `npm run build` and `php artisan view:cache && php artisan view:clear`: passed after the complete redesign and payment updates.
+- Browser check on `/login`: theme toggle switched light → dark → light and the page emitted no JavaScript errors.
+- Latest `git diff --check` passed. Git reports expected CRLF-to-LF normalization warnings on several existing files.
 
 ## Resume Sequence
 
@@ -163,12 +172,13 @@ Latest verification in this session:
 
 ## Current Stop Point
 
-The core service and approval flows, borrower data import, cumulative profit allocation, and full visual redesign are implemented. The latest full test suite passes (33 tests, 121 assertions), the frontend production build and Blade compilation pass, and the local database import reconciles. The preview server is running at `http://localhost:8000`; the shared browser tab is at `/login`. The manager account has completed its first password change; no password values are saved here.
+The core service and approval flows, borrower data import, cumulative profit allocation, identity/payment migration, and requested visual redesign are implemented. The latest full test suite passes (36 tests, 144 assertions), the frontend production build and Blade compilation pass, and the local database import reconciles. The preview server is running at `http://localhost:8000`; the shared browser tab is at `/login`. Staff usernames are `owner` and `admin`; no password values are saved here.
 
 Remaining follow-up:
 
-- Validate manager, cashier, and borrower experiences in the browser, including mobile navigation and page-specific tables/forms.
+- Validate Owner, Admin, and borrower experiences in the browser, including mobile navigation and page-specific tables/forms.
 - Compare remaining pages against product needs; `index.baseline.html` is a reference only, not a mandatory visual target.
 - Cross-check withdrawal behavior with negative balances, transfer-to-modal accounting, and borrower visibility restrictions.
 - Review migration/schema consistency and PHP 8.3 deployment readiness.
+- Apply the identity/payment migration to the production database before deploying the updated application. Do not rerun the one-time borrower import.
 - Confirm production database credentials and rotate any development credentials before deployment.

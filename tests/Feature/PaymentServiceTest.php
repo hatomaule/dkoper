@@ -19,7 +19,7 @@ class PaymentServiceTest extends TestCase
     public function test_partial_old_installment_is_covered_by_real_payment_and_exact_profit_is_realized_when_lunas(): void
     {
         $manager = User::factory()->create([
-            'username' => 'alan',
+            'username' => 'owner',
             'role' => 'manager',
             'must_change_password' => false,
         ]);
@@ -49,7 +49,6 @@ class PaymentServiceTest extends TestCase
 
         $paymentTwo = Payment::create([
             'loan_id' => $loan->id,
-            'installment_id' => $second->id,
             'recorded_by' => $manager->id,
             'amount' => $first->fresh()->outstanding_amount + 120_000,
             'nominal_source' => 'system',
@@ -65,8 +64,8 @@ class PaymentServiceTest extends TestCase
 
     public function test_overpayment_is_credited_to_advance_and_profit_split_totals_are_exact(): void
     {
-        $manager = User::factory()->create(['username' => 'alan', 'role' => 'manager']);
-        $cashier = User::factory()->create(['username' => 'chalo', 'role' => 'kasir']);
+        $manager = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
+        $cashier = User::factory()->create(['username' => 'admin', 'role' => 'kasir']);
         $borrower = Borrower::create([
             'full_name' => 'Nasabah Lebih Bayar',
             'borrower_code' => 'DK_103',

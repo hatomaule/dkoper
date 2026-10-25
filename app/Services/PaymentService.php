@@ -52,6 +52,7 @@ class PaymentService
             $installments = Installment::query()
                 ->where('loan_id', $loan->id)
                 ->where('outstanding_amount', '>', 0)
+                ->when($payment->installment_id, fn ($query) => $query->where('id', $payment->installment_id))
                 ->orderBy('sequence')
                 ->lockForUpdate()
                 ->get();
@@ -173,8 +174,8 @@ class PaymentService
     private function realizeProfit(User $manager, Loan $loan, Installment $installment): void
     {
         foreach ([
-            ['username' => 'alan', 'amount' => (int) $installment->alan_profit_amount],
-            ['username' => 'chalo', 'amount' => (int) $installment->chalo_profit_amount],
+            ['username' => 'owner', 'amount' => (int) $installment->alan_profit_amount],
+            ['username' => 'admin', 'amount' => (int) $installment->chalo_profit_amount],
         ] as $share) {
             $staff = User::query()->where('username', $share['username'])->lockForUpdate()->first();
             if (! $staff) continue;

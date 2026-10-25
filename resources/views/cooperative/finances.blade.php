@@ -2,8 +2,8 @@
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Riwayat Keuangan</h2></x-slot>
     <div class="min-h-[calc(100vh-65px)] bg-slate-100 py-8 px-4">
         <div class="mx-auto max-w-7xl space-y-6">
-            <div class="grid gap-6 lg:grid-cols-[360px_1fr]">
-                <form method="POST" action="{{ route('cooperative.finances.store') }}" class="h-fit rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="grid items-stretch gap-6 lg:grid-cols-[minmax(300px,360px)_1fr]">
+                <form method="POST" action="{{ route('cooperative.finances.store') }}" class="dk-form-panel h-full">
                     @csrf
                     <h3 class="font-bold text-slate-900">Catat Perubahan Kas</h3>
                     <p class="mt-2 text-sm text-slate-600">Gunakan untuk saldo modal awal atau transaksi kas manual yang memiliki bukti.</p>
@@ -27,20 +27,21 @@
                 </section>
             </div>
 
-            <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+            <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" data-table-tools>
+                <div class="dk-table-toolbar"><label>Filter <input type="search" placeholder="Cari transaksi..." data-table-search></label><label>Tampilkan<select data-page-size><option value="10" @selected(request('per_page', '10') === '10')>10</option><option value="25" @selected(request('per_page') === '25')>25</option><option value="50" @selected(request('per_page') === '50')>50</option><option value="all" @selected(request('per_page') === 'all')>Semua</option></select></label></div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm">
                         <thead class="bg-slate-50 text-xs uppercase text-slate-500"><tr><th class="px-5 py-3">Waktu</th><th class="px-5 py-3">Jenis</th><th class="px-5 py-3">Keterangan</th><th class="px-5 py-3">Kas masuk</th><th class="px-5 py-3">Kas keluar</th><th class="px-5 py-3">Saldo</th><th class="px-5 py-3">Petugas</th></tr></thead>
                         <tbody>
                             @forelse ($transactions as $transaction)
-                                <tr class="border-t border-slate-100">
-                                    <td class="px-5 py-3">{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
-                                    <td class="px-5 py-3">{{ str_replace('_', ' ', $transaction->type) }}</td>
-                                    <td class="px-5 py-3">{{ $transaction->description }} @if ($transaction->loan) ({{ $transaction->loan->loan_code }}) @endif</td>
-                                    <td class="px-5 py-3">{{ $transaction->direction === 'in' ? 'Rp '.number_format((int) $transaction->amount, 0, ',', '.') : '—' }}</td>
-                                    <td class="px-5 py-3">{{ $transaction->direction === 'out' ? 'Rp '.number_format((int) $transaction->amount, 0, ',', '.') : '—' }}</td>
-                                    <td class="px-5 py-3 font-semibold">Rp {{ number_format((int) $transaction->balance_after, 0, ',', '.') }}</td>
-                                    <td class="px-5 py-3">{{ $transaction->creator->name }}</td>
+                                <tr class="border-t border-slate-100" data-table-row>
+                                    <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
+                                    <td>{{ str_replace('_', ' ', $transaction->type) }}</td>
+                                    <td>{{ $transaction->description }} @if ($transaction->loan) ({{ $transaction->loan->loan_code }}) @endif</td>
+                                    <td>{{ $transaction->direction === 'in' ? 'Rp '.number_format((int) $transaction->amount, 0, ',', '.') : '—' }}</td>
+                                    <td>{{ $transaction->direction === 'out' ? 'Rp '.number_format((int) $transaction->amount, 0, ',', '.') : '—' }}</td>
+                                    <td class="font-semibold">Rp {{ number_format((int) $transaction->balance_after, 0, ',', '.') }}</td>
+                                    <td>{{ $transaction->creator->name }}</td>
                                 </tr>
                             @empty
                                 <tr><td colspan="7" class="px-5 py-8 text-center text-slate-500">Belum ada transaksi keuangan.</td></tr>

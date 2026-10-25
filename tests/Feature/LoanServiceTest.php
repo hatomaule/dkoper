@@ -18,7 +18,7 @@ class LoanServiceTest extends TestCase
     public function test_manager_can_create_twelve_installment_loan_with_separated_administration_fee(): void
     {
         $manager = User::factory()->create([
-            'username' => 'alan',
+            'username' => 'owner',
             'role' => 'manager',
             'must_change_password' => false,
         ]);
@@ -48,7 +48,7 @@ class LoanServiceTest extends TestCase
     public function test_installment_profit_shares_follow_cumulative_sixty_forty_split(): void
     {
         $manager = User::factory()->create([
-            'username' => 'alan',
+            'username' => 'owner',
             'role' => 'manager',
             'must_change_password' => false,
         ]);
@@ -83,8 +83,8 @@ class LoanServiceTest extends TestCase
 
     public function test_cashier_loan_waits_for_manager_approval_before_cash_is_posted(): void
     {
-        $manager = User::factory()->create(['username' => 'alan', 'role' => 'manager']);
-        $cashier = User::factory()->create(['username' => 'chalo', 'role' => 'kasir']);
+        $manager = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
+        $cashier = User::factory()->create(['username' => 'admin', 'role' => 'kasir']);
         $borrower = Borrower::create([
             'full_name' => 'Nasabah Approval',
             'borrower_code' => 'DK_101',
@@ -116,8 +116,8 @@ class LoanServiceTest extends TestCase
 
     public function test_rejected_loan_never_posts_cash_transactions(): void
     {
-        $manager = User::factory()->create(['username' => 'alan', 'role' => 'manager']);
-        $cashier = User::factory()->create(['username' => 'chalo', 'role' => 'kasir']);
+        $manager = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
+        $cashier = User::factory()->create(['username' => 'admin', 'role' => 'kasir']);
         $borrower = Borrower::create([
             'full_name' => 'Nasabah Ditolak',
             'borrower_code' => 'DK_102',

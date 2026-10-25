@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Pinjaman</h2></x-slot>
     <div class="bg-slate-100 min-h-[calc(100vh-65px)] py-8 px-4">
-        <div class="mx-auto max-w-6xl grid gap-6 lg:grid-cols-[360px_1fr]">
-            <form method="POST" action="{{ route('cooperative.loans.store') }}" class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm h-fit">
+        <div class="mx-auto max-w-7xl grid items-stretch gap-6 lg:grid-cols-[minmax(300px,360px)_1fr]" data-table-tools>
+            <form method="POST" action="{{ route('cooperative.loans.store') }}" class="dk-form-panel h-full">
                 @csrf
                 <h3 class="font-bold text-slate-900">Ajukan Pinjaman</h3>
                 @if (session('status'))<div class="mt-3 text-sm text-emerald-700">{{ session('status') }}</div>@endif
@@ -14,7 +14,16 @@
                 <button class="mt-5 w-full rounded-md bg-blue-600 px-4 py-3 font-bold text-white">{{ auth()->user()->isManager() ? 'Setujui & Catat' : 'Kirim Pengajuan' }}</button>
                 @if (session('status'))<div class="mt-4 text-sm text-emerald-700">{{ session('status') }}</div>@endif
             </form>
-            <div class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500"><tr><th class="px-5 py-3">Kode</th><th class="px-5 py-3">Nasabah</th><th class="px-5 py-3">Pokok</th><th class="px-5 py-3">Tagihan</th><th class="px-5 py-3">Status</th></tr></thead><tbody>@forelse ($loans as $loan)<tr class="border-t border-slate-100"><td class="px-5 py-3 font-bold">{{ $loan->loan_code }}</td><td class="px-5 py-3">{{ $loan->borrower->full_name }}</td><td class="px-5 py-3">Rp {{ number_format($loan->principal_amount,0,',','.') }}</td><td class="px-5 py-3">Rp {{ number_format($loan->total_receivable,0,',','.') }}</td><td class="px-5 py-3"><span class="dk-status" data-status="{{ $loan->status }}">{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</span></td></tr>@empty<tr><td colspan="5" class="px-5 py-8 text-center text-slate-500">Belum ada pinjaman.</td></tr>@endforelse</tbody></table></div>
+            <section class="dk-data-panel min-w-0">
+                <div class="dk-table-toolbar">
+                    <label>Filter <input type="search" placeholder="Cari nasabah / pinjaman..." data-table-search></label>
+                    <label>Tampilkan<select data-page-size><option value="10" @selected($perPage === 10)>10</option><option value="25" @selected($perPage === 25)>25</option><option value="50" @selected($perPage === 50)>50</option><option value="all" @selected($perPage === 'all')>Semua</option></select></label>
+                    <div class="dk-view-toggle" aria-label="Mode tampilan"><button type="button" class="is-active" data-view-mode="table" aria-label="Tabel" title="Tabel">▤</button><button type="button" data-view-mode="cards" aria-label="Kartu" title="Kartu">▦</button></div>
+                </div>
+                <div class="overflow-x-auto" data-table-view="table"><table class="w-full text-left text-sm"><thead><tr><th>Kode</th><th>Nasabah</th><th>Pokok</th><th>Tagihan</th><th>Status</th></tr></thead><tbody>@forelse ($loans as $loan)<tr data-table-row><td class="font-bold">{{ $loan->loan_code }}</td><td>{{ $loan->borrower->full_name }}</td><td>Rp {{ number_format($loan->principal_amount,0,',','.') }}</td><td>Rp {{ number_format($loan->total_receivable,0,',','.') }}</td><td><span class="dk-status" data-status="{{ $loan->status }}">{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</span></td></tr>@empty<tr><td colspan="5" class="py-8 text-center text-slate-500">Belum ada pinjaman.</td></tr>@endforelse</tbody></table></div>
+                <div class="dk-payment-cards hidden" data-table-view="cards">@foreach ($loans as $loan)<article class="dk-payment-card" data-table-row><div><strong>{{ $loan->borrower->full_name }}</strong><span class="dk-status" data-status="{{ $loan->status }}">{{ ucfirst($loan->status) }}</span></div><p>{{ $loan->loan_code }}</p><b>Rp {{ number_format((int) $loan->principal_amount,0,',','.') }}</b><small>Total tagihan Rp {{ number_format((int) $loan->total_receivable,0,',','.') }}</small></article>@endforeach</div>
+                @if ($loans instanceof \Illuminate\Contracts\Pagination\Paginator)<div class="dk-table-footer">{{ $loans->links() }}</div>@endif
+            </section>
         </div>
     </div>
 </x-app-layout>

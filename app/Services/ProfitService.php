@@ -77,8 +77,8 @@ class ProfitService
 
         return DB::transaction(function () use ($manager, $staffId, $amount) {
             $staff = User::query()->lockForUpdate()->findOrFail($staffId);
-            if (! $staff->isManager() && ! $staff->isCashier()) {
-                throw ValidationException::withMessages(['user' => 'Akun sumber bukan akun staf.']);
+            if (! $staff->isManager()) {
+                throw ValidationException::withMessages(['user' => 'Bonus Admin tidak dapat dipindahkan ke modal.']);
             }
 
             ProfitBalance::query()->firstOrCreate(['user_id' => $staff->id]);

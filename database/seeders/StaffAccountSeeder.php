@@ -12,8 +12,8 @@ class StaffAccountSeeder extends Seeder
     public function run(): void
     {
         foreach ([
-            ['name' => 'Alan', 'username' => 'alan', 'role' => 'manager'],
-            ['name' => 'Chalo', 'username' => 'chalo', 'role' => 'kasir'],
+            ['name' => 'Owner', 'username' => 'owner', 'role' => 'manager'],
+            ['name' => 'Admin', 'username' => 'admin', 'role' => 'kasir'],
         ] as $staff) {
             $user = User::updateOrCreate(
                 ['username' => $staff['username']],
