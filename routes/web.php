@@ -40,10 +40,13 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::get('/cooperative/borrowers', [CooperativeController::class, 'borrowers'])->name('cooperative.borrowers');
     Route::post('/cooperative/borrowers', [CooperativeController::class, 'storeBorrower'])->name('cooperative.borrowers.store');
     Route::post('/cooperative/borrowers/{borrower}/reset-password', [CooperativeController::class, 'resetBorrowerPassword'])->name('cooperative.borrowers.reset-password');
+    Route::post('/cooperative/borrowers/{borrower}/password', [CooperativeController::class, 'updateBorrowerPassword'])->name('cooperative.borrowers.update-password');
+    Route::post('/cooperative/staff/{user}/password', [CooperativeController::class, 'updateStaffPassword'])->name('cooperative.staff.update-password');
     Route::get('/cooperative/loans', [CooperativeController::class, 'loans'])->name('cooperative.loans');
     Route::post('/cooperative/loans', [CooperativeController::class, 'storeLoan'])->name('cooperative.loans.store');
     Route::get('/cooperative/payments', [CooperativeController::class, 'payments'])->name('cooperative.payments');
     Route::post('/cooperative/payments', [CooperativeController::class, 'storePayment'])->name('cooperative.payments.store');
+    Route::patch('/cooperative/payments/{payment}', [CooperativeController::class, 'updatePayment'])->name('cooperative.payments.update');
     Route::get('/cooperative/payments/{payment}/proof', [CooperativeController::class, 'paymentProof'])->name('cooperative.payments.proof');
     Route::get('/cooperative/approvals', [CooperativeController::class, 'approvals'])->name('cooperative.approvals');
     Route::post('/cooperative/loans/{loan}/approve', [CooperativeController::class, 'approveLoan'])->name('cooperative.loans.approve');

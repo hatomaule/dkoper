@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
         panel.querySelectorAll('[data-view-mode]').forEach((button) => {
             button.addEventListener('click', () => {
                 panel.querySelectorAll('[data-table-view]').forEach((view) => {
-                    view.classList.toggle('hidden', view.dataset.tableView !== button.dataset.viewMode);
+                    view.hidden = view.dataset.tableView !== button.dataset.viewMode;
+                    view.classList.toggle('hidden', view.hidden);
                 });
                 panel.querySelectorAll('[data-view-mode]').forEach((toggle) => {
                     toggle.classList.toggle('is-active', toggle === button);
@@ -46,6 +47,25 @@ document.addEventListener('DOMContentLoaded', () => {
             url.searchParams.set('per_page', event.target.value);
             url.searchParams.delete('page');
             window.location.assign(url);
+        });
+
+        const initialView = panel.querySelector('[data-view-mode].is-active')?.dataset.viewMode;
+        if (initialView) {
+            panel.querySelectorAll('[data-table-view]').forEach((view) => {
+                view.hidden = view.dataset.tableView !== initialView;
+                view.classList.toggle('hidden', view.hidden);
+            });
+        }
+    });
+
+    document.querySelectorAll('[data-open-dialog]').forEach((button) => {
+        button.addEventListener('click', () => {
+            document.querySelector(button.dataset.openDialog)?.showModal();
+        });
+    });
+    document.querySelectorAll('[data-close-dialog]').forEach((button) => {
+        button.addEventListener('click', () => {
+            button.closest('dialog')?.close();
         });
     });
 
@@ -96,6 +116,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const finalProofInput = document.querySelector('.dk-proof-final');
     const proofStatus = document.querySelector('[data-proof-status]');
     const proofPreview = document.querySelector('[data-proof-preview]');
+
+    document.querySelectorAll('[data-payment-edit]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const modal = document.querySelector('[data-payment-edit-dialog]');
+            const form = modal?.querySelector('form');
+            const amount = modal?.querySelector('[name="amount"]');
+            if (!modal || !form || !amount) return;
+            form.action = button.dataset.url;
+            amount.value = button.dataset.amount;
+            modal.showModal();
+        });
+    });
 
     methodSelect?.addEventListener('change', () => {
         proofPanel?.classList.toggle('hidden', methodSelect.value !== 'transfer');

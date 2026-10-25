@@ -1,27 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h2 class="font-semibold text-xl text-slate-900 leading-tight">Dashboard</h2>
-            <p class="mt-1 text-sm text-slate-500">Gambaran singkat kondisi koperasi.</p>
-        </div>
+        <h2 class="font-semibold text-xl text-slate-900 leading-tight">Dashboard</h2>
     </x-slot>
 
     <div class="min-h-[calc(100vh-65px)]">
-        <section class="dk-welcome-panel">
-            <div>
-                <p class="dk-eyebrow">DASHBOARD KOPERASI</p>
-                <h3>Halo, {{ auth()->user()->name }} 👋</h3>
-                <p>Ringkasan operasional dan posisi keuangan saat ini.</p>
-            </div>
-            <span class="dk-welcome-mark" aria-hidden="true"><img src="{{ asset('logo.svg') }}" alt=""></span>
-        </section>
-
         @php
             $rupiah = fn ($value) => 'Rp ' . number_format((int) $value, 0, ',', '.');
-            $maxMonthly = max(1, (int) $monthly_payments->max('amount'));
-            $monthlyPoints = $monthly_payments->values()->map(function ($item, $index) use ($maxMonthly) {
-                return ($index * 100) . ',' . (100 - (int) round(($item['amount'] / $maxMonthly) * 82));
-            })->implode(' ');
+            $maxWeeklyCash = max(1, (int) $weekly_cash_flow->flatMap(fn ($week) => [$week['debit'], $week['credit']])->max());
+            $weeklyDebitPoints = $weekly_cash_flow->values()->map(fn ($week, $index) => ($index * (100 / max(1, $weekly_cash_flow->count() - 1))) . ',' . (100 - (int) round(($week['debit'] / $maxWeeklyCash) * 82)))->implode(' ');
+            $weeklyCreditPoints = $weekly_cash_flow->values()->map(fn ($week, $index) => ($index * (100 / max(1, $weekly_cash_flow->count() - 1))) . ',' . (100 - (int) round(($week['credit'] / $maxWeeklyCash) * 82)))->implode(' ');
         @endphp
 
         <div class="dk-dashboard-section">
@@ -44,27 +31,20 @@
             </div>
         </div>
 
-        @if (auth()->user()->isManager())
-            <div class="dk-dashboard-section">
-                <div class="dk-section-title"><div><span>BONUS OWNER &amp; ADMIN</span><h3>Saldo dan proyeksi bonus</h3></div></div>
-                <div class="grid gap-3 md:grid-cols-2">
-                    @foreach ([
-                        [$owner_name, $owner_profit, $owner_future_bonus, 'dk-stat-tone-0'],
-                        [$admin_name, $admin_profit, $admin_future_bonus, 'dk-stat-tone-3'],
-                    ] as [$staffName, $available, $projected, $tone])
-                        <section class="dk-bonus-summary {{ $tone }}">
-                            <div><span>SALDO BONUS</span><h4>{{ $staffName }}</h4><strong>{{ $rupiah($available) }}</strong><small>Bonus yang sudah diperoleh dari cicilan lunas</small></div>
-                            <div><span>TOTAL BONUS PINJAMAN AKTIF</span><strong>{{ $rupiah((int) $available + (int) $projected) }}</strong><small>Saldo saat ini + bagian bonus dari cicilan yang belum lunas</small></div>
-                        </section>
-                    @endforeach
-                </div>
+        <div class="dk-dashboard-section">
+            <div class="dk-section-title"><div><span>BONUS</span><h3>Saldo dan proyeksi bonus</h3></div></div>
+            <div class="grid gap-3 md:grid-cols-2">
+                @foreach ([
+                    [$owner_name, $owner_profit, $owner_future_bonus, 'dk-bonus-owner'],
+                    [$admin_name, $admin_profit, $admin_future_bonus, 'dk-bonus-admin'],
+                ] as [$staffName, $available, $projected, $tone])
+                    <section class="dk-bonus-summary {{ $tone }}">
+                        <div class="dk-bonus-earned"><span>SALDO BONUS</span><h4>{{ $staffName }}</h4><strong>{{ $rupiah($available) }}</strong><small>Bonus dari cicilan lunas</small></div>
+                        <div class="dk-bonus-total"><span>TOTAL BONUS PINJAMAN AKTIF</span><strong>{{ $rupiah((int) $available + (int) $projected) }}</strong><small>Termasuk proyeksi cicilan aktif yang belum lunas</small></div>
+                    </section>
+                @endforeach
             </div>
-        @elseif (auth()->user()->isCashier())
-            <div class="dk-dashboard-section grid gap-3 sm:grid-cols-2">
-                <section class="dk-stat-card dk-stat-tone-0"><div class="dk-stat-heading"><span class="dk-stat-dot"></span><p>Saldo bonus saya</p></div><p class="dk-stat-value">{{ $rupiah($my_profit) }}</p></section>
-                <section class="dk-stat-card dk-stat-tone-3"><div class="dk-stat-heading"><span class="dk-stat-dot"></span><p>Bonus belum diperoleh</p></div><p class="dk-stat-value">{{ $rupiah($admin_future_bonus) }}</p></section>
-            </div>
-        @endif
+        </div>
 
         <div class="dk-dashboard-section">
             <div class="dk-section-title"><div><span>SETORAN DISETUJUI</span><h3>Laporan pemasukan</h3></div></div>
@@ -75,22 +55,42 @@
             </div>
         </div>
 
-        <section class="dk-chart-panel">
-            <div class="dk-section-title"><div><span>TREN PEMBAYARAN</span><h3>Setoran bulanan</h3></div><small>6 bulan terakhir</small></div>
-            <div class="dk-chart-wrap">
-                <div class="dk-chart-y"><span>{{ $rupiah($maxMonthly) }}</span><span>{{ $rupiah((int) ($maxMonthly / 2)) }}</span><span>Rp 0</span></div>
-                <svg class="dk-month-chart" viewBox="0 0 500 110" preserveAspectRatio="none" role="img" aria-label="Grafik pembayaran bulanan">
-                    <path d="M0 18H500M0 59H500M0 100H500" class="dk-chart-grid"></path>
-                    <polyline points="{{ $monthlyPoints }}" class="dk-chart-line"></polyline>
-                    @foreach ($monthly_payments->values() as $index => $item)
-                        @php($x = $index * 100)
-                        @php($y = 100 - (int) round(($item['amount'] / $maxMonthly) * 82))
-                        <circle cx="{{ $x }}" cy="{{ $y }}" r="3" class="dk-chart-point"><title>{{ $item['label'] }} · {{ $rupiah($item['amount']) }}</title></circle>
+        <div class="dk-dashboard-charts">
+            <section class="dk-chart-panel dk-weekly-chart">
+                <div class="dk-section-title"><div><span>ARUS KAS</span><h3>Debit dan kredit mingguan</h3></div><small>Bulan berjalan</small></div>
+                <div class="dk-chart-axis-labels"><span>{{ $rupiah($maxWeeklyCash) }}</span><span>{{ $rupiah((int) ($maxWeeklyCash / 2)) }}</span><span>Rp 0</span></div>
+                <svg class="dk-weekly-line-chart" viewBox="0 0 400 120" preserveAspectRatio="none" role="img" aria-label="Grafik debit dan kredit per minggu pada bulan berjalan">
+                    <path d="M0 18H400M0 60H400M0 102H400" class="dk-chart-grid"></path>
+                    <polyline points="{{ $weeklyDebitPoints }}" class="dk-chart-line dk-chart-debit"></polyline>
+                    <polyline points="{{ $weeklyCreditPoints }}" class="dk-chart-line dk-chart-credit"></polyline>
+                    @foreach ($weekly_cash_flow->values() as $index => $week)
+                        @php($x = $index * (400 / max(1, $weekly_cash_flow->count() - 1)))
+                        @php($debitY = 102 - (int) round(($week['debit'] / $maxWeeklyCash) * 84))
+                        @php($creditY = 102 - (int) round(($week['credit'] / $maxWeeklyCash) * 84))
+                        <circle cx="{{ $x }}" cy="{{ $debitY }}" r="3" class="dk-chart-point dk-chart-debit-point"><title>{{ $week['label'] }} · Debit {{ $rupiah($week['debit']) }}</title></circle>
+                        <circle cx="{{ $x }}" cy="{{ $creditY }}" r="3" class="dk-chart-point dk-chart-credit-point"><title>{{ $week['label'] }} · Kredit {{ $rupiah($week['credit']) }}</title></circle>
                     @endforeach
                 </svg>
-            </div>
-            <div class="dk-chart-labels">@foreach ($monthly_payments as $item)<span>{{ $item['label'] }}</span>@endforeach</div>
-            <div class="dk-chart-legend"><i></i><span>Jumlah setoran disetujui</span></div>
-        </section>
+                <div class="dk-chart-labels">@foreach ($weekly_cash_flow as $week)<span>{{ $week['label'] }}</span>@endforeach</div>
+                <div class="dk-chart-legend">
+                    <span><i class="dk-legend-debit"></i>Debit · Kas masuk</span>
+                    <span><i class="dk-legend-credit"></i>Kredit · Kas keluar</span>
+                </div>
+            </section>
+
+            <section class="dk-chart-panel dk-monthly-count-chart">
+                <div class="dk-section-title"><div><span>AKTIVITAS</span><h3>Jumlah transaksi per bulan</h3></div><small>12 bulan</small></div>
+                <div class="dk-monthly-bars" role="img" aria-label="Jumlah transaksi kas per bulan selama 12 bulan">
+                    @foreach ($monthly_transaction_counts as $month)
+                        <div class="dk-monthly-bar-row">
+                            <span>{{ $month['label'] }}</span>
+                            <div class="dk-monthly-bar-track"><i style="width: {{ (int) round(($month['count'] / $max_monthly_transactions) * 100) }}%"></i></div>
+                            <b>{{ $month['count'] }}</b>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="dk-chart-legend"><span><i class="dk-legend-transactions"></i>Transaksi kas tercatat</span></div>
+            </section>
+        </div>
     </div>
 </x-app-layout>

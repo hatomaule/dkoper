@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class CooperativeController extends Controller
@@ -70,6 +71,56 @@ class CooperativeController extends Controller
         return redirect()->route('cooperative.borrowers')->with('status', "Password {$borrower->borrower_code} direset; wajib diganti saat login.");
     }
 
+    public function updateBorrowerPassword(Request $request, Borrower $borrower): RedirectResponse
+    {
+        abort_unless($request->user()->isManager(), 403);
+        abort_unless($borrower->user, 404);
+        $validated = $request->validate([
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $borrower->user->forceFill([
+            'password' => Hash::make($validated['password']),
+            'must_change_password' => false,
+        ])->save();
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'borrower.password_changed',
+            'entity_type' => Borrower::class,
+            'entity_id' => $borrower->id,
+            'metadata' => ['borrower_code' => $borrower->borrower_code],
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('cooperative.borrowers')->with('status', "Password {$borrower->full_name} berhasil diperbarui.");
+    }
+
+    public function updateStaffPassword(Request $request, User $user): RedirectResponse
+    {
+        abort_unless($request->user()->isManager(), 403);
+        abort_unless(in_array($user->username, ['owner', 'admin'], true) && ($user->isManager() || $user->isCashier()), 404);
+        $validated = $request->validate([
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $user->forceFill([
+            'password' => Hash::make($validated['password']),
+            'must_change_password' => false,
+        ])->save();
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'staff.password_changed',
+            'entity_type' => User::class,
+            'entity_id' => $user->id,
+            'metadata' => ['username' => $user->username],
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->route('cooperative.profits')->with('status', "Password akun {$user->name} berhasil diperbarui.");
+    }
+
     public function loans(): View
     {
         $this->authorizeStaff();
@@ -98,9 +149,9 @@ class CooperativeController extends Controller
     public function payments(): View
     {
         $this->authorizeStaff();
-        $perPage = request()->query('per_page', '10');
+        $perPage = request()->query('per_page', '5');
         $perPage = $perPage === 'all' ? 'all' : (int) $perPage;
-        abort_unless($perPage === 'all' || in_array($perPage, [10, 25, 50], true), 422);
+        abort_unless($perPage === 'all' || in_array($perPage, [5, 10, 25, 50], true), 422);
 
         $payments = Payment::with(['loan.borrower', 'installment'])->latest()->when(
             $perPage !== 'all',
@@ -198,6 +249,32 @@ class CooperativeController extends Controller
         ]);
     }
 
+    public function updatePayment(Request $request, Payment $payment, PaymentService $service): RedirectResponse
+    {
+        abort_unless($request->user()->isManager(), 403);
+        $validated = $request->validate(['amount' => ['required', 'integer', 'min:1']]);
+
+        if ($payment->status === 'pending') {
+            $oldAmount = (int) $payment->amount;
+            $payment->update([
+                'amount' => (int) $validated['amount'],
+                'nominal_source' => 'manual',
+            ]);
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => 'payment.corrected',
+                'entity_type' => Payment::class,
+                'entity_id' => $payment->id,
+                'metadata' => ['old_amount' => $oldAmount, 'new_amount' => (int) $validated['amount']],
+                'ip_address' => $request->ip(),
+            ]);
+        } else {
+            $service->correctApprovedPayment($request->user(), $payment->id, (int) $validated['amount']);
+        }
+
+        return redirect()->route('cooperative.payments')->with('status', 'Nominal setoran berhasil dikoreksi.');
+    }
+
     public function approvals(): View
     {
         abort_unless(auth()->user()?->isManager(), 403);
@@ -287,6 +364,7 @@ class CooperativeController extends Controller
 
         return view('cooperative.profits', [
             'balances' => ProfitBalance::with('user')->whereHas('user', fn ($query) => $query->whereIn('role', ['manager', 'kasir']))->orderBy('user_id')->get(),
+            'accounts' => User::query()->whereIn('username', ['owner', 'admin'])->orderBy('username')->get(),
             'transactions' => $this->paginated(ProfitTransaction::with(['user', 'creator'])->latest(), $request),
         ]);
     }
@@ -321,8 +399,8 @@ class CooperativeController extends Controller
 
     private function perPage(Request $request): int|string
     {
-        $size = $request->query('per_page', '10');
-        abort_unless(in_array($size, ['10', '25', '50', 'all'], true), 422);
+        $size = $request->query('per_page', '5');
+        abort_unless(in_array($size, ['5', '10', '25', '50', 'all'], true), 422);
 
         return $size === 'all' ? 'all' : (int) $size;
     }

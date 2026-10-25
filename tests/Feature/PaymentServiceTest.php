@@ -93,4 +93,70 @@ class PaymentServiceTest extends TestCase
         $this->assertSame(120_000, (int) ProfitBalance::where('user_id', $manager->id)->value('earned_amount'));
         $this->assertSame(80_000, (int) ProfitBalance::where('user_id', $cashier->id)->value('earned_amount'));
     }
+
+    public function test_owner_correction_rebuilds_installments_profit_advance_and_cash_ledger(): void
+    {
+        $manager = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
+        $admin = User::factory()->create(['username' => 'admin', 'role' => 'kasir']);
+        $borrower = Borrower::create([
+            'full_name' => 'Nasabah Koreksi',
+            'borrower_code' => 'DK_104',
+            'phone' => '081299998882',
+            'status' => 'active',
+        ]);
+        $loan = app(LoanService::class)->createApprovedLoan($manager, $borrower->id, 1_000_000);
+        $payment = Payment::create([
+            'loan_id' => $loan->id,
+            'recorded_by' => $manager->id,
+            'amount' => 240_000,
+            'nominal_source' => 'manual',
+            'status' => 'pending',
+        ]);
+        app(PaymentService::class)->approvePayment($manager, $payment->id);
+        $cashBeforeCorrection = (int) \Illuminate\Support\Facades\DB::table('cash_accounts')->where('id', 1)->value('balance');
+
+        app(PaymentService::class)->correctApprovedPayment($manager, $payment->id, 150_000);
+
+        $first = $loan->installments()->where('sequence', 1)->firstOrFail()->fresh();
+        $second = $loan->installments()->where('sequence', 2)->firstOrFail()->fresh();
+        $this->assertSame(150_000, (int) $payment->fresh()->amount);
+        $this->assertSame('paid', $first->status);
+        $this->assertSame(50_000, (int) $second->paid_amount);
+        $this->assertSame(50_000, (int) $second->outstanding_amount);
+        $this->assertSame((int) $first->alan_profit_amount, (int) ProfitBalance::where('user_id', $manager->id)->value('earned_amount'));
+        $this->assertSame((int) $first->chalo_profit_amount, (int) ProfitBalance::where('user_id', $admin->id)->value('earned_amount'));
+        $this->assertSame($cashBeforeCorrection - 90_000, (int) \Illuminate\Support\Facades\DB::table('cash_accounts')->where('id', 1)->value('balance'));
+        $this->assertDatabaseHas('cash_transactions', ['loan_id' => $loan->id, 'type' => 'payment_correction', 'direction' => 'out', 'amount' => 90_000]);
+        $this->assertDatabaseHas('activity_logs', ['action' => 'payment.corrected', 'entity_id' => $payment->id]);
+    }
+
+    public function test_correcting_overpayment_rebuilds_borrower_advance_balance(): void
+    {
+        $manager = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
+        $borrower = Borrower::create([
+            'full_name' => 'Nasabah Koreksi Lebih Bayar',
+            'borrower_code' => 'DK_105',
+            'phone' => '081299998881',
+            'status' => 'active',
+        ]);
+        $loan = app(LoanService::class)->createApprovedLoan($manager, $borrower->id, 1_000_000);
+        $payment = Payment::create([
+            'loan_id' => $loan->id,
+            'recorded_by' => $manager->id,
+            'amount' => 1_215_000,
+            'nominal_source' => 'manual',
+            'status' => 'pending',
+        ]);
+        app(PaymentService::class)->approvePayment($manager, $payment->id);
+
+        app(PaymentService::class)->correctApprovedPayment($manager, $payment->id, 1_205_000);
+
+        $this->assertDatabaseHas('borrower_advance_transactions', [
+            'borrower_id' => $borrower->id,
+            'loan_id' => $loan->id,
+            'payment_id' => $payment->id,
+            'amount' => 5_000,
+            'balance_after' => 5_000,
+        ]);
+    }
 }

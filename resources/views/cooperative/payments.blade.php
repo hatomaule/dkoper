@@ -5,14 +5,14 @@
             <form method="POST" action="{{ route('cooperative.payments.store') }}" enctype="multipart/form-data" class="dk-form-panel h-full" data-payment-form>
                 @csrf
                 <h3 class="font-bold text-slate-900">Catat Setoran</h3>
-                <p class="mt-1 text-xs text-slate-500">Nominal dan cicilan sistem diverifikasi kembali saat disimpan.</p>
+                <p class="mt-1 text-xs text-slate-500">{{ auth()->user()->isManager() ? 'Setoran Owner langsung disetujui.' : 'Setoran Admin menunggu persetujuan Owner.' }}</p>
                 @if ($errors->any())<div class="dk-form-alert">{{ $errors->first() }}</div>@endif
                 @if (session('status'))<div class="dk-form-success">{{ session('status') }}</div>@endif
                 <label class="mt-5 block text-xs font-bold uppercase text-slate-600" for="payment-loan">Pinjaman</label>
                 <select id="payment-loan" name="loan_id" required class="mt-2 w-full" data-loan-select>
                     @forelse ($loans as $loan)
                         <option value="{{ $loan->id }}" data-installment="{{ $loan->installments->first()?->id ?? '' }}" data-sequence="{{ $loan->installments->first()?->sequence ?? '' }}" data-amount="{{ $loan->installments->first()?->outstanding_amount ?? 0 }}">
-                            {{ $loan->loan_code }} — {{ $loan->borrower->full_name }}
+                            {{ $loan->borrower->full_name }}
                         </option>
                     @empty
                         <option value="">Tidak ada pinjaman aktif dengan setoran tersisa</option>
@@ -46,7 +46,7 @@
                     <p class="mt-2 text-xs text-slate-500" data-proof-status>Gambar dikompres otomatis ke WebP sebelum diunggah.</p>
                     <img class="dk-proof-preview mt-3 hidden" alt="Pratinjau bukti transfer" data-proof-preview>
                 </div>
-                <button class="dk-button-primary mt-5 w-full px-4 py-3 font-bold">{{ auth()->user()->isManager() ? 'Catat & Setujui' : 'Kirim ke Approval' }}</button>
+                <button class="dk-button-primary mt-5 w-fit px-4 py-2 font-bold">Catat</button>
             </form>
 
             <section class="dk-data-panel min-w-0" data-table-tools>
@@ -54,6 +54,7 @@
                     <label>Filter <input type="search" placeholder="Cari nama, pinjaman..." data-table-search></label>
                     <label>Tampilkan
                         <select data-page-size>
+                            <option value="5" @selected($perPage === 5)>5</option>
                             <option value="10" @selected($perPage === 10)>10</option>
                             <option value="25" @selected($perPage === 25)>25</option>
                             <option value="50" @selected($perPage === 50)>50</option>
@@ -65,7 +66,7 @@
                         <button type="button" data-view-mode="cards" aria-label="Tampilan kartu" title="Kartu">▦</button>
                     </div>
                 </div>
-                <div class="overflow-x-auto" data-table-view="table">
+                <div class="overflow-x-auto dk-table-view" data-table-view="table">
                     <table class="w-full text-left text-sm">
                         <thead><tr><th>Waktu</th><th>Nasabah</th><th>Pinjaman</th><th>Nominal</th><th>Jenis</th><th>Status</th><th>Bukti / Kirim</th></tr></thead>
                         <tbody>
@@ -79,7 +80,7 @@
                                 <tr data-table-row>
                                     <td>{{ $payment->created_at->format('d/m/Y H:i') }}</td>
                                     <td>{{ $payment->loan->borrower->full_name }}</td>
-                                    <td>{{ $payment->loan->loan_code }}{{ $payment->installment ? ' · ke-'.$payment->installment->sequence : '' }}</td>
+                                    <td>{{ $payment->installment ? 'Cicilan ke-'.$payment->installment->sequence : 'Pembayaran' }}</td>
                                     <td class="font-bold">Rp {{ number_format((int) $payment->amount, 0, ',', '.') }}</td>
                                     <td>{{ $payment->payment_method === 'transfer' ? 'Transfer' : 'Tunai' }}</td>
                                     <td><span class="dk-status" data-status="{{ $payment->status }}">{{ match ($payment->status) { 'pending' => 'Menunggu', 'approved' => 'Disetujui', 'rejected' => 'Ditolak', default => ucfirst($payment->status) } }}</span></td>
@@ -92,6 +93,9 @@
                                         @elseif ($payment->status === 'approved')
                                             <span class="text-xs text-slate-400" title="Nomor WA belum tersedia">WA tidak tersedia</span>
                                         @endif
+                                        @if (auth()->user()->isManager() && $payment->status !== 'rejected')
+                                            <button type="button" class="dk-inline-action" data-payment-edit data-url="{{ route('cooperative.payments.update', $payment) }}" data-amount="{{ $payment->amount }}">Koreksi</button>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
@@ -100,26 +104,41 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="dk-payment-cards hidden" data-table-view="cards">
+                <div class="dk-payment-cards dk-table-view" data-table-view="cards" hidden>
                     @foreach ($payments as $payment)
                         @php
                             $cardPhone = preg_replace('/\D+/', '', (string) $payment->loan->borrower->phone);
                             $cardPhone = str_starts_with($cardPhone, '0') ? '62'.substr($cardPhone, 1) : (str_starts_with($cardPhone, '62') ? $cardPhone : '62'.$cardPhone);
                             if (strlen($cardPhone) < 10 || strlen($cardPhone) > 15) $cardPhone = '';
-                            $cardReceipt = "BUKTI SETORAN DKOPER\n------------------------------\nNasabah : {$payment->loan->borrower->full_name}\nPinjaman: {$payment->loan->loan_code}\nNominal : Rp ".number_format((int) $payment->amount, 0, ',', '.')."\nStatus  : ".ucfirst($payment->status)."\n------------------------------\nTerima kasih.";
+                            $cardReceipt = "BUKTI SETORAN DKOPER\n------------------------------\nNasabah : {$payment->loan->borrower->full_name}\nNominal : Rp ".number_format((int) $payment->amount, 0, ',', '.')."\nStatus  : ".($payment->status === 'approved' ? 'Disetujui' : ($payment->status === 'pending' ? 'Menunggu' : 'Ditolak'))."\n------------------------------\nTerima kasih.";
                         @endphp
                         <article class="dk-payment-card" data-table-row>
                             <div><strong>{{ $payment->loan->borrower->full_name }}</strong><span class="dk-status" data-status="{{ $payment->status }}">{{ ucfirst($payment->status) }}</span></div>
-                            <p>{{ $payment->loan->loan_code }}{{ $payment->installment ? ' · setoran ke-'.$payment->installment->sequence : '' }}</p>
+                            <p>{{ $payment->installment ? 'Cicilan ke-'.$payment->installment->sequence : 'Pembayaran' }}</p>
                             <b>Rp {{ number_format((int) $payment->amount, 0, ',', '.') }}</b>
                             <small>{{ $payment->created_at->format('d/m/Y H:i') }} · {{ $payment->payment_method === 'transfer' ? 'Transfer' : 'Tunai' }}</small>
                             @if ($payment->proof_path)<a class="dk-inline-action" href="{{ route('cooperative.payments.proof', $payment) }}" target="_blank" rel="noopener">Lihat bukti transfer</a>@endif
                             @if ($payment->status === 'approved' && $cardPhone !== '')<a class="dk-inline-action" href="https://wa.me/{{ $cardPhone }}?text={{ rawurlencode($cardReceipt) }}" target="_blank" rel="noopener">Kirim bukti via WA</a>@endif
+                            @if (auth()->user()->isManager() && $payment->status !== 'rejected')<button type="button" class="dk-inline-action w-fit" data-payment-edit data-url="{{ route('cooperative.payments.update', $payment) }}" data-amount="{{ $payment->amount }}">Koreksi setoran</button>@endif
                         </article>
                     @endforeach
                 </div>
                 @if ($payments instanceof \Illuminate\Contracts\Pagination\Paginator)
                     <div class="dk-table-footer">{{ $payments->links() }}</div>
+                @endif
+                @if (auth()->user()->isManager())
+                    <dialog class="dk-password-native-dialog" data-payment-edit-dialog>
+                        <form method="POST" class="dk-password-form">
+                            @csrf
+                            @method('PATCH')
+                            <button type="button" class="dk-modal-close" aria-label="Tutup" data-close-dialog>×</button>
+                            <p class="dk-eyebrow">KOREKSI SETORAN</p>
+                            <h3>Perbarui nominal setoran</h3>
+                            <label>Nominal yang benar (Rp)<input type="number" name="amount" min="1" required inputmode="numeric"></label>
+                            <p class="dk-modal-note">Saldo kas, cicilan, dan bonus akan dihitung ulang sesuai nominal baru.</p>
+                            <button type="submit" class="dk-button-primary">Simpan koreksi</button>
+                        </form>
+                    </dialog>
                 @endif
             </section>
         </div>

@@ -28,7 +28,7 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 - A dedicated forced-password-change screen is in `resources/views/profile/edit.blade.php`; its visible “Simpan dan lanjutkan” button submits the first password change.
 - The modern UI is an independent Blade design, not a strict conversion of `index.baseline.html`.
 - A DKoper financial logo and SVG favicon are in `public/logo.svg` and `public/favicon.svg`. Dark/light theme selection persists in local storage and is available on guest and authenticated layouts.
-- Payment entry supports server-calculated oldest-outstanding-installment nominal or manual amount, cash/transfer method, private transfer-proof storage, browser-side WebP compression/camera capture, proof viewing for Owner/Admin, and WhatsApp receipt links when a borrower phone number is available. Payment and loan tables support filtering, 10/25/50/all pagination, and table/card views.
+- Payment entry supports server-calculated oldest-outstanding-installment nominal or manual amount, cash/transfer method, private transfer-proof storage, browser-side WebP compression/camera capture, proof viewing for Owner/Admin, and WhatsApp receipt links when a borrower phone number is available. Payment and loan tables support filtering, 5/10/25/50/all pagination, and table/card views.
 - The local migration `2026_10_26_000000_enhance_payments_and_staff_identity` has been applied. Existing payments were assigned `cash` as their method; no payment, borrower, or loan records were reset. Transfer proofs are stored on the private `local` disk. Production must run the migration before deploying this code.
 - Dashboard date boundaries use the business timezone `Asia/Singapore` (UTC+8) and convert to UTC for database queries; do not compare local wall-clock boundaries directly to UTC timestamps.
 - Preview is currently running with `php artisan serve --host=0.0.0.0 --port=8000`; `http://localhost:8000/login` responds with HTTP 200. Login was visually checked in the browser. The user has another local browser window that reached `/dashboard` after login.
@@ -173,7 +173,18 @@ Latest verification in this session:
 
 ## Current Stop Point
 
-The core service and approval flows, borrower data import, cumulative profit allocation, identity/payment migration, and requested visual redesign are implemented. The latest full test suite passes (36 tests, 144 assertions), the frontend production build and Blade compilation pass, and the local database import reconciles. The preview server is running at `http://localhost:8000`; the shared browser tab is at `/login`. Alan is the Owner; Chalo is the employee/Admin operator. Usernames are `owner` and `admin`; no password values are saved here.
+The core service and approval flows, borrower data import, cumulative profit allocation, identity/payment migration, and requested visual redesign are implemented. The latest full test suite passes (41 tests, 168 assertions), the frontend production build and Blade compilation pass, and the local database import reconciles. The preview server is running at `http://localhost:8000`; the shared browser tab is at `/login`. Alan is the Owner; Chalo is the employee/Admin operator. Usernames are `owner` and `admin`; no password values are saved here.
+
+### Latest follow-up implementation
+
+- Removed the repeated Dashboard welcome/banner and shows the complete summary for both Owner and Admin. Added weekly incoming/outgoing cash charts, twelve-month transaction-count bars, and daily/weekly/monthly approved-payment totals.
+- Distinguished Owner and Admin bonus summaries, including earned balance and total projected share from active loans. Added subtle individual KPI colors and matching dark-mode styling.
+- Cooperative tables now default to 5 rows and provide 5/10/25/50/all selection plus separate table/card modes. Loan listings omit internal loan codes and show borrower names; payment capture actions are labelled “Catat”.
+- Owner can change Owner/Admin passwords and borrower passwords; borrower password reset returns to `123456` and requires a change at next login. The Admin cannot change staff passwords.
+- Owner-only correction of approved payment amounts reconstructs installment allocation, earned bonus entries, borrower advance balance, loan status, and cash-ledger difference in a database transaction. Corrections are also recorded in activity history.
+- Do not re-import, clear, or reset borrower/payment data. No schema migration is required by this follow-up.
+- Validation after these changes: `php artisan test` passed (41 tests, 168 assertions); `npm run build` passed; `php artisan view:cache` passed; `git diff --check` passed. Focused payment-correction tests cover installment allocation, earned bonus, borrower advance, cash ledger, and audit log.
+- The changes described above are still in the worktree until committed and pushed. Review `git status` and follow the user's established commit/push procedure.
 
 Remaining follow-up:
 
