@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- POIN 7 & 13: LOGO FAVICON KOIN EMAS 3D PADA TAB BROWSER RINGKAS -->
+    <title>dkoper</title>
+    <link rel="icon" href="https://icons8.com" type="image/png">
+    <link rel="stylesheet" href="https://googleapis.com">
+    <style>
+        :root {
+            --bg-main: #f1f5f9;
+            --sidebar-color: #0f172a;
+            --text-light: #f8fafc;
+            --text-dark: #0f172a;
+            --primary: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+
+            /* SKEMA WARNA KARTU PASTEL TEGAS SOLID (POIN 1 REVISI) */
+            --pastel-blue: #bae6fd;     /* Solid untuk Pinjaman */
+            --pastel-purple: #e9d5ff;   /* Solid untuk Transaksi */
+            --pastel-green: #bbf7d0;    /* Solid untuk Setoran */
+            --pastel-red: #fecaca;      /* Solid untuk Piutang */
+            --pastel-toska: #99f6e4;    /* Khusus Bonus Alan */
+            --pastel-orange: #fed7aa;   /* Khusus Penarikan Alan */
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-main); margin: 0; padding: 0;
+            color: var(--text-dark); display: flex; height: 100vh; overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* TAMPILAN HALAMAN GERBANG LOGIN DEPAN */
+        .login-wrapper {
+            display: flex; width: 100vw; height: 100vh;
+            justify-content: center; align-items: center;
+            background: #e2e8f0; position: absolute; z-index: 9999;
+        }
+        .login-box {
+            background: white; width: 100%; max-width: 400px;
+            padding: 45px 35px; border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.08);
+            border-top: 6px solid var(--primary); text-align: center;
+        }
+        /* SIDEBAR KIRI MODERN MULTI-ROLE COMPONENT */
+        .sidebar {
+            width: 280px; background-color: var(--sidebar-color); color: var(--text-light);
+            display: flex; flex-direction: column; padding: 30px 20px; box-sizing: border-box;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100;
+        }
+        .sidebar-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+        .sidebar-brand span { font-weight: 800; font-size: 1.3rem; letter-spacing: -0.5px; }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+
+        .menu-item {
+            display: flex; align-items: center; gap: 12px; padding: 14px 18px; color: #94a3b8;
+            border-radius: 12px; font-weight: 600; font-size: 0.95rem; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .menu-item:hover { background-color: rgba(255, 255, 255, 0.05); color: var(--text-light); }
+        .menu-item.active { background-color: rgba(255, 255, 255, 0.1); color: var(--text-light); font-weight: 800; }
+
+        /* KONTEN UTAMA & HEADER UTAMA */
+        .main-content { flex: 1; padding: 40px; box-sizing: border-box; overflow-y: auto; display: flex; flex-direction: column; gap: 35px; }
+        .content-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 25px; position: relative; }
+        .content-header h2 { margin: 0; font-weight: 800; font-size: 1.8rem; letter-spacing: -0.5px; }
+
+        /* LAYOUT GRID DASHBOARD UTAMA (POIN 1 REVISI) */
+        .dashboard-grid, .gaji-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+        .kpi-card, .gaji-card {
+            padding: 28px 24px; border-radius: 24px; border: 1px solid rgba(15, 23, 42, 0.08);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+        }
+        /* SEMUA KARTU KPI & REKAP BAWAH DISYARATKAN MELAYANG SERAGAM (POIN 1 REVISI) */
+        .kpi-card:hover, .gaji-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05); }
+
+        /* PEMETAAN WARNA SOLID KARTU PASTEL TEGAS */
+        .kpi-card.pinjaman { background-color: var(--pastel-blue); }
+        .kpi-card.transaksi { background-color: var(--pastel-purple); }
+        .kpi-card.setoran { background-color: var(--pastel-green); }
+        .kpi-card.piutang { background-color: var(--pastel-red); }
+        .gaji-card.alan-gaji { background-color: var(--pastel-toska); border-top: 6px solid #0d9488; }
+        .gaji-card.alan-tarik { background-color: var(--pastel-orange); border-top: 6px solid #ea580c; }
+        .gaji-card.chalo-gaji { background-color: #e0f2fe; border-top: 6px solid #0284c7; }
+        .gaji-card.chalo-tarik { background-color: #faf5ff; border-top: 6px solid #9333ea; }
+
+        .kpi-title { font-size: 0.8rem; text-transform: uppercase; color: #475569; font-weight: 800; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 1.8rem; font-weight: 800; color: var(--text-dark); margin-top: 10px; }
+
+        .card { background: white; border-radius: 24px; padding: 30px; border: 1px solid #cbd5e1; }
+        .form-group { margin-bottom: 22px; text-align: left; }
+        label { display: block; margin-bottom: 10px; font-weight: 800; font-size: 0.78rem; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* DROPDOWN KACA HALUS MODERN GLASSMORPHISM (POIN 3 REVISI DROPDOWN) */
+        input, select {
+            width: 100%; padding: 16px 18px; border: 1px solid #cbd5e1; border-radius: 16px;
+            box-sizing: border-box; background: rgba(248, 250, 252, 0.95); font-size: 0.95rem; font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        input:focus, select:focus {
+            border-color: var(--primary); background: white; outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+        select { cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); }
+        button {
+            width: 100%; padding: 16px; background: var(--primary); color: white;
+            border: none; border-radius: 14px; font-weight: 800; font-size: 1rem;
+            cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+        }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* DESAIN TABEL FINTECH PROFESIONAL ZEBRA PASTEL (POIN 2 REVISI TABEL) */
+        .table-responsive { overflow-x: auto; border-radius: 18px; border: 1px solid #cbd5e1; background: white; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem; }
+        th, td { padding: 16px 20px; border-bottom: 1px solid #cbd5e1; }
+        th { background-color: #f8fafc; color: #475569; font-weight: 800; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.5px; }
+
+        /* TABEL ZEBRA PASTEL DINAMIS SELANG-SELING (POIN 2 REVISI TABEL) */
+        tr:nth-child(odd) td { background-color: #f8fafc; }
+        tr:nth-child(even) td { background-color: #f1f5f9; }
+
+        /* WARNA LEBIH TEGAS KHUSUS 3 DATA KOLOM UJUNG KANAN (POIN 3 & 6 REVISI) */
+        td:nth-last-child(3) { background-color: #f3e8ff !important; font-weight: 800; color: #6b21a8; } /* Total Tagihan */
+        td:nth-last-child(2) { background-color: #dcfce7 !important; font-weight: 800; color: #166534; } /* Total Setoran */
+        td:nth-last-child(1) { background-color: #fee2e2 !important; font-weight: 800; color: #991b1b; } /* Sisa Piutang */
+
+        /* DINDING PEMBATAS VISUAL TEBAL ANTARA CICILAN 12 & TOTAL TAGIHAN (POIN 3 REVISI) */
+        td:nth-last-child(4) { border-right: 3px solid #cbd5e1; }
+        th:nth-last-child(4) { border-right: 3px solid #cbd5e1; }
+        /* EFEK GLOW PASTEL KUNING LEMBUT DI DALAM KOTAK SEL SAAT KURSOR MENEMPEL (POIN 1 & 2 REVISI) */
+        tr:hover td { background-color: rgba(254, 240, 138, 0.4) !important; transition: background-color 0.15s ease; }
+        td:hover { background-color: rgba(254, 240, 138, 0.9) !important; cursor: cell; box-shadow: inset 0 0 0 2px var(--warning); }
+
+        /* GAYA DEKORASI LINE TIMELINE AKTIVITAS */
+        .timeline-stream { display: flex; flex-direction: column; gap: 15px; }
+        .timeline-card { padding: 20px; border-radius: 16px; background: white; border: 1px solid #cbd5e1; border-left: 6px solid #cbd5e1; display: flex; flex-direction: column; gap: 8px; }
+        .timeline-card.log-pinjaman { border-left-color: var(--primary); }
+        .timeline-card.log-cicilan { border-left-color: var(--success); }
+        .timeline-card.log-panjar { border-left-color: var(--danger); }
+        .log-meta { display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 800; color: #64748b; }
+        .log-text { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
+
+        /* MODAL OVERLAY POPUP KACA BLUR BERLAPIS (POIN 2 & 9 REVISI POPUP) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 10000;
+            opacity: 0; pointer-events: none; transition: all 0.2s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .popup-box { background: white; padding: 35px; border-radius: 24px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08); border: none; }
+        .popup-buttons { display: flex; gap: 12px; margin-top: 25px; }
+        .btn-modal { padding: 14px; border-radius: 12px; font-weight: 800; border: none; cursor: pointer; flex: 1; font-size: 0.95rem; transition: all 0.2s ease; }
+        .btn-modal.confirm { background: var(--danger); color: white; }
+        .btn-modal.confirm:hover { opacity: 0.9; }
+        .btn-modal.cancel { background: #e2e8f0; color: #475569; }
+        .btn-modal.cancel:hover { background: #cbd5e1; }
+        /* MENU LOGOUT POJOK KANAN ATAS WITH DROPDOWN KACA RAMPING (POIN 1, 8 & 10 REVISI) */
+        .user-profile-wrapper { position: relative; display: flex; align-items: center; }
+        .btn-profile-trigger { background: var(--sidebar-color); color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
+        .btn-profile-trigger:hover { background: #1e293b; }
+
+        .profile-dropdown-card {
+            position: absolute; top: 110%; right: 0; width: 180px;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px);
+            border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 8px; box-sizing: border-box; display: none; z-index: 1005;
+            border: 1px solid rgba(15, 23, 42, 0.05); transform-origin: top right;
+        }
+        .profile-dropdown-card.active { display: block; animation: slideDown 0.2s ease; }
+        .dropdown-item-btn { width: 100%; text-align: left; padding: 12px 14px; border: none; background: transparent; font-weight: 600; font-size: 0.9rem; cursor: pointer; border-radius: 10px; display: flex; align-items: center; gap: 8px; color: var(--text-dark); transition: all 0.15s ease; }
+        .dropdown-item-btn:hover { background: rgba(15, 23, 42, 0.05); }
+        .dropdown-item-btn.danger-action { color: var(--danger); }
+        .dropdown-item-btn.danger-action:hover { background: var(--pastel-red); }
+
+        .menu-toggle-hp { display: none; background: var(--sidebar-color); color: white; padding: 12px 18px; border-radius: 10px; font-weight: 800; cursor: pointer; border: none; }
+        @keyframes slideDown { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* 📱 RESPONSIVITAS MOBILE TEROPTIMALISASI UTK LAYAR HP */
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow: auto; height: auto; }
+            .sidebar { width: 280px; position: fixed; top: 0; left: -100%; height: 100vh; box-shadow: 10px 0 30px rgba(0,0,0,0.15); }
+            .sidebar.active { left: 0; }
+            .menu-toggle-hp { display: inline-block; position: fixed; top: 15px; left: 15px; z-index: 1001; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+            .user-profile-wrapper { position: fixed; top: 15px; right: 15px; z-index: 1001; }
+            .main-content { padding: 90px 20px 40px 20px; width: 100%; box-sizing: border-box; }
+            .dashboard-grid, .gaji-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .kpi-card, .gaji-card { padding: 20px 16px; border-radius: 18px; }
+            .kpi-value { font-size: 1.3rem; }
+
+            .table-responsive table, .table-responsive thead, .table-responsive tbody, .table-responsive th, .table-responsive td, .table-responsive tr { display: block; }
+            .table-responsive thead { display: none; }
+            .table-responsive tr { border-bottom: 2px solid #cbd5e1; padding: 15px 10px; background: white; margin-bottom: 12px; border-radius: 16px; }
+            .table-responsive td { text-align: right; padding-left: 50%; position: relative; border-bottom: none; padding-top: 10px; padding-bottom: 10px; }
+            .table-responsive td::before { content: attr(data-label); position: absolute; left: 15px; width: 45%; text-align: left; font-weight: 800; color: #475569; font-size: 0.8rem; text-transform: uppercase; }
+            td:nth-last-child(4) { border-right: none; }
+        }
+    </style>
+</head>
+<body>
+    <button id="hp-menu-trigger" class="menu-toggle-hp" onclick="toggleSidebarMobile()">☰ MENU</button>
+
+    <!-- 1. POPUP DIALOG BERLAPIS LOGOUT DUA TOMBOL (POIN 1 REVISI - TOMBOL BATAL HAPUS) -->
+    <div id="popup-logout-overlay" class="modal-overlay">
+        <div class="popup-box">
+            <h3 style="font-weight: 800; margin: 0 0 15px 0; color: var(--text-dark);">Konfirmasi Keluar</h3>
+            <p style="font-weight: 600; color: #64748b; margin: 0; font-size: 0.95rem;">Apakah lo yakin ingin keluar dari sistem koperasi?</p>
+            <div class="popup-buttons">
+                <button class="btn-modal confirm" onclick="konfirmasiLogoutSistem()">Logout</button>
+                <button class="btn-modal cancel" onclick="tutupPopupLogout()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. POPUP KONFIRMASI 2 TOMBOL HAPUS NASABA LUNAS KHUSUS ALAN (POIN 5 REVISI) -->
+    <div id="popup-hapus-overlay" class="modal-overlay">
+        <div class="popup-box">
+            <h3 style="font-weight: 800; margin: 0 0 15px 0; color: var(--text-dark);">Hapus Data Nasabah</h3>
+            <p style="font-weight: 600; color: #64748b; margin: 0; font-size: 0.95rem;">Apakah Anda yakin ingin menghapus data nasabah <b id="txt-target-nama-hapus" style="color:var(--danger);">[Nama]</b> beserta akun aksesnya secara permanen dari sistem?</p>
+            <div class="popup-buttons">
+                <button class="btn-modal confirm" onclick="eksekusiHapusNasabahLunasReal()">YA (Hapus)</button>
+                <button class="btn-modal cancel" onclick="tutupPopupHapusNasabah()">BATAL</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. POPUP INTERAKTIF INPUT RESET PASSWORD BARU (POIN 8) -->
+    <div id="popup-password-overlay" class="modal-overlay">
+        <div class="popup-box">
+            <h3 style="font-weight: 800; margin: 0 0 15px 0; color: var(--text-dark);">Ubah Password Akun</h3>
+            <p style="font-weight: 600; color: #64748b; margin: 0 0 20px 0; font-size: 0.9rem;">Masukkan password baru untuk akun: <b id="target-user-pwd" style="color:var(--primary);">user</b></p>
+            <div class="form-group">
+                <label>Password Baru</label>
+                <input type="password" id="input-pwd-baru-popup" placeholder="Ketik password baru...">
+            </div>
+            <div class="popup-buttons">
+                <button class="btn-modal confirm" style="background:var(--success);" onclick="simpanPasswordBaruPopup()">Simpan</button>
+                <button class="btn-modal cancel" onclick="tutupPopupPassword()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. POPUP: DIALOG ANTRIAN APPROVAL MANAGER ALAN (POIN 2 & 7 REVISI) -->
+    <div id="popup-approval-overlay" class="modal-overlay">
+        <div class="popup-box">
+            <h3 style="font-weight: 800; margin: 0 0 15px 0; color: var(--text-dark);">Persetujuan Kas</h3>
+            <p style="font-weight: 600; color: #64748b; margin: 0 0 20px 0; font-size: 0.95rem;" id="txt-detail-approve-popup">Memproses persetujuan data transaksi...</p>
+            <div class="popup-buttons">
+                <button class="btn-modal confirm" style="background:var(--success);" onclick="eksekusiAproveKasCloudReal()">APPROVE</button>
+                <button class="btn-modal cancel" onclick="tutupPopupApprovalAlan()">BATAL</button>
+            </div>
+        </div>
+    </div>
+    <!-- NAVIGATION SIDEBAR KIRI KOPERASI V6 -->
+    <div id="sidebar-app" class="sidebar" style="display: none;">
+        <div class="sidebar-brand">
+            <div style="background: rgba(37, 99, 235, 0.15); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <svg xmlns="http://w3.org" viewBox="0 0 24 24" fill="#2563eb" style="width: 24px; height: 24px;">
+                    <path d="M12 2L2 7v2h20V7L12 2zm1 9h3v8h-3v-8zm-5 0h3v8H8v-8zM4 11h2v8H4v-8zm17 9H3v2h18v-2z"/>
+                </svg>
+            </div>
+            <span>KOPERASI V6</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li id="btn-menu-dasbor" class="menu-item active" onclick="pindahMenu('dashboard')">📊 Dashboard Utama</li>
+            <li id="btn-menu-tabel" class="menu-item" onclick="pindahMenu('tabel-setoran')">📋 Tabel Setoran</li>
+            <li id="btn-menu-approve-alan" class="menu-item" onclick="pindahMenu('menu-approval-baru')" style="display: none;">🔔 Persetujuan Kas</li>
+            <li id="btn-menu-pinjam" class="menu-item" onclick="pindahMenu('ajukan-pinjaman')">📑 Ajukan Pinjaman</li>
+            <li id="btn-menu-cicilan" class="menu-item" onclick="pindahMenu('bayar-cicilan')">💳 Bayar Cicilan</li>
+            <li id="btn-menu-panjar" class="menu-item" onclick="pindahMenu('panjar')">💸 Fitur Panjar</li>
+            <li id="btn-menu-log" class="menu-item" onclick="pindahMenu('log-riwayat')">📜 Riwayat Transaksi</li>
+            <li id="btn-menu-pass" class="menu-item" onclick="pindahMenu('pass')">🔐 Ubah Password</li>
+        </ul>
+    </div>
+
+    <!-- MAIN INTERFACE KANAN (KONTEN HALAMAN UTAMA) -->
+    <div id="main-application" class="main-content" style="display: none;">
+        <div class="content-header">
+            <div>
+                <h2 id="txt-header-sistem">Sistem Keuangan Utama</h2>
+                <small style="color: #64748b; font-weight: 800; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">Status Akses: <b id="txt-user-aktif" style="color: var(--primary);">Nama</b> (<span id="txt-role-aktif">Role</span>)</small>
+            </div>
+
+            <!-- MENU LOGOUT POJOK KANAN ATAS WITH DROPDOWN KACA RAMPING (POIN 1 REVISI) -->
+            <div class="user-profile-wrapper">
+                <button class="btn-profile-trigger" onclick="toggleProfileDropdown()">
+                    👤 <span id="txt-profil-singkat">User</span> ▾
+                </button>
+                <div id="dropdown-logout-kaca" class="profile-dropdown-card">
+                    <button class="dropdown-item-btn danger-action" onclick="bukaPopupLogout()">🟥 Keluar / Logout</button>
+                </div>
+            </div>
+        </div>
+        <!-- 1. HALAMAN DASHBOARD UTAMA (POIN 1 REVISI & POIN 10 HP) -->
+        <div id="page-dashboard" class="page-section" style="display: block;">
+            <!-- 4 KOTAK KPI PASTEL SOLID EXTRA BOLD (LIVE BARIS TOTAL 2 TAB TOTAL_GRAND) -->
+            <div class="dashboard-grid" style="margin-bottom: 25px;">
+                <div class="kpi-card pinjaman">
+                    <div class="kpi-title">🏛️ Total Pinjaman Berjalan</div>
+                    <div class="kpi-value" id="kpi-modal">Rp 0</div>
+                </div>
+                <div class="kpi-card transaksi">
+                    <div class="kpi-title">📜 Total Transaksi (+20%)</div>
+                    <div class="kpi-value" id="kpi-transaksi">Rp 0</div>
+                </div>
+                <div class="kpi-card setoran">
+                    <div class="kpi-title">🛒 Total Setoran Masuk</div>
+                    <div class="kpi-value" id="kpi-setoran">Rp 0</div>
+                </div>
+                <div class="kpi-card piutang">
+                    <div class="kpi-title">📉 Total Piutang</div>
+                    <div class="kpi-value" id="kpi-piutang">Rp 0</div>
+                </div>
+            </div>
+
+            <!-- KOTAK LAPORAN HAK BONUS & PENARIKAN INTERNAL (RESMI REVISI JADI BONUS SANGAT KONTRAS) -->
+            <h3 id="title-gaji-section" style="font-weight: 800; margin-bottom: 20px; font-size: 1.2rem; letter-spacing: -0.3px;">📊 Ringkasan Saldo Bonus & Penarikan Internal</h3>
+            <div class="gaji-grid" style="margin-bottom: 30px;">
+                <div id="box-gaji-alan" class="gaji-card alan-gaji"><div class="kpi-title">💰 Total Bonus Alan</div><div class="kpi-value" id="gaji-alan-live">Rp 0</div></div>
+                <div id="box-tarik-alan" class="gaji-card alan-tarik"><div class="kpi-title">⏳ Total Penarikan Alan</div><div class="kpi-value" id="tarik-alan-live">Rp 0</div></div>
+                <div id="box-gaji-chalo" class="gaji-card chalo-gaji"><div class="kpi-title">💵 Total Bonus Chalo</div><div class="kpi-value" id="gaji-chalo-live">Rp 0</div></div>
+                <div id="box-tarik-chalo" class="gaji-card chalo-tarik"><div class="kpi-title">⌛ Total Penarikan Chalo</div><div class="kpi-value" id="tarik-chalo-live">Rp 0</div></div>
+            </div>
+
+            <!-- POIN 14: TOMBOL GENERATE AKUN MASSAL NASABA LAMA -->
+            <div id="box-sync-nasabah-lama" style="display: none; margin-top: 20px;">
+                <button onclick="pemicuGenerateAkunNasabahLamaSistem()" style="background: #475569; max-width: 350px;">🔄 Sinkronkan Akun Akses Nasabah Lama</button>
+            </div>
+        </div>
+        <!-- 2. HALAMAN TABEL SETORAN PER BARIS ZEBRA (POIN 2, 3, 5 & 6 REVISI) -->
+        <div id="page-tabel-setoran" class="page-section" style="display: none;">
+            <div class="card">
+                <h3 style="font-weight: 800; margin-top: 0; margin-bottom: 20px;">📋 Tabel Pemantauan Angsuran Setoran Nasabah (1 - 12)</h3>
+                <div class="table-responsive">
+                    <table id="tabel-audit-setoran-nasabah">
+                        <thead>
+                            <tr>
+                                <th>No ID</th>
+                                <th>Nama Nasabah</th>
+                                <th>Jumlah Pokok</th>
+                                <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th>
+                                <th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th>
+                                <th>Total Tagihan</th> <!-- POIN 6: BERGANTI JADI TOTAL TAGIHAN -->
+                                <th>Total Setoran</th>
+                                <th>Sisa Piutang</th>
+                                <th id="th-aksi-hapus-pimpinan" style="display: none;">Otoritas</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-tabel-setoran-live">
+                            <!-- Data baris zebra & glow disuntik dinamis via cloud -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. HALAMAN BARU: TABEL ANTREAN APPROVAL PERSETUJUAN KAS (POIN 2 & 7 REVISI) -->
+        <div id="page-menu-approval-baru" class="page-section" style="display: none;">
+            <div class="card">
+                <h3 style="font-weight: 800; margin-top: 0; margin-bottom: 20px; color: var(--warning);">🔔 Antrean Validasi Persetujuan Kas Terbuka</h3>
+                <p style="font-weight: 600; color: #64748b; margin-top: -10px; margin-bottom: 20px; font-size: 0.9rem;">Seluruh inputan nasabah baru dan cicilan dari Kasir Chalo tertahan di sini sampai Anda melakukan klik Approve resmi.</p>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Waktu Pengajuan</th>
+                                <th>Jenis Aksi</th>
+                                <th>Detail Catatan Mentah</th>
+                                <th>Penginput</th>
+                                <th>Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-tabel-antrean-approval-live">
+                            <!-- Daftar antrean pending disuntikkan secara dinamis di sini -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- 4. HALAMAN AJUKAN PINJAMAN NASABAH BARU (VERSI RAMPING SUPER RINGAN - POIN 4 & POIN 9) -->
+        <div id="page-ajukan-pinjaman" class="page-section" style="display: none;">
+            <div class="card" style="max-width: 500px; margin: 0 auto; border-top: 6px solid var(--primary);">
+                <h3 style="font-weight: 800; margin-top: 0;">📑 Formulir Pengajuan Pinjaman Baru</h3>
+                <div class="form-group">
+                    <label>Nama Lengkap Nasabah Baru</label>
+                    <input type="text" id="tx-nama-nasabah-baru" placeholder="Masukkan nama lengkap nasabah...">
+                </div>
+                <!-- NO HP MASUK KE DATA AKUN KOLOM E (POIN 4) -->
+                <div class="form-group">
+                    <label>Nomor Telepon / WA Nasabah</label>
+                    <input type="number" id="tx-nomor-hp-nasabah" placeholder="Contoh: 081234567890">
+                </div>
+                <div class="form-group">
+                    <label>Nominal Pinjaman Pokok (Rp)</label>
+                    <input type="number" id="tx-nominal-pinjaman" placeholder="Contoh: 1000000">
+                </div>
+                <!-- FITUR FOTO SEPAKAT DIHAPUS TOTAL BERSIH SESUAI POIN 9 REVISI -->
+                <button onclick="kirimPinjamanBaruKeCloud()">Kirim Pengajuan Pinjaman ke Antrean →</button>
+            </div>
+        </div>
+
+        <!-- 5. HALAMAN BAYAR CICILAN DROPDOWN NAMA MURNI (POIN 3 & 4 SINKRONISASI FIXED) -->
+        <div id="page-bayar-cicilan" class="page-section" style="display: none;">
+            <div class="card" style="max-width: 500px; margin: 0 auto; border-top: 6px solid var(--success);">
+                <h3 style="font-weight: 800; margin-top: 0;">💳 Formulir Pembayaran Angsuran Cicilan</h3>
+                <div class="form-group">
+                    <label>Pilih Nama Nasabah Aktif</label>
+                    <select id="tx-dropdown-nasabah-live">
+                        <!-- Opsi nama lengkap di-render secara dinamis vertikal murni -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Setoran Angsuran Ke-berapa? (1 - 12)</label>
+                    <select id="tx-nomor-setoran-pilihan">
+                        <option value="1">Setoran 1</option><option value="2">Setoran 2</option><option value="3">Setoran 3</option>
+                        <option value="4">Setoran 4</option><option value="5">Setoran 5</option><option value="6">Setoran 6</option>
+                        <option value="7">Setoran 7</option><option value="8">Setoran 8</option><option value="9">Setoran 9</option>
+                        <option value="10">Setoran 10</option><option value="11">Setoran 11</option><option value="12">Setoran 12</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nominal Uang Angsuran (Rp)</label>
+                    <input type="number" id="tx-nominal-cicilan" placeholder="Masukkan nominal setoran...">
+                </div>
+                <button onclick="kirimSetoranCicilanKeCloud()" style="background: var(--success); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);">Kirim Setoran ke Antrean Persetujuan →</button>
+            </div>
+        </div>
+        <!-- 6. HALAMAN FITUR PANJAR KASBON INTERNAL DROPDOWN MENURUN (POIN 7 KHUSUS ALAN) -->
+        <div id="page-panjar" class="page-section" style="display: none;">
+            <div class="card" style="max-width: 500px; margin: 0 auto; border-top: 6px solid var(--danger);">
+                <h3 style="font-weight: 800; margin-top: 0;">💸 Otoritas Pencatatan Dana Panjar (Kasbon)</h3>
+                <div class="form-group">
+                    <label>Pilih Nama Penerima Panjar</label>
+                    <select id="panjar-dropdown-staf">
+                        <option value="Alan">Manager Alan</option>
+                        <option value="Chalo">Kasir Chalo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nominal Pengambilan Uang (Rp)</label>
+                    <input type="number" id="panjar-nominal-uang" placeholder="Masukkan nominal uang panjar...">
+                </div>
+                <button onclick="kirimPanjarInternalKeCloud()" style="background: var(--danger); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);">Eksekusi Catat Mutasi Panjar →</button>
+            </div>
+        </div>
+
+        <!-- 7. HALAMAN RIWAYAT TRANSAKSI TIMELINE KRONOLOGIS TANGGAL UTUH MELOMPATI BARIS 1 -->
+        <div id="page-log-riwayat" class="page-section" style="display: none;">
+            <div class="card">
+                <h3 style="font-weight: 800; margin-top: 0; margin-bottom: 25px;">📜 Jejak Digital Kronologis Aktivitas Koperasi</h3>
+                <div id="timeline-stream-live" class="timeline-stream">
+                    <!-- Stream Garis Waktu disuntikkan dinamis dari Tab Log_Aktivitas melompati Baris 1 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. HALAMAN MANAJEMEN PASSWORD MULTI-ROLE (POIN 8) -->
+        <div id="page-pass" class="page-section" style="display: none;">
+            <div id="box-pass-staf-wrapper" class="card" style="margin-bottom: 25px;">
+                <h3 style="font-weight: 800; margin-top: 0; margin-bottom: 20px;">👤 Tabel Manajemen Kata Sandi Staf Koperasi</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr><th>Username</th><th>Nama Lengkap</th><th>Jabatan</th><th>Aksi</th></tr>
+                        </thead>
+                        <tbody id="body-tabel-pass-staf"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <h3 style="font-weight: 800; margin-top: 0; margin-bottom: 20px;">👥 Tabel Manajemen Kata Sandi Nasabah / User</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr><th>No ID / User</th><th>Nama Nasabah</th><th>Aksi</th></tr>
+                        </thead>
+                        <tbody id="body-tabel-pass-nasabah"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 9. CONTAINER LAYAR UTAMA HALAMAN LOGIN DEPAN DENGAN LOGO FINANSIAL & SUB-JUDUL (POIN 11 & 12) -->
+    <div id="section-login" class="login-wrapper">
+        <div class="login-box">
+            <!-- POIN 11: LOGO FINANSIAL BANKING MODERN BERWARNA BIRU SAFIR -->
+            <div style="background: rgba(37, 99, 235, 0.1); width: 64px; height: 64px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);">
+                <svg xmlns="http://w3.org" viewBox="0 0 24 24" fill="#2563eb" style="width: 32px; height: 32px;">
+                    <path d="M12 1L3 5v2h18V5l-9-4zm1 9h3v8h-3v-8zm-5 0h3v8H8v-8zM4 11h2v8H4v-8zm17 9H3v2h18v-2z"/>
+                </svg>
+            </div>
+
+            <h2 style="margin: 0 0 4px 0; font-weight: 800; font-size: 1.8rem; letter-spacing: -0.5px;">dkoper</h2>
+
+            <!-- POIN 12: SUB-JUDUL ELEGAN DIGITAL KOPERASI DI BAWAH LOGO -->
+            <div style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 35px;">Digital Koperasi</div>
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="login-username" placeholder="Masukkan username lo...">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="login-password" placeholder="Masukkan password lo..." onkeyup="if(event.key === 'Enter') eksekusiLogin()">
+            </div>
+            <button onclick="eksekusiLogin()">Masuk Ke Sistem →</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIKA UTAMA FINTECH HUB GOOGLE APPS SCRIPT -->
+    <script>
+        // SILAKAN TEMPEL LINK WEBHOOK APPS SCRIPT BARU HASIL DEPLOY /EXEC LO DI SINI, BRO!
+        const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzkD6pU-aivxTHoko4VuFKitQquV961s2AM_H2Wok6IBu_tJ8EeDNkil4zePsj4mHDFwg/exec";
+
+        // 🔐 BENTENG KEAMANAN LAYER 1: TOKEN KUSTOM SINKRON KE BACKEND CLOUD
+        const SECRET_TOKEN = "dkoper_secure_key_2026_premium";
+
+        let userAktif = {};
+        let targetUserPasswordPopup = "";
+        let targetNamaHapusNasabah = "";
+        let antreanIndexLogGlobal = 0;
+        let antreanDetailMentahGlobal = "";
+        let sensorWaktuOtomatis = null;
+        // 🕒 MANAJEMEN SESSION TIMEOUT IDLE 30 MENIT
+        function setelUlangSensorWaktuIdle() {
+            if (sensorWaktuOtomatis) clearTimeout(sensorWaktuOtomatis);
+            sensorWaktuOtomatis = setTimeout(function() {
+                alert("Sesi akses kedaluwarsa! Anda otomatis dikunci demi keamanan kas.");
+                logoutSistemMasal();
+            }, 30 * 60 * 1000);
+        }
+        ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(function(ev) {
+            document.addEventListener(ev, setelUlangSensorWaktuIdle, true);
+        });
+
+        // 🔘 DROPDOWN LOGOUT KACA PROFILE CONTROL (POIN 1 REVISI - TOMBOL BATAL HAPUS)
+        function toggleProfileDropdown() { document.getElementById('dropdown-logout-kaca').classList.toggle('active'); }
+        function tutupProfileDropdown() { document.getElementById('dropdown-logout-kaca').classList.remove('active'); }
+        window.addEventListener('click', function(e) { if (!e.target.matches('.btn-profile-trigger')) { tutupProfileDropdown(); } });
+
+        function eksekusiLogin() {
+            const u = document.getElementById('login-username').value.trim();
+            const p = document.getElementById('login-password').value.trim();
+            if(!u || !p) return;
+
+            fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "login", username: u, password: p }) })
+            .then(res => res.json()).then(hasil => {
+                if(hasil.status === "sukses") {
+                    masukKeLayar({ nama: hasil.nama, role: hasil.role, namaLengkap: hasil.namaLengkap });
+                } else {
+                    alert(hasil.pesan);
+                }
+            });
+        }
+
+        function masukKeLayar(user) {
+            userAktif = user;
+            document.getElementById('section-login').style.display = "none";
+            document.getElementById('sidebar-app').style.display = "flex";
+            document.getElementById('main-application').style.display = "flex";
+            document.getElementById('txt-user-aktif').innerText = user.namaLengkap;
+            document.getElementById('txt-role-aktif').innerText = user.role;
+            document.getElementById('txt-profil-singkat').innerText = user.namaLengkap.split(" ")[0];
+            setelUlangSensorWaktuIdle();
+
+            // 🔐 ATURAN MATRIKS PRIVASI JABATAN CLOUD
+            if(user.role === "Manager") {
+                document.getElementById('txt-header-sistem').innerText = "Sistem Pimpinan Koperasi";
+                document.getElementById('btn-menu-approve-alan').style.display = "flex";
+                document.getElementById('btn-menu-panjar').style.display = "flex";
+                document.getElementById('box-gaji-alan').style.display = "block";
+                document.getElementById('box-tarik-alan').style.display = "block";
+                document.getElementById('box-pass-staf-wrapper').style.display = "block";
+                document.getElementById('box-sync-nasabah-lama').style.display = "block";
+                document.getElementById('th-aksi-hapus-pimpinan').style.display = "table-cell";
+                pindahMenu('dashboard');
+            } else if(user.role === "Kasir") {
+                document.getElementById('txt-header-sistem').innerText = "Sistem Kasir Koperasi";
+                document.getElementById('btn-menu-approve-alan').style.display = "none";
+                document.getElementById('btn-menu-panjar').style.display = "none";
+                document.getElementById('box-gaji-alan').style.display = "none";
+                document.getElementById('box-tarik-alan').style.display = "none";
+                document.getElementById('box-pass-staf-wrapper').style.display = "none";
+                document.getElementById('box-sync-nasabah-lama').style.display = "none";
+                document.getElementById('th-aksi-hapus-pimpinan').style.display = "none";
+                pindahMenu('dashboard');
+            } else {
+                document.getElementById('txt-header-sistem').innerText = "Layanan Mandiri Nasabah";
+                document.getElementById('btn-menu-dasbor').style.display = "none";
+                document.getElementById('btn-menu-approve-alan').style.display = "none";
+                document.getElementById('btn-menu-pinjam').style.display = "none";
+                document.getElementById('btn-menu-cicilan').style.display = "none";
+                document.getElementById('btn-menu-panjar').style.display = "none";
+                document.getElementById('btn-menu-log').style.display = "none";
+                document.getElementById('btn-menu-pass').style.display = "none";
+                document.getElementById('th-aksi-hapus-pimpinan').style.display = "none";
+                pindahMenu('tabel-setoran');
+            }
+        }
+        function pindahMenu(targetPage) {
+            document.querySelectorAll('.page-section').forEach(p => p.style.display = "none");
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            document.getElementById('sidebar-app').classList.remove('active');
+
+            if(targetPage === 'dashboard') {
+                document.getElementById('page-dashboard').style.display = "block";
+                document.getElementById('btn-menu-dasbor').classList.add('active');
+                memuatDataDasborLive();
+            } else if(targetPage === 'tabel-setoran') {
+                document.getElementById('page-tabel-setoran').style.display = "block";
+                if(document.getElementById('btn-menu-tabel')) document.getElementById('btn-menu-tabel').classList.add('active');
+                memuatTabelSetoranLive();
+            } else if(targetPage === 'menu-approval-baru') {
+                document.getElementById('page-menu-approval-baru').style.display = "block";
+                document.getElementById('btn-menu-approve-alan').classList.add('active');
+                memuatTabelAntreanApprovalLive();
+            } else if(targetPage === 'ajukan-pinjaman') {
+                document.getElementById('page-ajukan-pinjaman').style.display = "block";
+                document.getElementById('btn-menu-pinjam').classList.add('active');
+            } else if(targetPage === 'bayar-cicilan') {
+                document.getElementById('page-bayar-cicilan').style.display = "block";
+                document.getElementById('btn-menu-cicilan').classList.add('active');
+                memuatDropdownNasabahLive();
+            } else if(targetPage === 'panjar') {
+                document.getElementById('page-panjar').style.display = "block";
+                document.getElementById('btn-menu-panjar').classList.add('active');
+            } else if(targetPage === 'log-riwayat') {
+                document.getElementById('page-log-riwayat').style.display = "block";
+                document.getElementById('btn-menu-log').classList.add('active');
+                memuatTimelineLogLive();
+            } else if(targetPage === 'pass') {
+                document.getElementById('page-pass').style.display = "block";
+                document.getElementById('btn-menu-pass').classList.add('active');
+                memuatDataTabelManajemenPassword();
+            }
+        }
+
+        function toggleSidebarMobile() { document.getElementById('sidebar-app').classList.toggle('active'); }
+
+        function memuatDataDasborLive() {
+            fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "ambil_dasbor" }) })
+            .then(res => res.json()).then(hasil => {
+                if(hasil.status === "sukses") {
+                    document.getElementById('kpi-modal').innerText = "Rp " + (hasil.d21||0).toLocaleString('id-ID');
+                    document.getElementById('kpi-transaksi').innerText = "Rp " + (hasil.q21||0).toLocaleString('id-ID');
+                    document.getElementById('kpi-setoran').innerText = "Rp " + (hasil.r21||0).toLocaleString('id-ID');
+                    document.getElementById('kpi-piutang').innerText = "Rp " + (hasil.s21||0).toLocaleString('id-ID');
+                    document.getElementById('gaji-alan-live').innerText = "Rp " + (hasil.t21||0).toLocaleString('id-ID');
+                    document.getElementById('gaji-chalo-live').innerText = "Rp " + (hasil.u21||0).toLocaleString('id-ID');
+                    document.getElementById('tarik-alan-live').innerText = "Rp " + (hasil.v21||0).toLocaleString('id-ID');
+                    document.getElementById('tarik-chalo-live').innerText = "Rp " + (hasil.w21||0).toLocaleString('id-ID');
+                }
+            });
+        }
+        function memuatTabelSetoranLive() {
+            fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "ambil_tabel_setoran" }) })
+            .then(res => res.json()).then(hasil => {
+                if(hasil.status === "sukses") {
+                    const tbody = document.getElementById('body-tabel-setoran-live'); tbody.innerHTML = "";
+                    hasil.data.forEach(row => {
+                        // 🔐 POIN 5 FIXED: DINDING PRIVASI MUTLAK - NASABA HANYA BISA MELIHAT DATA DIRINYA SENDIRI
+                        if(userAktif.role === "Nasabah" && userAktif.namaLengkap.trim().toLowerCase() !== row.nama.trim().toLowerCase()) {
+                            return;
+                        }
+
+                        let htmlC = "";
+                        row.setoran.forEach((v, i) => {
+                            let teksSel = "-";
+                            if(v > 0) { teksSel = "Rp " + v.toLocaleString('id-ID'); }
+                            htmlC += '<td data-label="Cicilan ' + (i+1) + '">' + teksSel + '</td>';
+                        });
+
+                        let tdHapusHtml = "";
+                        if(userAktif.role === "Manager") {
+                            tdHapusHtml = '<td data-label="Otoritas"><button style="padding:8px 12px; font-size:0.8rem; background:var(--danger); width:auto; border-radius:8px;" onclick="bukaPopupHapusNasabah(\'' + row.nama + '\')">🗑️ Hapus</button></td>';
+                        }
+
+                        const tr = document.createElement('tr');
+                        let htmlBaris = '<td data-label="No ID">' + row.id + '</td>';
+                        htmlBaris += '<td data-label="Nama">' + row.nama + '</td>';
+                        htmlBaris += '<td data-label="Pokok">Rp ' + row.pokok.toLocaleString('id-ID') + '</td>';
+                        htmlBaris += htmlC;
+                        htmlBaris += '<td data-label="Total Tagihan">Rp ' + row.totalTarget.toLocaleString('id-ID') + '</td>';
+                        htmlBaris += '<td data-label="Total Setoran">Rp ' + row.jumlahSetoran.toLocaleString('id-ID') + '</td>';
+                        htmlBaris += '<td data-label="Sisa Piutang">Rp ' + row.sisaPiutang.toLocaleString('id-ID') + '</td>';
+                        htmlBaris += tdHapusHtml;
+
+                        tr.innerHTML = htmlBaris;
+                        tbody.appendChild(tr);
+                    });
+                }
+            });
+        }
+        function memuatTabelAntreanApprovalLive() {
+            fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "ambil_antrean_approval" }) })
+            .then(res => res.json()).then(hasil => {
+                if(hasil.status === "sukses") {
+                    const tbody = document.getElementById('body-tabel-antrean-approval-live'); tbody.innerHTML = "";
+                    if(hasil.data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; font-weight:600; color:#64748b; padding:30px;">Empty! Tidak ada antrean pengajuan tertunda dari kasir, aman bos!</td></tr>';
+                        return;
+                    }
+                    hasil.data.forEach(row => {
+                        const tr = document.createElement('tr');
+                        const detailBersih = row.detail.replace("PENDING_NASABAH | ", "").replace("PENDING_CICILAN | ", "");
+
+                        let htmlBaris = '<td>' + row.waktu + '</td>';
+                        htmlBaris += '<td><b>' + row.tipe + '</b></td>';
+                        htmlBaris += '<td>' + detailBersih + '</td>';
+                        htmlBaris += '<td>' + row.aktor + '</td>';
+                        htmlBaris += '<td><button style="padding:8px 14px; font-size:0.85rem; background:var(--success); width:auto; border-radius:10px;" onclick="bukaPopupApprovalAlan(' + row.indexLog + ', \'' + row.detail + '\')">✓ Approve</button></td>';
+
+                        tr.innerHTML = htmlBaris;
+                        tbody.appendChild(tr);
+                    });
+                }
+            });
+        }
+
+        function bukaPopupApprovalAlan(indexLog, detailMentah) {
+            antreanIndexLogGlobal = indexLog;
+            antreanDetailMentahGlobal = detailMentah;
+            const ringkasan = detailMentah.replace("PENDING_NASABAH | ", "Pendaftaran Nasabah: ").replace("PENDING_CICILAN | ", "Setoran Cicilan: ");
+            document.getElementById('txt-detail-approve-popup').innerHTML = 'Apakah lo yakin ingin menyetujui secara sah transaksi:<br><br><b style="color:var(--text-dark); font-size:1rem;">' + ringkasan + '</b>?';
+            document.getElementById('popup-approval-overlay').classList.add('active');
+        }
+        function tutupPopupApprovalAlan() { document.getElementById('popup-approval-overlay').classList.remove('active'); }
+        function eksekusiAproveKasCloudReal() {
+            fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "eksekusi_approve_kas", indexLog: antreanIndexLogGlobal, detailMentah: antreanDetailMentahGlobal }) })
+            .then(res => res.json()).then(h => {
+                alert(h.pesan);
+                tutupPopupApprovalAlan();
+                pindahMenu('menu-approval-baru');
+            });
+        }
+
+        function memuatDropdownNasabahLive() {
+            fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "ambil_nasabah_dropdown" }) })
+            .then(res => res.json()).then(hasil => {
+                if(hasil.status === "sukses") {
+                    const sel = document.getElementById('tx-dropdown-nasabah-live'); sel.innerHTML = "";
+                    if(hasil.data.length === 0) {
+                        const op = document.createElement('option'); op.innerText = "-- Database Kosong --"; sel.appendChild(op); return;
+                    }
+                    hasil.data.forEach(n => { const op = document.createElement('option'); op.value=n; op.innerText=n; sel.appendChild(op); });
+                }
+            });
+        }
+
+        function memuatTimelineLogLive() {
+            fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "ambil_log" }) })
+            .then(res => res.json()).then(hasil => {
+                if(hasil.status === "sukses") {
+                    const st = document.getElementById('timeline-stream-live'); st.innerHTML = "";
+                    hasil.data.forEach(log => {
+                        if(userAktif.role === "Kasir" && log.tipe === "Panjar") return;
+                        const c = document.createElement('div'); c.className = "timeline-card log-" + log.tipe.toLowerCase();
+                        c.innerHTML = '<div class="log-meta"><span>📅 ' + log.waktu + '</span><span>👤 Oleh: ' + log.aktor + '</span></div><div class="log-text">' + log.detail + '</div>';
+                        st.appendChild(c);
+                    });
+                }
+            });
+        }
+        function memuatDataTabelManajemenPassword() {
+            fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "ambil_akun_tabel" }) })
+            .then(res => res.json()).then(hasil => {
+                if(hasil.status === "sukses") {
+                    const tbS = document.getElementById('body-tabel-pass-staf'), tbN = document.getElementById('body-tabel-pass-nasabah');
+                    tbS.innerHTML = ""; tbN.innerHTML = "";
+                    hasil.staf.forEach(s => { const tr = document.createElement('tr'); tr.innerHTML = '<td>' + s.username + '</td><td>' + s.namaLengkap + '</td><td><b>' + s.role + '</b></td><td><button style="padding:8px 12px; font-size:0.8rem; background:var(--sidebar-color); width:auto; border-radius:8px;" onclick="bukaPopupPassword(\'' + s.username + '\')">🔧 Ubah</button></td>'; tbS.appendChild(tr); });
+                    hasil.nasabah.forEach(n => { const tr = document.createElement('tr'); tr.innerHTML = '<td>' + n.username + '</td><td>' + n.namaLengkap + '</td><td><button style="padding:8px 12px; font-size:0.8rem; background:var(--primary); width:auto; border-radius:8px;" onclick="bukaPopupPassword(\'' + n.username + '\')">✏️ Ganti</button></td>'; tbN.appendChild(tr); });
+                }
+            });
+        }
+
+        function bukaPopupPassword(u) { targetUserPasswordPopup = u; document.getElementById('target-user-pwd').innerText = u; document.getElementById('popup-password-overlay').classList.add('active'); }
+        function tutupPopupPassword() { document.getElementById('popup-password-overlay').classList.remove('active'); document.getElementById('input-pwd-baru-popup').value = ""; }
+        function simpanPasswordBaruPopup() { const pwd = document.getElementById('input-pwd-baru-popup').value.trim(); if(!pwd) return; fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "ubah_password", usernameTarget: targetUserPasswordPopup, passwordBaru: pwd }) }).then(res => res.json()).then(h => { alert(h.pesan); tutupPopupPassword(); memuatDataTabelManajemenPassword(); }); }
+
+        // POIN 14: TOMBOL PEMICU GENERATE AKUN MASSAL DINAMIS NASABAH LAMA
+        function pemicuGenerateAkunNasabahLamaSistem() {
+            if(confirm("Apakah Anda ingin memicu pembuatan akun login massal otomatis untuk nasabah lama di spreadsheet?")) {
+                fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "generate_akun_massal" }) })
+                .then(res => res.json()).then(h => { alert(h.pesan); memuatDataDasborLive(); });
+            }
+        }
+
+        function kirimPinjamanBaruKeCloud() {
+            const n = document.getElementById('tx-nama-nasabah-baru').value.trim();
+            const hp = document.getElementById('tx-nomor-hp-nasabah').value.trim();
+            const v = document.getElementById('tx-nominal-pinjaman').value;
+            if(!n || !hp || !v) { alert("Semua kolom isian wajib diisi lengkap, bos!"); return; }
+
+            fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "ajukan_pinjaman", namaNasabahBaru: n, nomorHpNasabah: hp, nominal: v, penginput: userAktif.namaLengkap }) })
+            .then(res => res.json()).then(h => { alert(h.pesan); document.getElementById('tx-nama-nasabah-baru').value = ""; document.getElementById('tx-nomor-hp-nasabah').value = ""; document.getElementById('tx-nominal-pinjaman').value = ""; pindahMenu('dashboard'); });
+        }
+
+        function kirimSetoranCicilanKeCloud() {
+            const n = document.getElementById('tx-dropdown-nasabah-live').value;
+            const s = document.getElementById('tx-nomor-setoran-pilihan').value;
+            const v = document.getElementById('tx-nominal-cicilan').value;
+            if(!n || !v) { alert("Data tidak komplit, pastikan nasabah sudah dipilih!"); return; }
+
+            fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "input_cicilan", namaNasabah: n, nomorCicilan: s, nominal: v, penginput: userAktif.namaLengkap }) })
+            .then(res => res.json()).then(h => { alert(h.pesan); document.getElementById('tx-nominal-cicilan').value = ""; pindahMenu('dashboard'); });
+        }
+
+        function kirimPanjarInternalKeCloud() {
+            const t = document.getElementById('panjar-dropdown-staf').value;
+            const v = document.getElementById('panjar-nominal-uang').value;
+            if(!v) return;
+
+            fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "panjar_dana", targetUser: t, nominal: v, rolePenginput: userAktif.role }) })
+            .then(res => res.json()).then(h => { alert(h.pesan); document.getElementById('panjar-nominal-uang').value = ""; pindahMenu('dashboard'); });
+        }
+
+        function bukaPopupHapusNasabah(nama) { targetNamaHapusNasabah = nama; document.getElementById('txt-target-nama-hapus').innerText = nama; document.getElementById('popup-hapus-overlay').classList.add('active'); }
+        function tutupPopupHapusNasabah() { document.getElementById('popup-hapus-overlay').classList.remove('active'); targetNamaHapusNasabah = ""; }
+        function eksekusiHapusNasabahLunasReal() { if(!targetNamaHapusNasabah) return; fetch(WEBHOOK_URL, { method: "POST", body: JSON.stringify({ token: SECRET_TOKEN, aksi: "hapus_nasabah_lunas", namaTargetHapus: targetNamaHapusNasabah }) }).then(res => res.json()).then(h => { alert(h.pesan); tutupPopupHapusNasabah(); memuatTabelSetoranLive(); }); }
+
+        function bukaPopupLogout() { document.getElementById('popup-logout-overlay').classList.add('active'); tutupProfileDropdown(); }
+        function tutupPopupLogout() { document.getElementById('popup-logout-overlay').classList.remove('active'); }
+        function konfirmasiLogoutSistem() { tutupPopupLogout(); logoutSistemMasal(); }
+        function logoutSistemMasal() { if (sensorWaktuOtomatis) clearTimeout(sensorWaktuOtomatis); document.getElementById('main-application').style.display = "none"; document.getElementById('sidebar-app').style.display = "none"; document.getElementById('section-login').style.display = "flex"; document.getElementById('login-username').value = ""; document.getElementById('login-password').value = ""; }
+    </script>
+</body>
+</html>

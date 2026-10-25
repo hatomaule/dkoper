@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Installment extends Model
 {
-    protected $fillable = ['loan_id', 'sequence', 'scheduled_amount', 'paid_amount', 'outstanding_amount', 'status', 'paid_at'];
+    protected $fillable = ['loan_id', 'sequence', 'scheduled_amount', 'interest_amount', 'alan_profit_amount', 'chalo_profit_amount', 'paid_amount', 'outstanding_amount', 'status', 'paid_at'];
 
     protected function casts(): array
     {

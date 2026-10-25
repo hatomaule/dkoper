@@ -16,17 +16,28 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 
 ## Runtime Status
 
-- Repository cloned and Laravel installed.
-- Breeze and Tailwind assets installed; Vite build has completed once.
-- Local MariaDB database `dkoper` is available.
-- Database user is local-only: `dkoper`.
-- Laravel migration skeletons and revisions have been created and migrated.
-- Breeze login has been modified for ID, username, or phone identifier.
-- Password-first-change middleware and routes have been added.
-- Alan and Chalo staff seeder exists.
-- DashboardController and KPI dashboard Blade view have been added.
-- Model relations for users, borrowers, loans, payments, cash, and profit have been partially implemented.
-- Default staff/password is not to be used outside local development or reset immediately after deployment.
+- Laravel project and local MariaDB/MySQL connection are operational.
+- All migrations are currently applied. The missing `cash_accounts` table reported on `/dashboard` was created by applying `2026_10_25_010000_add_financial_workflow_fields`; its initial balance was populated from the latest cash-ledger balance (zero when no ledger entries exist).
+- Current local database connection reports `mysql`; the `alan` manager and `chalo` cashier accounts exist.
+- Login accepts an identifier (borrower code, username, or phone); public registration is disabled.
+- First-login password change is enforced. The manager account has `must_change_password = false`; the cashier account currently has `must_change_password = true`. Do not inspect or disclose either password.
+- Staff passwords were synchronized with the user's supplied account sheet during this session. Password values are intentionally not recorded here; use private credentials and never retain shared/default passwords for production.
+- Core borrower, loan, installment, payment approval, cash ledger, profit, and activity-log workflows have been implemented in the current worktree.
+- A full visual redesign is in progress: authenticated navigation is now a dark, icon-based desktop sidebar with grouped sections and a compact account footer; mobile uses a responsive top bar and slide-down menu. The dashboard uses an emerald hero, refined KPI cards, and calmer card/table styling. Login, tables, forms, and status badges use the same lightweight design system and system fonts (no external font request or new UI dependency).
+- Latest visual refinement: the login submit label is the concise “Login” and the button is compact and right-aligned. Cards have more pronounced layered shadows, subtle gradients, and a gentle hover lift to feel elevated from the canvas; common action buttons were reduced in size.
+- A dedicated forced-password-change screen is in `resources/views/profile/edit.blade.php`; its visible “Simpan dan lanjutkan” button submits the first password change.
+- The modern UI is an independent Blade design, not a strict conversion of `index.baseline.html`.
+- Preview is currently running with `php artisan serve --host=0.0.0.0 --port=8000`; `http://localhost:8000/login` responds with HTTP 200. Login was visually checked in the browser. The user has another local browser window that reached `/dashboard` after login.
+- The working tree contains uncommitted business-flow and UI changes. Review `git status` before further edits; do not discard unrelated/pre-existing user changes.
+
+## Imported Borrower Data
+
+- The supplied borrower table has been loaded into the local database: 13 borrowers, 13 borrower login accounts, 13 active loans, 156 installments, and 84 approved payments. All 13 borrower accounts require a password change on first login; no password values are recorded here.
+- Source data totals: Rp19,000,000 principal, Rp22,800,000 total receivable, Rp11,240,000 paid, Rp11,560,000 outstanding, and Rp1,330,000 administration fees.
+- Opening capital was recorded as Rp19,000,000. Cash ledger ending balance and `cash_accounts.balance` both reconcile to Rp12,570,000.
+- The source did not provide actual payment dates. Imported payment records therefore use 26 October 2026 as the import date; this is not represented as the historical payment date.
+- Profit is realized only for cleared installments. The 72 paid installments currently recognize Rp1,650,011 total: Alan Rp990,006 and Chalo Rp660,005. `LoanService` distributes the 60:40 split using cumulative rounding per loan, so each installment's shares sum to its interest and each fully completed loan's total split is exact. This also corrected the earlier per-installment rounding imbalance in the imported profit ledger.
+- Borrower names and passwords are intentionally not copied into this handoff. Do not rerun the one-time import/reset script; it has been removed after use.
 
 ## Business Rules
 
@@ -50,8 +61,8 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 
 - Login identifier accepts borrower code, username, or phone.
 - Staff usernames are generated or seeded as `alan` and `chalo`.
-- Default password is `123456`.
-- All first-login accounts must change the password.
+- Initial staff credentials are development-only and must not be documented in plaintext or used in production.
+- Staff accounts currently require a first-login password change (`must_change_password = true`).
 - Cashier can reset borrower passwords.
 - Staff and borrowers can change their own password.
 - Store password only as a Laravel hash.
@@ -92,22 +103,44 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 cd ~/projects/DKoper
 php artisan --version
 php artisan migrate:status
-php artisan test --compact
+php artisan test
 npm run build
 ```
+
+## Change Completion and Git Procedure
+
+- For each completed implementation task, update this handoff in the same task with the change summary, relevant data/runtime status, and the latest verification results.
+- Run focused tests for the change; run the full `php artisan test` suite and `npm run build` when the change affects shared application behavior or frontend assets.
+- Before publishing, inspect `git status` and the staged diff. Stage only intended project changes; never stage `.env`, credentials, real borrower data, one-time import files, or other private runtime data.
+- Commit the completed changes on the current branch with a clear message and the required Copilot co-author trailer, then push that branch to `origin`. Do not rewrite existing commits. If tests fail, a secret is detected, the remote has diverged, or publishing is otherwise unsafe, stop and document the blocker here rather than forcing a push.
+- If the user explicitly asks not to publish a particular change, document that exception and leave it unpushed.
+
+Latest verification in this session:
+
+- `php artisan test`: 33 tests passed, 121 assertions (latest run after cumulative profit-split rounding and imported-ledger reconciliation).
+- `npm run build`: passed.
+- `php artisan view:cache && php artisan view:clear`: passed.
+- `npm run build`: passed.
+- After the full sidebar redesign, `php artisan test`: 32 passed, 93 assertions; `npm run build`: passed; Blade view cache compilation: passed.
+- After the compact button/card refinement, `npm run build` passed and `php artisan test --filter=AuthenticationTest` passed (4 tests, 8 assertions). Login button label, size, and placement were checked in browser.
+- `php artisan test --filter=DashboardAccessTest`: 2 tests passed, 3 assertions after the password-change screen update.
+- `php artisan migrate:status`: all migrations ran after applying the pending financial workflow migration.
+- `php artisan test --filter=DashboardAccessTest`: passed after the migration was applied.
+- `php artisan view:cache && php artisan view:clear`: passed after status badge changes.
+- The login preview and forced-password-change page were visually checked in the browser; the latest preview was also checked in a narrow mobile viewport.
 
 ## Resume Sequence
 
 1. Confirm folder is open in VS Code as `/home/hatomaule/projects/DKoper`.
-2. Restore `.env` from `.env.example` if needed; never publish real production credentials.
-3. Start MariaDB: `sudo service mariadb start`.
-4. Run migrations: `php artisan migrate --force`.
-5. Seed staff only on local/test database: `php artisan db:seed --class=StaffAccountSeeder`.
-6. Implement login identifier and force-password-change behavior.
-7. Implement borrower, loan, installment, payment, approval, cash, and profit services.
-8. Import/seed baseline spreadsheet after field mapping is confirmed.
-9. Convert the provided `index.baseline.html` visual design to Blade.
-10. Run tests, build assets, commit, and push.
+2. Review `git status` and preserve all existing worktree changes.
+3. Confirm `.env` targets the intended local database; never publish real database or account credentials.
+4. Start MariaDB if necessary: `sudo service mariadb start`.
+5. Start the preview if it is not already running: `php artisan serve --host=0.0.0.0 --port=8000`, then open `http://localhost:8000/login`.
+6. On the current manager browser session, select and save a private password on `/password/change`. The starter password must not be retained for normal use.
+7. Review the current business flows against `AI_HANDOFF.md`, especially negative-balance withdrawals, transfer-to-capital semantics, and borrower-role access restrictions.
+8. Continue polishing responsive pages and verify all role-specific workflows in browser; the dashboard is currently manager/staff-oriented and should be checked alongside the borrower view.
+9. Run `php artisan test` and `npm run build` after changes.
+10. Review migration consistency and deployment compatibility with PHP 8.3 before release.
 
 ## Deployment Notes
 
@@ -130,4 +163,12 @@ npm run build
 
 ## Current Stop Point
 
-The database foundation is present locally, and migration revision files are applied. Remaining work is the executable business service layer, authenticated dashboard, borrower/loan/payment workflows, seed/import, and final UI conversion.
+The core service and approval flows, borrower data import, cumulative profit allocation, and full visual redesign are implemented. The latest full test suite passes (33 tests, 121 assertions), the frontend production build and Blade compilation pass, and the local database import reconciles. The preview server is running at `http://localhost:8000`; the shared browser tab is at `/login`. The manager account has completed its first password change; no password values are saved here.
+
+Remaining follow-up:
+
+- Validate manager, cashier, and borrower experiences in the browser, including mobile navigation and page-specific tables/forms.
+- Compare remaining pages against product needs; `index.baseline.html` is a reference only, not a mandatory visual target.
+- Cross-check withdrawal behavior with negative balances, transfer-to-modal accounting, and borrower visibility restrictions.
+- Review migration/schema consistency and PHP 8.3 deployment readiness.
+- Confirm production database credentials and rotate any development credentials before deployment.

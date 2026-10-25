@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Borrower;
 use App\Models\CashTransaction;
+use App\Models\ApprovalRequest;
 use App\Models\Loan;
 use App\Models\User;
 use App\Services\LoanService;
@@ -40,5 +41,95 @@ class LoanServiceTest extends TestCase
         $this->assertSame(1_200_000, (int) $loan->installments()->sum('scheduled_amount'));
         $this->assertDatabaseHas('cash_transactions', ['loan_id' => $loan->id, 'type' => 'loan_disbursement', 'amount' => 1_000_000]);
         $this->assertDatabaseHas('cash_transactions', ['loan_id' => $loan->id, 'type' => 'administration_fee', 'amount' => 70_000]);
+        $this->assertSame(120_000, (int) $loan->installments()->sum('alan_profit_amount'));
+        $this->assertSame(80_000, (int) $loan->installments()->sum('chalo_profit_amount'));
+    }
+
+    public function test_installment_profit_shares_follow_cumulative_sixty_forty_split(): void
+    {
+        $manager = User::factory()->create([
+            'username' => 'alan',
+            'role' => 'manager',
+            'must_change_password' => false,
+        ]);
+        $borrower = Borrower::create([
+            'full_name' => 'Nasabah Pembulatan',
+            'borrower_code' => 'DK_002',
+            'status' => 'active',
+        ]);
+
+        $loan = app(LoanService::class)->createApprovedLoan($manager, $borrower->id, 500_000);
+        $cumulativeInterest = 0;
+        $cumulativeAlanShare = 0;
+
+        foreach ($loan->installments()->orderBy('sequence')->get() as $installment) {
+            $cumulativeInterest += (int) $installment->interest_amount;
+            $cumulativeAlanShare += (int) $installment->alan_profit_amount;
+            $expectedAlanShare = intdiv($cumulativeInterest, 5) * 3
+                + intdiv(($cumulativeInterest % 5) * 3 + 2, 5);
+
+            $this->assertSame((int) $installment->interest_amount, (int) $installment->alan_profit_amount + (int) $installment->chalo_profit_amount);
+            $this->assertSame($expectedAlanShare, $cumulativeAlanShare);
+
+            if ($installment->sequence === 9) {
+                $this->assertSame(75_001, $cumulativeInterest);
+                $this->assertSame(45_001, $cumulativeAlanShare);
+            }
+        }
+
+        $this->assertSame(60_000, (int) $loan->installments()->sum('alan_profit_amount'));
+        $this->assertSame(40_000, (int) $loan->installments()->sum('chalo_profit_amount'));
+    }
+
+    public function test_cashier_loan_waits_for_manager_approval_before_cash_is_posted(): void
+    {
+        $manager = User::factory()->create(['username' => 'alan', 'role' => 'manager']);
+        $cashier = User::factory()->create(['username' => 'chalo', 'role' => 'kasir']);
+        $borrower = Borrower::create([
+            'full_name' => 'Nasabah Approval',
+            'borrower_code' => 'DK_101',
+            'phone' => '081299998881',
+            'status' => 'active',
+        ]);
+
+        $loan = app(LoanService::class)->createLoan($cashier, $borrower->id, 1_000_000);
+
+        $this->assertSame('pending', $loan->status);
+        $this->assertDatabaseHas('approval_requests', [
+            'request_type' => 'loan',
+            'approvable_id' => $loan->id,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseMissing('cash_transactions', ['loan_id' => $loan->id]);
+
+        app(LoanService::class)->approveLoan($manager, $loan->id);
+
+        $this->assertSame('active', $loan->fresh()->status);
+        $this->assertDatabaseHas('approval_requests', [
+            'request_type' => 'loan',
+            'approvable_id' => $loan->id,
+            'status' => 'approved',
+            'reviewed_by' => $manager->id,
+        ]);
+        $this->assertSame(-930_000, (int) \Illuminate\Support\Facades\DB::table('cash_accounts')->value('balance'));
+    }
+
+    public function test_rejected_loan_never_posts_cash_transactions(): void
+    {
+        $manager = User::factory()->create(['username' => 'alan', 'role' => 'manager']);
+        $cashier = User::factory()->create(['username' => 'chalo', 'role' => 'kasir']);
+        $borrower = Borrower::create([
+            'full_name' => 'Nasabah Ditolak',
+            'borrower_code' => 'DK_102',
+            'phone' => '081299998882',
+            'status' => 'active',
+        ]);
+        $loan = app(LoanService::class)->createLoan($cashier, $borrower->id, 500_000);
+
+        app(LoanService::class)->rejectLoan($manager, $loan->id);
+
+        $this->assertSame('rejected', $loan->fresh()->status);
+        $this->assertDatabaseMissing('cash_transactions', ['loan_id' => $loan->id]);
+        $this->assertDatabaseHas('approval_requests', ['approvable_id' => $loan->id, 'status' => 'rejected']);
     }
 }

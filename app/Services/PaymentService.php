@@ -3,7 +3,8 @@
 namespace App\Services;
 
 use App\Models\ActivityLog;
-use App\Models\CashTransaction;
+use App\Models\ApprovalRequest;
+use App\Models\BorrowerAdvanceTransaction;
 use App\Models\Installment;
 use App\Models\Loan;
 use App\Models\Payment;
@@ -12,6 +13,7 @@ use App\Models\ProfitTransaction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Illuminate\Validation\ValidationException;
 
 class PaymentService
 {
@@ -25,11 +27,26 @@ class PaymentService
             $payment = Payment::query()->lockForUpdate()->findOrFail($paymentId);
 
             if ($payment->status === 'approved') {
-                throw new RuntimeException('Pembayaran sudah disetujui.');
+                throw ValidationException::withMessages(['payment' => 'Pembayaran sudah disetujui.']);
             }
 
-            $remaining = $payment->amount;
+            if ($payment->status !== 'pending') {
+                throw ValidationException::withMessages(['payment' => 'Pembayaran tidak lagi menunggu persetujuan.']);
+            }
+
             $loan = Loan::query()->lockForUpdate()->findOrFail($payment->loan_id);
+            if ($loan->status !== 'active') {
+                throw ValidationException::withMessages(['payment' => 'Pembayaran hanya dapat disetujui untuk pinjaman aktif.']);
+            }
+
+            if ($payment->installment_id !== null) {
+                $selectedInstallment = Installment::query()->findOrFail($payment->installment_id);
+                if ((int) $selectedInstallment->loan_id !== (int) $loan->id) {
+                    throw ValidationException::withMessages(['payment' => 'Cicilan tidak sesuai dengan pinjaman.']);
+                }
+            }
+
+            $remaining = (int) $payment->amount;
             $allocations = [];
 
             $installments = Installment::query()
@@ -43,10 +60,10 @@ class PaymentService
                 if ($remaining <= 0) break;
 
                 $allocated = min($remaining, (int) $installment->outstanding_amount);
-                $installment->paid_amount += $allocated;
-                $installment->outstanding_amount -= $allocated;
-                $installment->status = $installment->outstanding_amount === 0 ? 'paid' : 'partial';
-                $installment->paid_at = $installment->outstanding_amount === 0 ? now() : $installment->paid_at;
+                $installment->paid_amount = (int) $installment->paid_amount + $allocated;
+                $installment->outstanding_amount = (int) $installment->outstanding_amount - $allocated;
+                $installment->status = (int) $installment->outstanding_amount === 0 ? 'paid' : 'partial';
+                $installment->paid_at = (int) $installment->outstanding_amount === 0 ? now() : $installment->paid_at;
                 $installment->save();
 
                 $remaining -= $allocated;
@@ -57,23 +74,45 @@ class PaymentService
                 }
             }
 
-            $payment->status = 'approved';
-            $payment->approved_by = $manager->id;
-            $payment->approved_at = now();
-            $payment->save();
+            if ($remaining > 0) {
+                $borrower = $loan->borrower()->lockForUpdate()->firstOrFail();
+                $advanceBalance = (int) ($borrower->advanceTransactions()->latest('id')->value('balance_after') ?? 0);
+                BorrowerAdvanceTransaction::create([
+                    'borrower_id' => $borrower->id,
+                    'loan_id' => $loan->id,
+                    'payment_id' => $payment->id,
+                    'created_by' => $manager->id,
+                    'amount' => $remaining,
+                    'balance_after' => $advanceBalance + $remaining,
+                ]);
+            }
 
-            $balance = (int) (CashTransaction::query()->latest('id')->value('balance_after') ?? 0);
-            CashTransaction::create([
-                'created_by' => $manager->id,
-                'type' => 'installment_payment',
-                'source' => 'installment',
-                'direction' => 'in',
-                'amount' => $payment->amount,
-                'balance_after' => $balance + $payment->amount,
-                'loan_id' => $loan->id,
-                'reference' => $payment->getKey() ? 'PAY-' . str_pad((string) $payment->getKey(), 8, '0', STR_PAD_LEFT) : null,
-                'description' => 'Pembayaran cicilan nasabah',
-            ]);
+            $payment->forceFill([
+                'status' => 'approved',
+                'approved_by' => $manager->id,
+                'approved_at' => now(),
+            ])->save();
+
+            ApprovalRequest::query()
+                ->where('approvable_type', Payment::class)
+                ->where('approvable_id', $payment->id)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'approved',
+                    'reviewed_by' => $manager->id,
+                    'reviewed_at' => now(),
+                ]);
+
+            app(CashLedgerService::class)->post(
+                $manager,
+                'installment_payment',
+                'installment',
+                'in',
+                (int) $payment->amount,
+                $loan->id,
+                'PAY-' . str_pad((string) $payment->getKey(), 8, '0', STR_PAD_LEFT),
+                'Pembayaran cicilan nasabah',
+            );
 
             $loanPaid = $loan->installments()->sum('paid_amount');
             if ($loanPaid >= $loan->total_receivable) {
@@ -86,7 +125,44 @@ class PaymentService
                 'action' => 'payment.approved',
                 'entity_type' => Payment::class,
                 'entity_id' => $payment->id,
-                'metadata' => ['amount' => $payment->amount, 'allocations' => $allocations, 'credit_balance' => $remaining],
+                'metadata' => ['amount' => $payment->amount, 'allocations' => $allocations, 'advance_credit' => $remaining],
+                'ip_address' => request()?->ip(),
+            ]);
+
+            return $payment->fresh();
+        });
+    }
+
+    public function rejectPayment(User $manager, int $paymentId): Payment
+    {
+        if (! $manager->isManager()) {
+            throw new RuntimeException('Hanya Manager yang dapat menolak pembayaran.');
+        }
+
+        return DB::transaction(function () use ($manager, $paymentId) {
+            $payment = Payment::query()->lockForUpdate()->findOrFail($paymentId);
+            if ($payment->status !== 'pending') {
+                throw ValidationException::withMessages(['payment' => 'Pembayaran tidak lagi menunggu persetujuan.']);
+            }
+
+            $payment->forceFill(['status' => 'rejected'])->save();
+
+            ApprovalRequest::query()
+                ->where('approvable_type', Payment::class)
+                ->where('approvable_id', $payment->id)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'rejected',
+                    'reviewed_by' => $manager->id,
+                    'reviewed_at' => now(),
+                ]);
+
+            ActivityLog::create([
+                'user_id' => $manager->id,
+                'action' => 'payment.rejected',
+                'entity_type' => Payment::class,
+                'entity_id' => $payment->id,
+                'metadata' => ['amount' => $payment->amount],
                 'ip_address' => request()?->ip(),
             ]);
 
@@ -96,17 +172,17 @@ class PaymentService
 
     private function realizeProfit(User $manager, Loan $loan, Installment $installment): void
     {
-        $interestPerInstallment = (int) intdiv($loan->interest_amount, 12);
-        $alanShare = (int) round($interestPerInstallment * 0.60);
-        $chaloShare = $interestPerInstallment - $alanShare;
-
-        foreach ([['username' => 'alan', 'amount' => $alanShare], ['username' => 'chalo', 'amount' => $chaloShare]] as $share) {
-            $staff = User::query()->where('username', $share['username'])->first();
+        foreach ([
+            ['username' => 'alan', 'amount' => (int) $installment->alan_profit_amount],
+            ['username' => 'chalo', 'amount' => (int) $installment->chalo_profit_amount],
+        ] as $share) {
+            $staff = User::query()->where('username', $share['username'])->lockForUpdate()->first();
             if (! $staff) continue;
 
-            $balance = ProfitBalance::query()->firstOrCreate(['user_id' => $staff->id]);
-            $balance->earned_amount += $share['amount'];
-            $balance->available_amount += $share['amount'];
+            ProfitBalance::query()->firstOrCreate(['user_id' => $staff->id]);
+            $balance = ProfitBalance::query()->where('user_id', $staff->id)->lockForUpdate()->firstOrFail();
+            $balance->earned_amount = (int) $balance->earned_amount + $share['amount'];
+            $balance->available_amount = (int) $balance->available_amount + $share['amount'];
             $balance->save();
 
             ProfitTransaction::create([

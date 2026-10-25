@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Loan extends Model
 {
-    protected $fillable = ['borrower_id', 'created_by', 'loan_code', 'principal_amount', 'administration_fee', 'net_disbursement', 'interest_amount', 'total_receivable', 'installment_count', 'status', 'approved_at', 'approved_by'];
+    protected $fillable = ['borrower_id', 'created_by', 'loan_code', 'principal_amount', 'administration_fee', 'net_disbursement', 'interest_amount', 'total_receivable', 'installment_count', 'status', 'approved_at', 'approved_by', 'rejected_at', 'rejected_by'];
 
     protected function casts(): array
     {
-        return ['approved_at' => 'datetime'];
+        return ['approved_at' => 'datetime', 'rejected_at' => 'datetime'];
     }
 
     public function borrower(): BelongsTo { return $this->belongsTo(Borrower::class); }

@@ -1,114 +1,107 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
-    <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800" />
-                    </a>
-                </div>
+<nav x-data="{ open: false }" class="dk-nav">
+    <div class="dk-sidebar">
+        <a href="{{ route('dashboard') }}" class="dk-brand" aria-label="DKoper, Ringkasan">
+            <span class="dk-brand-mark">D</span>
+            <span class="dk-brand-name"><span class="dk-brand-title">DKoper<span>.</span></span><small>COOPERATIVE FINANCE</small></span>
+        </a>
 
-                <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-                    @if (auth()->user()->isManager() || auth()->user()->isCashier())
-                        <x-nav-link :href="route('cooperative.borrowers')" :active="request()->routeIs('cooperative.borrowers')">{{ __('Nasabah') }}</x-nav-link>
-                        <x-nav-link :href="route('cooperative.loans')" :active="request()->routeIs('cooperative.loans')">{{ __('Pinjaman') }}</x-nav-link>
-                        <x-nav-link :href="route('cooperative.payments')" :active="request()->routeIs('cooperative.payments')">{{ __('Pembayaran') }}</x-nav-link>
-                        @if (auth()->user()->isManager())
-                            <x-nav-link :href="route('cooperative.approvals')" :active="request()->routeIs('cooperative.approvals')">{{ __('Approval') }}</x-nav-link>
-                        @endif
-                    @endif
-                </div>
-            </div>
-
-            <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
-
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
-
-                        <!-- Authentication -->
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
-            </div>
-
-            <!-- Hamburger -->
-            <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">{{ __('Dashboard') }}</x-responsive-nav-link>
+        <div class="dk-sidebar-caption">MENU UTAMA</div>
+        <div class="dk-nav-links">
+            <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
+                <span>Ringkasan</span>
+            </x-nav-link>
             @if (auth()->user()->isManager() || auth()->user()->isCashier())
-                <x-responsive-nav-link :href="route('cooperative.borrowers')" :active="request()->routeIs('cooperative.borrowers')">{{ __('Nasabah') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('cooperative.loans')" :active="request()->routeIs('cooperative.loans')">{{ __('Pinjaman') }}</x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('cooperative.payments')" :active="request()->routeIs('cooperative.payments')">{{ __('Pembayaran') }}</x-responsive-nav-link>
+                <x-nav-link :href="route('cooperative.borrowers')" :active="request()->routeIs('cooperative.borrowers')">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20v-1.5A4.5 4.5 0 0 1 7.5 14h3a4.5 4.5 0 0 1 4.5 4.5V20M16 5.2a3.5 3.5 0 0 1 0 6.6M17 14h.5a3.5 3.5 0 0 1 3.5 3.5V20"/></svg>
+                    <span>Nasabah</span>
+                </x-nav-link>
+                <x-nav-link :href="route('cooperative.loans')" :active="request()->routeIs('cooperative.loans')">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v13H4zM7 6.5V4h10v2.5M8 11h8M8 15h5"/></svg>
+                    <span>Pinjaman</span>
+                </x-nav-link>
+                <x-nav-link :href="route('cooperative.payments')" :active="request()->routeIs('cooperative.payments')">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h4"/></svg>
+                    <span>Pembayaran</span>
+                </x-nav-link>
                 @if (auth()->user()->isManager())
-                    <x-responsive-nav-link :href="route('cooperative.approvals')" :active="request()->routeIs('cooperative.approvals')">{{ __('Approval') }}</x-responsive-nav-link>
+                    <div class="dk-sidebar-caption dk-sidebar-caption-spaced">PENGELOLAAN</div>
+                    <x-nav-link :href="route('cooperative.approvals')" :active="request()->routeIs('cooperative.approvals')">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 20 7v5.2c0 4.4-3.1 7.1-8 8.8-4.9-1.7-8-4.4-8-8.8V7z"/><path d="m8.5 12 2.2 2.2 4.8-4.8"/></svg>
+                        <span>Persetujuan</span>
+                    </x-nav-link>
+                    <x-nav-link :href="route('cooperative.finances')" :active="request()->routeIs('cooperative.finances')">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5h16M6.5 16V10M12 16V5M17.5 16v-4"/></svg>
+                        <span>Keuangan</span>
+                    </x-nav-link>
+                    <x-nav-link :href="route('cooperative.profits')" :active="request()->routeIs('cooperative.profits')">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M15 8.5c-.7-.7-1.6-1-2.8-1-1.4 0-2.4.7-2.4 1.8 0 2.8 5.3 1.1 5.3 4.1 0 1.2-1.1 2.1-2.8 2.1-1.2 0-2.3-.4-3.2-1.2M12 5.5v13"/></svg>
+                        <span>Bonus staf</span>
+                    </x-nav-link>
+                    <x-nav-link :href="route('cooperative.activity-logs')" :active="request()->routeIs('cooperative.activity-logs')">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v14H5zM8 9h8M8 12.5h8M8 16h5M8 3v5M16 3v5"/></svg>
+                        <span>Aktivitas</span>
+                    </x-nav-link>
                 @endif
             @endif
         </div>
 
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+        <div class="dk-sidebar-spacer"></div>
+        <div class="dk-sidebar-footer">
+            <span class="dk-user-avatar">{{ mb_substr(Auth::user()->name, 0, 1) }}</span>
+            <div class="dk-sidebar-user">
+                <strong>{{ Auth::user()->name }}</strong>
+                <small>{{ ucfirst(Auth::user()->role) }}</small>
             </div>
+            <x-dropdown align="right" width="48">
+                <x-slot name="trigger">
+                    <button class="dk-user-trigger" type="button" aria-label="Buka menu akun">
+                        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="4" cy="10" r="1"/><circle cx="10" cy="10" r="1"/><circle cx="16" cy="10" r="1"/></svg>
+                    </button>
+                </x-slot>
+                <x-slot name="content">
+                    <x-dropdown-link :href="route('profile.edit')">Profil</x-dropdown-link>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">Keluar</x-dropdown-link>
+                    </form>
+                </x-slot>
+            </x-dropdown>
+        </div>
+    </div>
 
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
+    <div class="dk-mobile-bar">
+        <a href="{{ route('dashboard') }}" class="dk-brand" aria-label="DKoper, Ringkasan">
+            <span class="dk-brand-mark">D</span>
+            <span class="dk-brand-name"><span class="dk-brand-title">DKoper<span>.</span></span><small>COOPERATIVE FINANCE</small></span>
+        </a>
+        <button class="dk-menu-toggle" type="button" @click="open = ! open" :aria-expanded="open.toString()" aria-label="Buka navigasi">
+            <svg x-show="!open" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+            <svg x-show="open" x-cloak viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
+    </div>
 
-                <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
-            </div>
+    <div class="dk-mobile-overlay" x-show="open" x-transition.opacity x-cloak @click="open = false"></div>
+    <div class="dk-mobile-menu" x-show="open" x-transition x-cloak>
+        <div class="dk-mobile-caption">MENU</div>
+        <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">Ringkasan</x-responsive-nav-link>
+        @if (auth()->user()->isManager() || auth()->user()->isCashier())
+            <x-responsive-nav-link :href="route('cooperative.borrowers')" :active="request()->routeIs('cooperative.borrowers')">Nasabah</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('cooperative.loans')" :active="request()->routeIs('cooperative.loans')">Pinjaman</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('cooperative.payments')" :active="request()->routeIs('cooperative.payments')">Pembayaran</x-responsive-nav-link>
+            @if (auth()->user()->isManager())
+                <div class="dk-mobile-caption dk-mobile-caption-spaced">PENGELOLAAN</div>
+                <x-responsive-nav-link :href="route('cooperative.approvals')" :active="request()->routeIs('cooperative.approvals')">Persetujuan</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('cooperative.finances')" :active="request()->routeIs('cooperative.finances')">Keuangan</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('cooperative.profits')" :active="request()->routeIs('cooperative.profits')">Bonus staf</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('cooperative.activity-logs')" :active="request()->routeIs('cooperative.activity-logs')">Aktivitas</x-responsive-nav-link>
+            @endif
+        @endif
+        <div class="dk-mobile-user">
+            <span class="dk-user-avatar">{{ mb_substr(Auth::user()->name, 0, 1) }}</span>
+            <div><strong>{{ Auth::user()->name }}</strong><small>{{ ucfirst(Auth::user()->role) }}</small></div>
+            <a href="{{ route('profile.edit') }}">Profil</a>
+            <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit">Keluar</button></form>
         </div>
     </div>
 </nav>

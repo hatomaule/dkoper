@@ -19,4 +19,9 @@ class Borrower extends Model
     {
         return $this->hasMany(Loan::class);
     }
+
+    public function advanceTransactions(): HasMany
+    {
+        return $this->hasMany(BorrowerAdvanceTransaction::class);
+    }
 }
