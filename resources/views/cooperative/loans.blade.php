@@ -43,7 +43,7 @@
                                     <td class="font-bold">{{ $loan->borrower->full_name }}</td>
                                     <td>Rp {{ number_format($loan->principal_amount, 0, ',', '.') }}</td>
                                     <td>Rp {{ number_format($loan->total_receivable, 0, ',', '.') }}</td>
-                                    <td><span class="dk-status" data-status="{{ $loan->status }}">{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</span></td>
+                                    <td><span class="dk-status" data-status="{{ $loan->status }}">{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</span></td>
                                 </tr>
                             @empty
                                 <tr><td colspan="4" class="py-8 text-center text-slate-500">Belum ada pinjaman.</td></tr>
@@ -56,7 +56,7 @@
                         <article class="dk-payment-card" data-table-row>
                             <div>
                                 <strong>{{ $loan->borrower->full_name }}</strong>
-                                <span class="dk-status" data-status="{{ $loan->status }}">{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</span>
+                                <span class="dk-status" data-status="{{ $loan->status }}">{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</span>
                             </div>
                             <b>Rp {{ number_format((int) $loan->principal_amount, 0, ',', '.') }}</b>
                             <small>Total tagihan Rp {{ number_format((int) $loan->total_receivable, 0, ',', '.') }}</small>

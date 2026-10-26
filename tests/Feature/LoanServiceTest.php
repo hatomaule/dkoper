@@ -126,10 +126,36 @@ class LoanServiceTest extends TestCase
         ]);
         $loan = app(LoanService::class)->createLoan($cashier, $borrower->id, 500_000);
 
-        app(LoanService::class)->rejectLoan($manager, $loan->id);
+        app(LoanService::class)->rejectLoan($manager, $loan->id, 'Data pengajuan tidak lengkap.');
 
         $this->assertSame('rejected', $loan->fresh()->status);
         $this->assertDatabaseMissing('cash_transactions', ['loan_id' => $loan->id]);
         $this->assertDatabaseHas('approval_requests', ['approvable_id' => $loan->id, 'status' => 'rejected']);
+        $approval = \App\Models\ApprovalRequest::where('approvable_id', $loan->id)->firstOrFail();
+        $this->assertSame('Data pengajuan tidak lengkap.', $approval->payload['rejection_reason']);
+        $this->assertSame(
+            'Data pengajuan tidak lengkap.',
+            \App\Models\ActivityLog::where('entity_id', $loan->id)->latest('id')->firstOrFail()->metadata['rejection_reason'],
+        );
+    }
+
+    public function test_rejecting_a_loan_requires_an_auditable_reason(): void
+    {
+        $manager = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
+        $cashier = User::factory()->create(['username' => 'admin', 'role' => 'kasir']);
+        $borrower = Borrower::create([
+            'full_name' => 'Nasabah Alasan',
+            'borrower_code' => 'DK_108',
+            'phone' => '081299998878',
+            'status' => 'active',
+        ]);
+        $loan = app(LoanService::class)->createLoan($cashier, $borrower->id, 500_000);
+
+        $this->actingAs($manager)
+            ->from(route('cooperative.approvals'))
+            ->post(route('cooperative.loans.reject', $loan))
+            ->assertSessionHasErrors('reason');
+
+        $this->assertSame('pending', $loan->fresh()->status);
     }
 }

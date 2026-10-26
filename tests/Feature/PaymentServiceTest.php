@@ -159,4 +159,51 @@ class PaymentServiceTest extends TestCase
             'balance_after' => 5_000,
         ]);
     }
+
+    public function test_owner_correction_can_move_approved_payment_to_another_borrower_contract_and_installment(): void
+    {
+        $manager = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
+        $oldBorrower = Borrower::create([
+            'full_name' => 'Nasabah Kontrak Lama',
+            'borrower_code' => 'DK_106',
+            'phone' => '081299998880',
+            'status' => 'active',
+        ]);
+        $newBorrower = Borrower::create([
+            'full_name' => 'Nasabah Kontrak Baru',
+            'borrower_code' => 'DK_107',
+            'phone' => '081299998879',
+            'status' => 'active',
+        ]);
+        $oldLoan = app(LoanService::class)->createApprovedLoan($manager, $oldBorrower->id, 1_000_000);
+        $newLoan = app(LoanService::class)->createApprovedLoan($manager, $newBorrower->id, 1_000_000);
+        $oldInstallment = $oldLoan->installments()->where('sequence', 1)->firstOrFail();
+        $newInstallment = $newLoan->installments()->where('sequence', 2)->firstOrFail();
+        $payment = Payment::create([
+            'loan_id' => $oldLoan->id,
+            'installment_id' => $oldInstallment->id,
+            'recorded_by' => $manager->id,
+            'amount' => $oldInstallment->scheduled_amount,
+            'nominal_source' => 'manual',
+            'status' => 'pending',
+        ]);
+        app(PaymentService::class)->approvePayment($manager, $payment->id);
+
+        app(PaymentService::class)->correctApprovedPayment(
+            $manager,
+            $payment->id,
+            (int) $newInstallment->scheduled_amount,
+            $newLoan->id,
+            $newInstallment->id,
+        );
+
+        $this->assertSame($newLoan->id, (int) $payment->fresh()->loan_id);
+        $this->assertSame($newInstallment->id, (int) $payment->fresh()->installment_id);
+        $this->assertSame('pending', $oldInstallment->fresh()->status);
+        $this->assertSame('paid', $newInstallment->fresh()->status);
+        $this->assertDatabaseHas('cash_transactions', [
+            'reference' => 'PAY-' . str_pad((string) $payment->id, 8, '0', STR_PAD_LEFT),
+            'loan_id' => $newLoan->id,
+        ]);
+    }
 }

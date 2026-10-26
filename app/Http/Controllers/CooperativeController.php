@@ -6,6 +6,7 @@ use App\Models\ApprovalRequest;
 use App\Models\ActivityLog;
 use App\Models\Borrower;
 use App\Models\CashTransaction;
+use App\Models\Installment;
 use App\Models\Loan;
 use App\Models\Payment;
 use App\Models\ProfitBalance;
@@ -30,7 +31,7 @@ class CooperativeController extends Controller
     {
         $this->authorizeStaff();
         $perPage = $this->perPage(request());
-        $query = Borrower::with('loans')->latest();
+        $query = Borrower::with(['user', 'loans.installments'])->orderByDesc('created_at')->orderByDesc('id');
 
         return view('cooperative.borrowers', [
             'borrowers' => $perPage === 'all' ? $query->get() : $query->paginate($perPage)->withQueryString(),
@@ -40,7 +41,7 @@ class CooperativeController extends Controller
 
     public function storeBorrower(Request $request, BorrowerService $service): RedirectResponse
     {
-        abort_unless($request->user()->isManager(), 403);
+        abort_unless($request->user()->isManager() || $request->user()->isCashier(), 403);
         $validated = $request->validate([
             'full_name' => ['required', 'string', 'max:150'],
             'phone' => ['required', 'string', 'max:30', 'unique:borrowers,phone', 'unique:users,phone'],
@@ -98,7 +99,9 @@ class CooperativeController extends Controller
 
     public function updateStaffPassword(Request $request, User $user): RedirectResponse
     {
-        abort_unless($request->user()->isManager(), 403);
+        $isOwner = $request->user()->isManager();
+        $isOwnAccount = $request->user()->id === $user->id;
+        abort_unless($isOwner || $isOwnAccount, 403);
         abort_unless(in_array($user->username, ['owner', 'admin'], true) && ($user->isManager() || $user->isCashier()), 404);
         $validated = $request->validate([
             'password' => ['required', 'confirmed', Password::defaults()],
@@ -125,7 +128,7 @@ class CooperativeController extends Controller
     {
         $this->authorizeStaff();
         $perPage = $this->perPage(request());
-        $query = Loan::with('borrower')->latest();
+        $query = Loan::with('borrower')->orderByDesc('created_at')->orderByDesc('id');
 
         return view('cooperative.loans', [
             'borrowers' => Borrower::with('user')->orderBy('full_name')->get(),
@@ -149,21 +152,27 @@ class CooperativeController extends Controller
     public function payments(): View
     {
         $this->authorizeStaff();
-        $perPage = request()->query('per_page', '5');
-        $perPage = $perPage === 'all' ? 'all' : (int) $perPage;
-        abort_unless($perPage === 'all' || in_array($perPage, [5, 10, 25, 50], true), 422);
+        $perPage = $this->perPage(request());
 
-        $payments = Payment::with(['loan.borrower', 'installment'])->latest()->when(
-            $perPage !== 'all',
-            fn ($query) => $query->paginate($perPage)->withQueryString(),
-            fn ($query) => $query->get(),
-        );
-
-        $loans = Loan::with(['borrower', 'installments' => fn ($query) => $query->where('outstanding_amount', '>', 0)->orderBy('sequence')])->where('status', 'active')->latest()->get();
+        $query = Payment::with(['loan.borrower', 'installment'])->orderByDesc('created_at')->orderByDesc('id');
+        $payments = $perPage === 'all' ? $query->get() : $query->paginate($perPage)->withQueryString();
+        $paymentLoans = Loan::with([
+            'borrower',
+            'installments' => fn ($query) => $query->where('outstanding_amount', '>', 0)->orderBy('sequence'),
+        ])->where('status', 'active')
+            ->whereHas('installments', fn ($query) => $query->where('outstanding_amount', '>', 0))
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+        $correctionLoans = Loan::with(['borrower', 'installments' => fn ($query) => $query->orderBy('sequence')])
+            ->whereIn('status', ['active', 'paid'])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
 
         return view('cooperative.payments', [
-            'loans' => $loans,
-            'firstInstallment' => $loans->first()?->installments->first(),
+            'paymentLoans' => $paymentLoans,
+            'correctionLoans' => $correctionLoans,
             'payments' => $payments,
             'perPage' => $perPage,
         ]);
@@ -174,28 +183,19 @@ class CooperativeController extends Controller
         $this->authorizeStaff();
         $validated = $request->validate([
             'loan_id' => ['required', Rule::exists('loans', 'id')->where('status', 'active')],
+            'installment_id' => ['required', 'integer'],
             'nominal_source' => ['required', 'in:system,manual'],
             'payment_method' => ['required', 'in:cash,transfer'],
             'amount' => ['required_if:nominal_source,manual', 'nullable', 'integer', 'min:1'],
-            'installment_id' => ['required_if:nominal_source,system', 'nullable', 'integer'],
             'proof' => ['required_if:payment_method,transfer', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ]);
 
-        $installment = null;
+        $installment = Installment::query()
+            ->where('loan_id', $validated['loan_id'])
+            ->where('id', $validated['installment_id'])
+            ->where('outstanding_amount', '>', 0)
+            ->firstOrFail();
         if ($validated['nominal_source'] === 'system') {
-            $installment = \App\Models\Installment::query()
-                ->where('loan_id', $validated['loan_id'])
-                ->where('id', $validated['installment_id'])
-                ->where('outstanding_amount', '>', 0)
-                ->firstOrFail();
-            $oldestOutstandingId = \App\Models\Installment::query()
-                ->where('loan_id', $validated['loan_id'])
-                ->where('outstanding_amount', '>', 0)
-                ->orderBy('sequence')
-                ->value('id');
-            if ((int) $installment->id !== (int) $oldestOutstandingId) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['installment_id' => 'Nominal sistem hanya berlaku untuk cicilan tertua yang belum lunas.']);
-            }
             $validated['amount'] = (int) $installment->outstanding_amount;
         }
 
@@ -209,7 +209,7 @@ class CooperativeController extends Controller
 
         $payment = Payment::create([
             'loan_id' => $validated['loan_id'],
-            'installment_id' => $installment?->id,
+            'installment_id' => $installment->id,
             'recorded_by' => $request->user()->id,
             'amount' => $validated['amount'],
             'nominal_source' => $validated['nominal_source'],
@@ -252,25 +252,24 @@ class CooperativeController extends Controller
     public function updatePayment(Request $request, Payment $payment, PaymentService $service): RedirectResponse
     {
         abort_unless($request->user()->isManager(), 403);
-        $validated = $request->validate(['amount' => ['required', 'integer', 'min:1']]);
-
-        if ($payment->status === 'pending') {
-            $oldAmount = (int) $payment->amount;
-            $payment->update([
-                'amount' => (int) $validated['amount'],
-                'nominal_source' => 'manual',
-            ]);
-            ActivityLog::create([
-                'user_id' => $request->user()->id,
-                'action' => 'payment.corrected',
-                'entity_type' => Payment::class,
-                'entity_id' => $payment->id,
-                'metadata' => ['old_amount' => $oldAmount, 'new_amount' => (int) $validated['amount']],
-                'ip_address' => $request->ip(),
-            ]);
-        } else {
-            $service->correctApprovedPayment($request->user(), $payment->id, (int) $validated['amount']);
+        $validated = $request->validate([
+            'loan_id' => ['required', 'exists:loans,id'],
+            'installment_id' => ['required', 'integer'],
+            'amount' => ['required', 'integer', 'min:1'],
+        ]);
+        $targetLoan = Loan::query()->findOrFail($validated['loan_id']);
+        if (! in_array($targetLoan->status, ['active', 'paid'], true)
+            || ! Installment::query()->where('loan_id', $targetLoan->id)->whereKey($validated['installment_id'])->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['installment_id' => 'Pilih cicilan yang sesuai dengan kontrak pinjaman.']);
         }
+
+        $service->correctApprovedPayment(
+            $request->user(),
+            $payment->id,
+            (int) $validated['amount'],
+            (int) $targetLoan->id,
+            (int) $validated['installment_id'],
+        );
 
         return redirect()->route('cooperative.payments')->with('status', 'Nominal setoran berhasil dikoreksi.');
     }
@@ -279,7 +278,10 @@ class CooperativeController extends Controller
     {
         abort_unless(auth()->user()?->isManager(), 403);
         $perPage = $this->perPage(request());
-        $query = ApprovalRequest::with(['requester', 'approvable'])->where('status', 'pending')->latest();
+        $query = ApprovalRequest::with(['requester', 'approvable'])
+            ->where('status', 'pending')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
 
         return view('cooperative.approvals', [
             'approvalRequests' => $perPage === 'all' ? $query->get() : $query->paginate($perPage)->withQueryString(),
@@ -298,7 +300,8 @@ class CooperativeController extends Controller
     public function rejectPayment(Request $request, Payment $payment, PaymentService $service): RedirectResponse
     {
         abort_unless($request->user()->isManager(), 403);
-        $service->rejectPayment($request->user(), $payment->id);
+        $validated = $request->validate(['reason' => ['required', 'string', 'min:3', 'max:1000']]);
+        $service->rejectPayment($request->user(), $payment->id, trim($validated['reason']));
         return redirect()->route('cooperative.approvals')->with('status', 'Pembayaran ditolak.');
     }
 
@@ -313,7 +316,8 @@ class CooperativeController extends Controller
     public function rejectLoan(Request $request, Loan $loan, LoanService $service): RedirectResponse
     {
         abort_unless($request->user()->isManager(), 403);
-        $service->rejectLoan($request->user(), $loan->id);
+        $validated = $request->validate(['reason' => ['required', 'string', 'min:3', 'max:1000']]);
+        $service->rejectLoan($request->user(), $loan->id, trim($validated['reason']));
 
         return redirect()->route('cooperative.approvals')->with('status', "Pinjaman {$loan->loan_code} ditolak.");
     }
@@ -321,10 +325,30 @@ class CooperativeController extends Controller
     public function cashHistory(Request $request, CashLedgerService $service): View
     {
         abort_unless($request->user()->isManager(), 403);
+        $now = now('Asia/Singapore');
+        $chartStart = $now->copy()->subMonths(11)->startOfMonth();
+        $chartEnd = $now->copy()->endOfMonth();
+        $cashRows = CashTransaction::query()
+            ->whereBetween('created_at', [$chartStart->copy()->utc(), $chartEnd->copy()->utc()])
+            ->get(['amount', 'direction', 'created_at']);
+        $monthlyCashFlow = collect(range(11, 0))->map(function (int $monthsAgo) use ($now, $cashRows) {
+            $month = $now->copy()->subMonths($monthsAgo)->startOfMonth();
+            $transactions = $cashRows->filter(
+                fn (CashTransaction $transaction) => $transaction->created_at->copy()->timezone('Asia/Singapore')->format('Y-m') === $month->format('Y-m'),
+            );
+
+            return [
+                'label' => $month->translatedFormat('M'),
+                'in' => (int) $transactions->where('direction', 'in')->sum('amount'),
+                'out' => (int) $transactions->where('direction', 'out')->sum('amount'),
+            ];
+        });
 
         return view('cooperative.finances', [
             'balance' => $service->balance(),
-            'transactions' => $this->paginated(CashTransaction::with(['creator', 'loan.borrower'])->latest(), $request),
+            'monthlyCashFlow' => $monthlyCashFlow,
+            'maxMonthlyCashFlow' => max(1, (int) $monthlyCashFlow->max(fn ($month) => $month['in'] + $month['out'])),
+            'transactions' => $this->paginated(CashTransaction::with(['creator', 'loan.borrower'])->orderByDesc('created_at')->orderByDesc('id'), $request),
         ]);
     }
 
@@ -360,18 +384,19 @@ class CooperativeController extends Controller
 
     public function profits(Request $request): View
     {
-        abort_unless($request->user()->isManager(), 403);
+        abort_unless($request->user()->isManager() || $request->user()->isCashier(), 403);
 
         return view('cooperative.profits', [
             'balances' => ProfitBalance::with('user')->whereHas('user', fn ($query) => $query->whereIn('role', ['manager', 'kasir']))->orderBy('user_id')->get(),
-            'accounts' => User::query()->whereIn('username', ['owner', 'admin'])->orderBy('username')->get(),
-            'transactions' => $this->paginated(ProfitTransaction::with(['user', 'creator'])->latest(), $request),
+            'transactions' => $this->paginated(ProfitTransaction::with(['user', 'creator'])->orderByDesc('created_at')->orderByDesc('id'), $request),
         ]);
     }
 
     public function withdrawProfit(Request $request, User $user, ProfitService $service): RedirectResponse
     {
-        abort_unless($request->user()->isManager(), 403);
+        $canManageAny = $request->user()->isManager();
+        $canSelf = $request->user()->id === $user->id;
+        abort_unless($canManageAny || $canSelf, 403);
         $validated = $request->validate(['amount' => ['required', 'integer', 'min:1']]);
         $service->withdraw($request->user(), $user->id, (int) $validated['amount']);
 
@@ -390,10 +415,10 @@ class CooperativeController extends Controller
 
     public function activityLogs(Request $request): View
     {
-        abort_unless($request->user()->isManager(), 403);
+        abort_unless($request->user()->isManager() || $request->user()->isCashier(), 403);
 
         return view('cooperative.activity-logs', [
-            'logs' => $this->paginated(ActivityLog::with('user')->latest(), $request),
+            'logs' => $this->paginated(ActivityLog::with('user')->orderByDesc('created_at')->orderByDesc('id'), $request),
         ]);
     }
 

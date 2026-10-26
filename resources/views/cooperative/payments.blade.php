@@ -10,13 +10,17 @@
                 @if (session('status'))<div class="dk-form-success">{{ session('status') }}</div>@endif
                 <label class="mt-5 block text-xs font-bold uppercase text-slate-600" for="payment-loan">Pinjaman</label>
                 <select id="payment-loan" name="loan_id" required class="mt-2 w-full" data-loan-select>
-                    @forelse ($loans as $loan)
-                        <option value="{{ $loan->id }}" data-installment="{{ $loan->installments->first()?->id ?? '' }}" data-sequence="{{ $loan->installments->first()?->sequence ?? '' }}" data-amount="{{ $loan->installments->first()?->outstanding_amount ?? 0 }}">
-                            {{ $loan->borrower->full_name }}
+                    @forelse ($paymentLoans as $loan)
+                        <option value="{{ $loan->id }}" data-installments="{{ $loan->installments->map(fn ($installment) => ['id' => $installment->id, 'sequence' => $installment->sequence, 'amount' => $installment->outstanding_amount])->values()->toJson() }}">
+                            {{ $loan->borrower->full_name }} · {{ $loan->loan_code }}
                         </option>
                     @empty
-                        <option value="">Tidak ada pinjaman aktif dengan setoran tersisa</option>
+                        <option value="" data-installments="[]">Tidak ada pinjaman aktif dengan cicilan tersisa</option>
                     @endforelse
+                </select>
+                <label class="mt-4 block text-xs font-bold uppercase text-slate-600" for="payment-installment">Cicilan yang dibayar</label>
+                <select id="payment-installment" name="installment_id" required class="mt-2 w-full" data-installment-select>
+                    <option value="">Pilih cicilan</option>
                 </select>
                 <label class="mt-4 block text-xs font-bold uppercase text-slate-600" for="nominal-source">Jenis Nominal</label>
                 <select id="nominal-source" name="nominal_source" required class="mt-2 w-full" data-nominal-source>
@@ -24,9 +28,8 @@
                 </select>
                 <div class="dk-system-installment mt-3" data-system-installment>
                     <span>SETORAN OTOMATIS</span>
-                    <strong data-installment-label>{{ $firstInstallment ? 'Setoran ke-'.$firstInstallment->sequence : 'Tidak ada cicilan tersisa' }}</strong>
-                    <b data-installment-amount>Rp {{ number_format((int) ($firstInstallment?->outstanding_amount ?? 0), 0, ',', '.') }}</b>
-                    <input type="hidden" name="installment_id" value="{{ $firstInstallment?->id }}">
+                    <strong data-installment-label>Pilih cicilan</strong>
+                    <b data-installment-amount>Rp 0</b>
                 </div>
                 <div class="mt-4 hidden" data-manual-amount>
                     <label class="block text-xs font-bold uppercase text-slate-600" for="payment-amount">Nominal Diterima (Rp)</label>
@@ -78,7 +81,7 @@
                                     if (strlen($phone) < 10 || strlen($phone) > 15) $phone = '';
                                 @endphp
                                 <tr data-table-row>
-                                    <td>{{ $payment->created_at->format('d/m/Y H:i') }}</td>
+                                    <td class="dk-time-cell"><span>{{ $payment->created_at->format('H:i') }}</span><small>{{ $payment->created_at->format('d/m/Y') }}</small></td>
                                     <td>{{ $payment->loan->borrower->full_name }}</td>
                                     <td>{{ $payment->installment ? 'Cicilan ke-'.$payment->installment->sequence : 'Pembayaran' }}</td>
                                     <td class="font-bold">Rp {{ number_format((int) $payment->amount, 0, ',', '.') }}</td>
@@ -94,7 +97,7 @@
                                             <span class="text-xs text-slate-400" title="Nomor WA belum tersedia">WA tidak tersedia</span>
                                         @endif
                                         @if (auth()->user()->isManager() && $payment->status !== 'rejected')
-                                            <button type="button" class="dk-inline-action" data-payment-edit data-url="{{ route('cooperative.payments.update', $payment) }}" data-amount="{{ $payment->amount }}">Koreksi</button>
+                                            <button type="button" class="dk-inline-action" data-payment-edit data-url="{{ route('cooperative.payments.update', $payment) }}" data-amount="{{ $payment->amount }}" data-loan-id="{{ $payment->loan_id }}" data-installment-id="{{ $payment->installment_id }}">Koreksi</button>
                                         @endif
                                     </td>
                                 </tr>
@@ -119,7 +122,7 @@
                             <small>{{ $payment->created_at->format('d/m/Y H:i') }} · {{ $payment->payment_method === 'transfer' ? 'Transfer' : 'Tunai' }}</small>
                             @if ($payment->proof_path)<a class="dk-inline-action" href="{{ route('cooperative.payments.proof', $payment) }}" target="_blank" rel="noopener">Lihat bukti transfer</a>@endif
                             @if ($payment->status === 'approved' && $cardPhone !== '')<a class="dk-inline-action" href="https://wa.me/{{ $cardPhone }}?text={{ rawurlencode($cardReceipt) }}" target="_blank" rel="noopener">Kirim bukti via WA</a>@endif
-                            @if (auth()->user()->isManager() && $payment->status !== 'rejected')<button type="button" class="dk-inline-action w-fit" data-payment-edit data-url="{{ route('cooperative.payments.update', $payment) }}" data-amount="{{ $payment->amount }}">Koreksi setoran</button>@endif
+                            @if (auth()->user()->isManager() && $payment->status !== 'rejected')<button type="button" class="dk-inline-action w-fit" data-payment-edit data-url="{{ route('cooperative.payments.update', $payment) }}" data-amount="{{ $payment->amount }}" data-loan-id="{{ $payment->loan_id }}" data-installment-id="{{ $payment->installment_id }}">Koreksi setoran</button>@endif
                         </article>
                     @endforeach
                 </div>
@@ -133,9 +136,19 @@
                             @method('PATCH')
                             <button type="button" class="dk-modal-close" aria-label="Tutup" data-close-dialog>×</button>
                             <p class="dk-eyebrow">KOREKSI SETORAN</p>
-                            <h3>Perbarui nominal setoran</h3>
+                            <h3>Koreksi setoran</h3>
+                            <label>Nasabah / kontrak
+                                <select name="loan_id" required data-edit-loan-select>
+                                    @foreach ($correctionLoans as $loan)
+                                        <option value="{{ $loan->id }}" data-installments="{{ $loan->installments->map(fn ($installment) => ['id' => $installment->id, 'sequence' => $installment->sequence, 'amount' => $installment->outstanding_amount])->values()->toJson() }}">{{ $loan->borrower->full_name }} · {{ $loan->loan_code }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label>Cicilan
+                                <select name="installment_id" required data-edit-installment-select></select>
+                            </label>
                             <label>Nominal yang benar (Rp)<input type="text" name="amount" required inputmode="numeric" data-format-rupiah data-min="1"></label>
-                            <p class="dk-modal-note">Saldo kas, cicilan, dan bonus akan dihitung ulang sesuai nominal baru.</p>
+                            <p class="dk-modal-note">Nasabah dan kontrak mengikuti pilihan di atas. Saldo kas, cicilan, bonus, dan uang muka akan dihitung ulang.</p>
                             <button type="submit" class="dk-button-primary">Simpan koreksi</button>
                         </form>
                     </dialog>

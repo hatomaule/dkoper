@@ -153,13 +153,13 @@ class LoanService
         });
     }
 
-    public function rejectLoan(User $manager, int $loanId): Loan
+    public function rejectLoan(User $manager, int $loanId, string $reason): Loan
     {
         if (! $manager->isManager()) {
             throw new RuntimeException('Hanya Manager yang dapat menolak pinjaman.');
         }
 
-        return DB::transaction(function () use ($manager, $loanId) {
+        return DB::transaction(function () use ($manager, $loanId, $reason) {
             $loan = Loan::query()->lockForUpdate()->findOrFail($loanId);
 
             if ($loan->status !== 'pending') {
@@ -173,13 +173,23 @@ class LoanService
             ])->save();
 
             $this->reviewApproval($manager, $loan, 'rejected');
+            $approval = ApprovalRequest::query()
+                ->where('approvable_type', Loan::class)
+                ->where('approvable_id', $loan->id)
+                ->where('status', 'rejected')
+                ->latest('id')
+                ->first();
+            if ($approval) {
+                $approval->payload = array_merge((array) $approval->payload, ['rejection_reason' => $reason]);
+                $approval->save();
+            }
 
             ActivityLog::create([
                 'user_id' => $manager->id,
                 'action' => 'loan.rejected',
                 'entity_type' => Loan::class,
                 'entity_id' => $loan->id,
-                'metadata' => ['principal_amount' => $loan->principal_amount],
+                'metadata' => ['principal_amount' => $loan->principal_amount, 'rejection_reason' => $reason],
                 'ip_address' => request()?->ip(),
             ]);
 

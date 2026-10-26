@@ -2,10 +2,10 @@
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Nasabah</h2></x-slot>
     <div class="bg-slate-100 min-h-[calc(100vh-65px)] py-8 px-4">
         <div class="mx-auto max-w-7xl grid items-stretch gap-5 lg:grid-cols-[minmax(240px,290px)_minmax(0,1fr)]" data-table-tools x-data="{ passwordOpen:false, passwordMode:'reset', borrowerId:'', borrowerName:'' }" @borrower-password-open.window="passwordOpen=true; borrowerId=$event.detail.id; borrowerName=$event.detail.name; passwordMode='reset'">
-            @if (auth()->user()->isManager())
+            @if (auth()->user()->isManager() || auth()->user()->isCashier())
                 <form method="POST" action="{{ route('cooperative.borrowers.store') }}" class="dk-form-panel self-start">
                     @csrf
-                    <h3 class="font-bold text-slate-900">Tambah Nasabah & Akun</h3>
+                    <h3 class="font-bold text-slate-900">Registrasi</h3>
                     <label class="mt-5 block text-xs font-bold uppercase text-slate-600">Nama Lengkap</label>
                     <input name="full_name" required value="{{ old('full_name') }}" class="mt-2 w-full rounded-md border-slate-300">
                     <label class="mt-4 block text-xs font-bold uppercase text-slate-600">Nomor HP</label>
@@ -28,24 +28,43 @@
                 </div>
                 <div class="overflow-x-auto dk-table-view" data-table-view="table">
                     <table class="w-full text-left text-sm">
-                        <thead><tr><th>Nama</th><th>Username</th><th>HP</th><th>Pinjaman</th><th>Aksi</th></tr></thead>
+                        <thead><tr><th>Nama</th><th>Username</th><th>HP</th><th>Pinjaman</th><th>Total tagihan</th><th>Total dibayar</th><th>Aksi</th></tr></thead>
                         <tbody>
                             @forelse ($borrowers as $borrower)
+                                @php
+                                    $accountLoans = $borrower->loans->whereIn('status', ['active', 'paid']);
+                                    $totalBilled = (int) $accountLoans->sum('total_receivable');
+                                    $totalPaid = (int) $accountLoans->sum(fn ($loan) => $loan->installments->sum('paid_amount'));
+                                @endphp
                                 <tr data-table-row>
-                                    <td class="font-bold">{{ $borrower->full_name }}</td><td>{{ $borrower->user?->username }}</td><td>{{ $borrower->phone ?: '—' }}</td><td>{{ $borrower->loans->count() }}</td>
+                                    <td class="font-bold">{{ $borrower->full_name }}</td>
+                                    <td>{{ $borrower->user?->username }}</td>
+                                    <td>{{ $borrower->phone ?: '—' }}</td>
+                                    <td>{{ $borrower->loans->count() }}</td>
+                                    <td class="whitespace-nowrap font-semibold">Rp {{ number_format($totalBilled, 0, ',', '.') }}</td>
+                                    <td class="whitespace-nowrap font-semibold">Rp {{ number_format($totalPaid, 0, ',', '.') }}</td>
                                     <td>@if ($borrower->user)<button type="button" class="dk-inline-action" @click="$dispatch('borrower-password-open', { id: {{ $borrower->id }}, name: @js($borrower->full_name) })">Password</button>@endif</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="py-8 text-center text-slate-500">Belum ada nasabah.</td></tr>
+                                <tr><td colspan="7" class="py-8 text-center text-slate-500">Belum ada nasabah.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
                 <div class="dk-payment-cards dk-table-view" data-table-view="cards" hidden>
                     @foreach ($borrowers as $borrower)
+                        @php
+                            $accountLoans = $borrower->loans->whereIn('status', ['active', 'paid']);
+                            $totalBilled = (int) $accountLoans->sum('total_receivable');
+                            $totalPaid = (int) $accountLoans->sum(fn ($loan) => $loan->installments->sum('paid_amount'));
+                        @endphp
                         <article class="dk-payment-card" data-table-row>
                             <div><strong>{{ $borrower->full_name }}</strong><span>{{ $borrower->loans->count() }} pinjaman</span></div>
                             <p>{{ $borrower->user?->username }} · {{ $borrower->phone ?: 'Nomor HP belum diisi' }}</p>
+                            <dl class="dk-borrower-totals">
+                                <div><dt>Total tagihan</dt><dd>Rp {{ number_format($totalBilled, 0, ',', '.') }}</dd></div>
+                                <div><dt>Total dibayar</dt><dd>Rp {{ number_format($totalPaid, 0, ',', '.') }}</dd></div>
+                            </dl>
                             @if ($borrower->user)<button type="button" class="dk-inline-action w-fit" @click="$dispatch('borrower-password-open', { id: {{ $borrower->id }}, name: @js($borrower->full_name) })">Kelola password</button>@endif
                         </article>
                     @endforeach

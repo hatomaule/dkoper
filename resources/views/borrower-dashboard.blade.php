@@ -8,31 +8,38 @@
 
     <div class="min-h-[calc(100vh-65px)] bg-slate-100 py-8">
         <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-            <section class="rounded-lg border border-sky-200 bg-sky-100 p-5 shadow-sm">
-                <p class="text-xs font-bold uppercase text-slate-600">Saldo pembayaran di muka</p>
-                <p class="mt-3 text-2xl font-extrabold text-slate-950">Rp {{ number_format((int) $advance_balance, 0, ',', '.') }}</p>
+            <section class="dk-period-card dk-advance-balance">
+                <p class="dk-eyebrow">Saldo pembayaran di muka</p>
+                <p class="dk-finance-balance">Rp {{ number_format((int) $advance_balance, 0, ',', '.') }}</p>
             </section>
 
             @forelse ($borrower->loans as $loan)
-                <section class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                <section class="dk-data-panel overflow-hidden" data-table-tools data-mobile-default="cards">
                     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
                         <div>
                             <h3 class="font-bold text-slate-900">{{ $loan->loan_code }}</h3>
-                            <p class="mt-2"><span class="dk-status" data-status="{{ $loan->status }}">{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</span></p>
+                            <p class="mt-2"><span class="dk-status" data-status="{{ $loan->status }}">{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</span></p>
                         </div>
                         <div class="text-sm text-slate-700">
                             <span class="font-semibold">Total tagihan:</span>
                             Rp {{ number_format((int) $loan->total_receivable, 0, ',', '.') }}
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="dk-table-toolbar">
+                        <span class="dk-view-caption">Rincian cicilan</span>
+                        <div class="dk-view-toggle" aria-label="Mode tampilan cicilan">
+                            <button type="button" class="is-active" data-view-mode="table" aria-label="Tabel" title="Tabel">▤</button>
+                            <button type="button" data-view-mode="cards" aria-label="Kartu" title="Kartu">▦</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto dk-table-view" data-table-view="table">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-slate-50 text-xs uppercase text-slate-500">
                                 <tr><th class="px-5 py-3">Cicilan</th><th class="px-5 py-3">Tagihan</th><th class="px-5 py-3">Terbayar</th><th class="px-5 py-3">Sisa</th><th class="px-5 py-3">Status</th></tr>
                             </thead>
                             <tbody>
                                 @foreach ($loan->installments as $installment)
-                                    <tr class="border-t border-slate-100">
+                                    <tr class="border-t border-slate-100" data-table-row>
                                         <td class="px-5 py-3">{{ $installment->sequence }}</td>
                                         <td class="px-5 py-3">Rp {{ number_format((int) $installment->scheduled_amount, 0, ',', '.') }}</td>
                                         <td class="px-5 py-3">Rp {{ number_format((int) $installment->paid_amount, 0, ',', '.') }}</td>
@@ -42,6 +49,21 @@
                                 @endforeach
                             </tbody>
                         </table>
+                    </div>
+                    <div class="dk-payment-cards dk-table-view" data-table-view="cards" hidden>
+                        @foreach ($loan->installments as $installment)
+                            <article class="dk-payment-card dk-borrower-installment-card" data-table-row>
+                                <div>
+                                    <strong>Cicilan ke-{{ $installment->sequence }}</strong>
+                                    <span class="dk-status" data-status="{{ $installment->status }}">{{ match ($installment->status) { 'pending' => 'Belum dibayar', 'partial' => 'Sebagian', 'paid' => 'Lunas', 'overdue' => 'Terlambat', default => ucfirst($installment->status) } }}</span>
+                                </div>
+                                <dl>
+                                    <div><dt>Tagihan</dt><dd>Rp {{ number_format((int) $installment->scheduled_amount, 0, ',', '.') }}</dd></div>
+                                    <div><dt>Terbayar</dt><dd>Rp {{ number_format((int) $installment->paid_amount, 0, ',', '.') }}</dd></div>
+                                    <div><dt>Sisa</dt><dd>Rp {{ number_format((int) $installment->outstanding_amount, 0, ',', '.') }}</dd></div>
+                                </dl>
+                            </article>
+                        @endforeach
                     </div>
                 </section>
             @empty

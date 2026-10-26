@@ -20,7 +20,10 @@ class DashboardController extends Controller
 
         if ($user->isBorrower()) {
             $borrower = Borrower::query()
-                ->with(['loans' => fn ($query) => $query->whereIn('status', ['active', 'pending', 'paid'])->with('installments')])
+                ->with(['loans' => fn ($query) => $query->whereIn('status', ['active', 'pending', 'paid'])
+                    ->with('installments')
+                    ->orderByDesc('created_at')
+                    ->orderByDesc('id')])
                 ->where('user_id', $user->id)
                 ->firstOrFail();
 
@@ -58,14 +61,16 @@ class DashboardController extends Controller
         $chartStart = $now->copy()->subMonths(11)->startOfMonth();
         $monthlyTransactionRows = CashTransaction::query()
             ->whereBetween('created_at', [$chartStart->copy()->utc(), $monthEnd->copy()->utc()])
-            ->get(['created_at']);
-        $monthlyTransactionCounts = collect(range(11, 0))->map(function (int $monthsAgo) use ($now, $monthlyTransactionRows) {
+            ->get(['amount', 'created_at']);
+        $monthlyTransactionAmounts = collect(range(11, 0))->map(function (int $monthsAgo) use ($now, $monthlyTransactionRows) {
             $month = $now->copy()->subMonths($monthsAgo)->startOfMonth();
-            $count = $monthlyTransactionRows->filter(fn (CashTransaction $transaction) => $transaction->created_at->copy()->timezone('Asia/Singapore')->format('Y-m') === $month->format('Y-m'))->count();
+            $amount = $monthlyTransactionRows
+                ->filter(fn (CashTransaction $transaction) => $transaction->created_at->copy()->timezone('Asia/Singapore')->format('Y-m') === $month->format('Y-m'))
+                ->sum('amount');
 
-            return ['label' => $month->translatedFormat('M'), 'count' => $count];
+            return ['label' => $month->translatedFormat('M'), 'amount' => (int) $amount];
         });
-        $maxMonthlyTransactions = max(1, (int) $monthlyTransactionCounts->max('count'));
+        $maxMonthlyTransactionAmount = max(1, (int) $monthlyTransactionAmounts->max('amount'));
         $dayStart = $now->copy()->startOfDay();
         $dayEnd = $now->copy()->endOfDay();
         $reportWeekStart = $now->copy()->startOfWeek();
@@ -90,8 +95,8 @@ class DashboardController extends Controller
             'owner_name' => $owner?->name ?? 'Owner',
             'admin_name' => $admin?->name ?? 'Admin',
             'weekly_cash_flow' => $weeklyCashFlow,
-            'monthly_transaction_counts' => $monthlyTransactionCounts,
-            'max_monthly_transactions' => $maxMonthlyTransactions,
+            'monthly_transaction_amounts' => $monthlyTransactionAmounts,
+            'max_monthly_transaction_amount' => $maxMonthlyTransactionAmount,
             'daily_payments' => Payment::query()->where('status', 'approved')->whereBetween('created_at', [$dayStart->utc(), $dayEnd->utc()])->sum('amount'),
             'weekly_payments' => Payment::query()->where('status', 'approved')->whereBetween('created_at', [$reportWeekStart->utc(), $reportWeekEnd->utc()])->sum('amount'),
             'monthly_total_payments' => Payment::query()->where('status', 'approved')->whereBetween('created_at', [$monthStart->utc(), $monthEnd->utc()])->sum('amount'),

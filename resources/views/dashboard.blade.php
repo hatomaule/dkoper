@@ -35,24 +35,24 @@
                 </div>
             </section>
 
-            <section class="dk-chart-panel dk-monthly-count-chart">
-                <div class="dk-section-title"><div><span>AKTIVITAS</span><h3>Jumlah transaksi per bulan</h3></div><small>12 bulan</small></div>
-                <div class="dk-monthly-bars" role="img" aria-label="Jumlah transaksi kas per bulan selama 12 bulan">
-                    @foreach ($monthly_transaction_counts as $month)
+            <section class="dk-chart-panel dk-monthly-amount-chart">
+                <div class="dk-section-title"><div><span>ARUS KAS</span><h3>Nominal transaksi per bulan</h3></div><small>12 bulan</small></div>
+                <div class="dk-monthly-bars" role="img" aria-label="Nominal transaksi kas per bulan selama 12 bulan">
+                    @foreach ($monthly_transaction_amounts as $month)
                         <div class="dk-monthly-bar-row">
                             <span>{{ $month['label'] }}</span>
-                            <div class="dk-monthly-bar-track"><i style="width: {{ (int) round(($month['count'] / $max_monthly_transactions) * 100) }}%"></i></div>
-                            <b>{{ $month['count'] }}</b>
+                            <div class="dk-monthly-bar-track"><i @class(['is-empty' => $month['amount'] === 0]) style="width: {{ (int) round(($month['amount'] / $max_monthly_transaction_amount) * 100) }}%"></i></div>
+                            <b title="{{ $rupiah($month['amount']) }}">{{ $rupiah($month['amount']) }}</b>
                         </div>
                     @endforeach
                 </div>
-                <div class="dk-chart-legend"><span><i class="dk-legend-transactions"></i>Transaksi kas tercatat</span></div>
+                <div class="dk-chart-legend"><span><i class="dk-legend-transactions"></i>Total nominal transaksi kas</span></div>
             </section>
         </div>
 
         <div class="dk-dashboard-section">
             <div class="dk-section-title"><div><span>KEUANGAN</span><h3>Posisi koperasi</h3></div></div>
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 @foreach ([
                     ['Kas tersedia', $rupiah($cash_balance)],
                     ['Pokok pinjaman aktif', $rupiah($total_principal_running)],
@@ -87,7 +87,7 @@
 
         <div class="dk-dashboard-section">
             <div class="dk-section-title"><div><span>SETORAN DISETUJUI</span><h3>Laporan pemasukan</h3></div></div>
-            <div class="grid gap-3 sm:grid-cols-3">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 @foreach ([['Hari ini', $daily_payments], ['Minggu ini', $weekly_payments], ['Bulan ini', $monthly_total_payments]] as [$label, $total])
                     <section class="dk-period-card"><span>{{ $label }}</span><strong>{{ $rupiah($total) }}</strong><small>Transaksi pembayaran disetujui</small></section>
                 @endforeach

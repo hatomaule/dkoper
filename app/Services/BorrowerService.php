@@ -13,7 +13,7 @@ class BorrowerService
 {
     public function createWithAccount(User $actor, string $fullName, string $phone): Borrower
     {
-        abort_unless($actor->isManager(), 403);
+        abort_unless($actor->isManager() || $actor->isCashier(), 403);
 
         return DB::transaction(function () use ($actor, $fullName, $phone) {
             $base = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode(' ', trim($fullName))[0] ?? 'nasabah'));

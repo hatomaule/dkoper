@@ -19,6 +19,32 @@ Alpine.data('dkTheme', () => ({
 Alpine.start();
 
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('input[type="password"]').forEach((input) => {
+        if (input.parentElement?.querySelector('.dk-password-toggle')) {
+            return;
+        }
+
+        const wrap = input.parentElement;
+        if (!wrap || wrap.querySelector('button.dk-password-toggle')) {
+            return;
+        }
+
+        wrap.style.position = 'relative';
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'dk-password-toggle';
+        button.setAttribute('aria-label', 'Tampilkan password');
+        button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+        button.addEventListener('click', () => {
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            button.classList.toggle('is-visible', isHidden);
+            button.setAttribute('aria-label', isHidden ? 'Sembunyikan password' : 'Tampilkan password');
+        });
+        wrap.appendChild(button);
+    });
+
     const formatRupiahInput = (input) => {
         const digits = input.value.replace(/\D/g, '');
         input.value = digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -44,13 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-table-tools]').forEach((panel) => {
         const search = panel.querySelector('[data-table-search]');
         const rows = [...panel.querySelectorAll('[data-table-row]')];
-
-        search?.addEventListener('input', () => {
-            const needle = search.value.trim().toLocaleLowerCase();
+        const applyRowFilters = () => {
+            const needle = search?.value.trim().toLocaleLowerCase() || '';
             rows.forEach((row) => {
                 row.hidden = needle !== '' && !row.textContent.toLocaleLowerCase().includes(needle);
             });
-        });
+        };
+
+        search?.addEventListener('input', applyRowFilters);
+        applyRowFilters();
 
         panel.querySelectorAll('[data-view-mode]').forEach((button) => {
             button.addEventListener('click', () => {
@@ -71,11 +99,17 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.assign(url);
         });
 
-        const initialView = panel.querySelector('[data-view-mode].is-active')?.dataset.viewMode;
+        const mobileDefault = panel.dataset.mobileDefault;
+        const initialView = mobileDefault && window.matchMedia('(max-width: 640px)').matches
+            ? mobileDefault
+            : panel.querySelector('[data-view-mode].is-active')?.dataset.viewMode;
         if (initialView) {
             panel.querySelectorAll('[data-table-view]').forEach((view) => {
                 view.hidden = view.dataset.tableView !== initialView;
                 view.classList.toggle('hidden', view.hidden);
+            });
+            panel.querySelectorAll('[data-view-mode]').forEach((button) => {
+                button.classList.toggle('is-active', button.dataset.viewMode === initialView);
             });
         }
     });
@@ -93,30 +127,46 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('dialog[data-open-on-error]').forEach((dialog) => dialog.showModal());
 
     const loanSelect = document.querySelector('[data-loan-select]');
+    const installmentSelect = document.querySelector('[data-installment-select]');
     const sourceSelect = document.querySelector('[data-nominal-source]');
     const installmentPanel = document.querySelector('[data-system-installment]');
     const manualAmount = document.querySelector('[data-manual-amount]');
     const amountInput = manualAmount?.querySelector('input');
-    if (!loanSelect || !sourceSelect || !installmentPanel) return;
+    const editLoanSelect = document.querySelector('[data-edit-loan-select]');
+    const editInstallmentSelect = document.querySelector('[data-edit-installment-select]');
+
+    const setInstallmentOptions = (loan, installment, selectedId = '') => {
+        if (!loan || !installment) return null;
+        const choices = JSON.parse(loan.selectedOptions[0]?.dataset.installments || '[]');
+        installment.replaceChildren();
+        choices.forEach((choice) => {
+            const option = document.createElement('option');
+            option.value = choice.id;
+            option.textContent = `Cicilan ke-${choice.sequence} · sisa Rp ${new Intl.NumberFormat('id-ID').format(choice.amount)}`;
+            option.dataset.sequence = choice.sequence;
+            option.dataset.amount = choice.amount;
+            installment.appendChild(option);
+        });
+        if (selectedId && choices.some((choice) => String(choice.id) === String(selectedId))) {
+            installment.value = String(selectedId);
+        }
+        return choices.find((choice) => String(choice.id) === installment.value) || choices[0] || null;
+    };
 
     const updateInstallment = () => {
-        const option = loanSelect.selectedOptions[0];
-        const amount = Number(option?.dataset.amount || 0);
-        const installmentId = option?.dataset.installment || '';
-
-        document.querySelector('[data-installment-label]').textContent = option?.dataset.sequence
-            ? `Setoran ke-${option.dataset.sequence}`
-            : 'Tidak ada cicilan tersisa';
+        const selected = setInstallmentOptions(loanSelect, installmentSelect, installmentSelect.value);
+        const amount = Number(selected?.amount || 0);
+        document.querySelector('[data-installment-label]').textContent = selected?.sequence
+            ? `Setoran ke-${selected.sequence}`
+            : 'Pilih cicilan';
         document.querySelector('[data-installment-amount]').textContent = new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
             maximumFractionDigits: 0,
         }).format(amount);
-        installmentPanel.querySelector('input[name="installment_id"]').setAttribute('value', installmentId);
-        installmentPanel.querySelector('input[name="installment_id"]').value = installmentId;
         const systemOption = sourceSelect.querySelector('option[value="system"]');
-        systemOption.disabled = amount <= 0;
-        if (amount <= 0) sourceSelect.value = 'manual';
+        systemOption.disabled = !selected;
+        if (!selected) sourceSelect.value = 'manual';
         updateNominalMode();
     };
 
@@ -130,9 +180,12 @@ document.addEventListener('DOMContentLoaded', () => {
         installmentPanel.classList.toggle('hidden', isManual);
     }
 
-    loanSelect.addEventListener('change', updateInstallment);
-    sourceSelect.addEventListener('change', updateNominalMode);
-    updateInstallment();
+    if (loanSelect && installmentSelect && sourceSelect && installmentPanel) {
+        loanSelect.addEventListener('change', updateInstallment);
+        installmentSelect.addEventListener('change', updateInstallment);
+        sourceSelect.addEventListener('change', updateNominalMode);
+        updateInstallment();
+    }
 
     const methodSelect = document.querySelector('[data-payment-method]');
     const proofPanel = document.querySelector('[data-transfer-proof]');
@@ -145,12 +198,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const modal = document.querySelector('[data-payment-edit-dialog]');
             const form = modal?.querySelector('form');
             const amount = modal?.querySelector('[name="amount"]');
-            if (!modal || !form || !amount) return;
+            if (!modal || !form || !amount || !editLoanSelect || !editInstallmentSelect) return;
             form.action = button.dataset.url;
             amount.value = button.dataset.amount;
+            editLoanSelect.value = button.dataset.loanId;
+            setInstallmentOptions(editLoanSelect, editInstallmentSelect, button.dataset.installmentId);
+            formatRupiahInput(amount);
             modal.showModal();
         });
     });
+    editLoanSelect?.addEventListener('change', () => setInstallmentOptions(editLoanSelect, editInstallmentSelect));
 
     methodSelect?.addEventListener('change', () => {
         proofPanel?.classList.toggle('hidden', methodSelect.value !== 'transfer');

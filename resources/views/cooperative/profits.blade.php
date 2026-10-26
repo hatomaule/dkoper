@@ -33,29 +33,6 @@
                 @endforeach
             </section>
 
-            <section class="dk-staff-password-section">
-                <div class="dk-section-title"><div><span>KEAMANAN AKUN</span><h3>Kelola password Owner dan Admin</h3></div></div>
-                <div class="grid gap-3 sm:grid-cols-2">
-                    @foreach ($accounts as $account)
-                        <article class="dk-account-password-card">
-                            <div><strong>{{ $account->name }}</strong><span>{{ $account->isManager() ? 'Owner' : 'Admin pengelola' }}</span></div>
-                            <button type="button" class="dk-button-secondary" data-open-dialog="#staff-password-{{ $account->id }}">Ganti password</button>
-                            <dialog class="dk-password-native-dialog" id="staff-password-{{ $account->id }}">
-                                <form method="POST" action="{{ route('cooperative.staff.update-password', $account) }}" class="dk-password-form">
-                                    @csrf
-                                    <button type="button" class="dk-modal-close" aria-label="Tutup" data-close-dialog>×</button>
-                                    <p class="dk-eyebrow">AKUN PENGELOLA</p>
-                                    <h3>Ganti password {{ $account->name }}</h3>
-                                    <label>Password baru<input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
-                                    <label>Ulangi password<input type="password" name="password_confirmation" required minlength="8" autocomplete="new-password"></label>
-                                    <button type="submit" class="dk-button-primary">Simpan password</button>
-                                </form>
-                            </dialog>
-                        </article>
-                    @endforeach
-                </div>
-            </section>
-
             <section class="dk-data-panel min-w-0" data-table-tools>
                 <div class="border-b border-slate-200 px-5 py-4"><h3 class="font-bold text-slate-900">Riwayat Bonus</h3></div>
                 <div class="dk-table-toolbar">

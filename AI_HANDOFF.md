@@ -23,7 +23,7 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 - First-login password change is enforced. The manager account has `must_change_password = false`; the cashier account currently has `must_change_password = true`. Do not inspect or disclose either password.
 - Staff passwords were synchronized with the user's supplied account sheet during this session. Password values are intentionally not recorded here; use private credentials and never retain shared/default passwords for production.
 - Core borrower, loan, installment, payment approval, cash ledger, profit, and activity-log workflows have been implemented in the current worktree.
-- The visual redesign includes a dark, icon-based desktop sidebar with grouped sections and a compact account footer; mobile uses a responsive top bar and slide-down menu. The dashboard uses an emerald hero, operational KPIs, monthly payment chart, daily/weekly/monthly reports, borrower count, Owner bonus and Admin employee bonus (earned/projected). Login, tables, forms, and status badges share the same lightweight glass-inspired design system and system fonts (no external font request or new UI dependency).
+- The visual redesign includes a dark, icon-based desktop sidebar with grouped sections and a compact account footer; mobile uses a responsive top bar and slide-down menu. The dashboard uses an emerald hero, operational KPIs, weekly cash-flow lines, monthly cash transaction amount bars, daily/weekly/monthly reports, borrower count, Owner bonus and Admin employee bonus (earned/projected). Login, tables, forms, and status badges share the same lightweight glass-inspired design system and system fonts (no external font request or new UI dependency).
 - Latest visual refinement: the login submit label is the concise “Login” and the button is compact and right-aligned. Cards have more pronounced layered shadows, subtle gradients, and a gentle hover lift to feel elevated from the canvas; common action buttons were reduced in size.
 - A dedicated forced-password-change screen is in `resources/views/profile/edit.blade.php`; its visible “Simpan dan lanjutkan” button submits the first password change.
 - The modern UI is an independent Blade design, not a strict conversion of `index.baseline.html`.
@@ -177,7 +177,7 @@ The core service and approval flows, borrower data import, cumulative profit all
 
 ### Latest follow-up implementation
 
-- Removed the repeated Dashboard welcome/banner and shows the complete summary for both Owner and Admin. Added weekly incoming/outgoing cash charts, twelve-month transaction-count bars, and daily/weekly/monthly approved-payment totals.
+- Removed the repeated Dashboard welcome/banner and shows the complete summary for both Owner and Admin. Added weekly incoming/outgoing cash charts, twelve-month cash transaction amount bars, and daily/weekly/monthly approved-payment totals.
 - Distinguished Owner and Admin bonus summaries, including earned balance and total projected share from active loans. Added subtle individual KPI colors and matching dark-mode styling.
 - Cooperative tables now default to 5 rows and provide 5/10/25/50/all selection plus separate table/card modes. Loan listings omit internal loan codes and show borrower names; payment capture actions are labelled “Catat”.
 - Owner can change Owner/Admin passwords and borrower passwords; borrower password reset returns to `123456` and requires a change at next login. The Admin cannot change staff passwords.
@@ -193,14 +193,29 @@ The core service and approval flows, borrower data import, cumulative profit all
 - Withdrawal activity entries now include the name of the bonus account being withdrawn from, so an Admin bonus withdrawal is distinguishable in the activity history. A feature test verifies the withdrawal appears with the Admin name and formatted amount.
 - Rupiah entry fields on loan, payment, correction, finance, and bonus forms now group thousands with dots while typing; submission sends only digits to the server. Inputs validate configured minimums and the available bonus maximum.
 - Dashboard cash/transaction charts are now visually first, followed by financial and bonus summaries. KPI cards use soft abstract waves instead of oversized circles; chart and period cards have stronger contrast in light and dark themes.
+
+## Known Follow-ups
+
+- Payment capture now requires a specific active loan and outstanding installment. System nominal uses that installment's remaining amount; Admin payments remain pending Owner approval.
+- Staff record tables are ordered newest-first by creation time with descending ID as a stable tie-breaker. Borrower loan history also places the latest contract first.
+- Paid loans are retained as historical records; they are shown with the “Lunas” status in staff and borrower loan lists, and their installments/payment history remain available.
+- The staff Nasabah table and card view show each borrower's combined billed total and paid installment total across active and paid contracts; pending/rejected loan applications are excluded from these financial totals.
+- Mobile navigation uses an animated right-side drawer with overlay and Escape/link close behavior. Borrower installment history shows all installments without a page-size selector and defaults to interactive cards on phone-sized screens; the table view remains available via the view switch.
+- The local preview server is already bound to `0.0.0.0:8000`; phone access depends on the phone being able to route to this development host. Keep this unauthenticated-transport HTTP preview on a trusted network only; do not expose it publicly.
+- Owner correction can change amount, borrower/contract, and installment. Approved payments are reallocated transactionally across both affected loans, including bonus reversals/replay, advance balances, loan statuses, and cash-ledger references. Pending payment corrections also update the approval payload.
+- Keuangan now includes a responsive 12-month cash-in/cash-out chart using `Asia/Singapore` month boundaries. Dashboard monthly bars continue to show transaction amounts, not transaction counts.
+- Loan/payment rejection now requires a written reason (3–1000 characters); the reason is stored with the approval request and activity audit record. Rejection remains protected by a confirmation dialog.
+- Borrower installment details now have table/card modes and a local 5/10/25/all display limit; the default remains five.
+- A manual visual browser pass across every page, role, responsive size, and both theme modes remains outstanding; automated role and rendering coverage is included in the feature suite.
 - Sidebar bonus label shortened to “Bonus”; bonus withdrawal/transfer controls are compact. Side forms were narrowed to 240–290px at desktop breakpoints to leave more room for their tables. Table cells use smaller, single-line amounts while explanatory details may wrap.
 - Side forms now keep content height instead of stretching to the adjacent table; pagination summary text remains one line with a compact, horizontally scrollable page selector on narrow widths.
-- Do not reset/re-import local borrower/payment data. No migration required for this UI/activity update.
-- Verification after this follow-up: `php artisan test` passed (42 tests, 177 assertions), `npm run build` passed, `php artisan view:cache` passed, and `git diff --check` passed. The login card width was checked in the browser at a 462px viewport and rendered at 390px.
+- Do not reset/re-import local borrower/payment data. No migration is required for this follow-up.
+- Latest UI follow-up: dashboard financial summary and report cards display in two columns on phones; bonus/report cards have distinct abstract motifs; the login password eye control has no filled background; dark login fields and account dropdown have explicit contrast; table controls stay on one mobile row with horizontal scrolling when needed; light canvas and form/table panels use subtle colored line patterns.
+- Visual browser check confirmed two dashboard KPI cards share one row at 390px. A broader page-by-page review in both themes remains outstanding.
+- Latest automated verification: `php artisan test --no-coverage` passed (51 tests, 240 assertions); `npm run build`, `php artisan view:cache`, and `git diff --check` passed.
 
 Remaining follow-up:
 
-- Validate Owner, Admin, and borrower experiences in the browser, including mobile navigation and page-specific tables/forms.
 - Compare remaining pages against product needs; `index.baseline.html` is a reference only, not a mandatory visual target.
 - Cross-check withdrawal behavior with negative balances, transfer-to-modal accounting, and borrower visibility restrictions.
 - Review migration/schema consistency and PHP 8.3 deployment readiness.

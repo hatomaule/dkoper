@@ -33,7 +33,7 @@ class DashboardAccessTest extends TestCase
             ->assertSee('Dashboard')
             ->assertSee('Saldo dan proyeksi bonus')
             ->assertSee('Debit dan kredit mingguan')
-            ->assertSee('Jumlah transaksi per bulan')
+            ->assertSee('Nominal transaksi per bulan')
             ->assertSee('logout-title');
     }
 
@@ -98,6 +98,7 @@ class DashboardAccessTest extends TestCase
             ->get('/dashboard')
             ->assertOk()
             ->assertSee('Rp 123.456')
+            ->assertSee('Rp 1.284.000')
             ->assertSee('Jan');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ActivityLog;
 use App\Models\ApprovalRequest;
 use App\Models\BorrowerAdvanceTransaction;
+use App\Models\CashTransaction;
 use App\Models\Installment;
 use App\Models\Loan;
 use App\Models\Payment;
@@ -17,7 +18,13 @@ use Illuminate\Validation\ValidationException;
 
 class PaymentService
 {
-    public function correctApprovedPayment(User $manager, int $paymentId, int $newAmount): int
+    public function correctApprovedPayment(
+        User $manager,
+        int $paymentId,
+        int $newAmount,
+        ?int $newLoanId = null,
+        ?int $newInstallmentId = null,
+    ): int
     {
         if (! $manager->isManager()) {
             throw new RuntimeException('Hanya Owner yang dapat mengoreksi setoran.');
@@ -27,32 +34,94 @@ class PaymentService
             throw ValidationException::withMessages(['amount' => 'Nominal setoran harus lebih dari nol.']);
         }
 
-        return DB::transaction(function () use ($manager, $paymentId, $newAmount) {
+        return DB::transaction(function () use ($manager, $paymentId, $newAmount, $newLoanId, $newInstallmentId) {
             $payment = Payment::query()->lockForUpdate()->findOrFail($paymentId);
-            if ($payment->status !== 'approved') {
-                throw ValidationException::withMessages(['payment' => 'Hanya setoran yang sudah disetujui yang dapat dikoreksi.']);
+            $oldAmount = (int) $payment->amount;
+            $oldLoanId = (int) $payment->loan_id;
+            $oldInstallmentId = $payment->installment_id ? (int) $payment->installment_id : null;
+            $newLoanId ??= $oldLoanId;
+            $newInstallmentId ??= $oldInstallmentId;
+
+            $targetLoan = Loan::query()->lockForUpdate()->findOrFail($newLoanId);
+            if (! in_array($targetLoan->status, ['active', 'paid'], true)) {
+                throw ValidationException::withMessages(['loan_id' => 'Setoran hanya dapat dikaitkan ke pinjaman aktif atau lunas.']);
+            }
+            if ($newInstallmentId !== null && ! Installment::query()->where('loan_id', $targetLoan->id)->whereKey($newInstallmentId)->exists()) {
+                throw ValidationException::withMessages(['installment_id' => 'Cicilan tidak sesuai dengan kontrak pinjaman yang dipilih.']);
+            }
+            if ($payment->status === 'pending' && $targetLoan->status !== 'active') {
+                throw ValidationException::withMessages(['loan_id' => 'Pengajuan setoran hanya dapat dikaitkan ke pinjaman aktif.']);
             }
 
-            $loan = Loan::query()->lockForUpdate()->findOrFail($payment->loan_id);
+            if ($payment->status === 'pending') {
+                if ($oldAmount === $newAmount && $oldLoanId === $newLoanId && $oldInstallmentId === $newInstallmentId) {
+                    throw ValidationException::withMessages(['payment' => 'Tidak ada perubahan pada data setoran.']);
+                }
+
+                $payment->forceFill([
+                    'amount' => $newAmount,
+                    'loan_id' => $newLoanId,
+                    'installment_id' => $newInstallmentId,
+                    'nominal_source' => 'manual',
+                ])->save();
+                $approval = ApprovalRequest::query()
+                    ->where('approvable_type', Payment::class)
+                    ->where('approvable_id', $payment->id)
+                    ->where('status', 'pending')
+                    ->firstOrFail();
+                $approval->payload = array_merge((array) $approval->payload, [
+                    'amount' => $newAmount,
+                    'loan_id' => $newLoanId,
+                    'installment_id' => $newInstallmentId,
+                    'payment_method' => $payment->payment_method,
+                ]);
+                $approval->save();
+                ActivityLog::create([
+                    'user_id' => $manager->id,
+                    'action' => 'payment.corrected',
+                    'entity_type' => Payment::class,
+                    'entity_id' => $payment->id,
+                    'metadata' => [
+                        'old_amount' => $oldAmount,
+                        'new_amount' => $newAmount,
+                        'old_loan_id' => $oldLoanId,
+                        'new_loan_id' => $newLoanId,
+                        'old_installment_id' => $oldInstallmentId,
+                        'new_installment_id' => $newInstallmentId,
+                    ],
+                    'ip_address' => request()?->ip(),
+                ]);
+
+                return $oldAmount;
+            }
+            if ($payment->status !== 'approved') {
+                throw ValidationException::withMessages(['payment' => 'Hanya setoran menunggu atau disetujui yang dapat dikoreksi.']);
+            }
+            if ($oldAmount === $newAmount && $oldLoanId === $newLoanId && $oldInstallmentId === $newInstallmentId) {
+                throw ValidationException::withMessages(['payment' => 'Tidak ada perubahan pada data setoran.']);
+            }
+
+            $loanIds = collect([$oldLoanId, $newLoanId])->unique()->values();
+            $loans = Loan::query()->whereIn('id', $loanIds)->lockForUpdate()->get()->keyBy('id');
+            $installmentsByLoan = Installment::query()
+                ->whereIn('loan_id', $loanIds)
+                ->orderBy('sequence')
+                ->lockForUpdate()
+                ->get()
+                ->groupBy('loan_id');
+            $installmentLoanIds = $installmentsByLoan->flatten()->keyBy('id')->map(
+                fn (Installment $installment) => (int) $installment->loan_id,
+            );
             $approvedPayments = Payment::query()
-                ->where('loan_id', $loan->id)
+                ->whereIn('loan_id', $loanIds)
                 ->where('status', 'approved')
                 ->orderBy('id')
                 ->lockForUpdate()
                 ->get();
-            $installments = Installment::query()
-                ->where('loan_id', $loan->id)
-                ->orderBy('sequence')
-                ->lockForUpdate()
-                ->get();
-            $oldAmount = (int) $payment->amount;
-
-            if ($oldAmount === $newAmount) {
-                throw ValidationException::withMessages(['amount' => 'Nominal baru sama dengan nominal saat ini.']);
-            }
+            $affectedBorrowerIds = $loans->pluck('borrower_id')->unique()->values();
 
             $earnedTransactions = ProfitTransaction::query()
-                ->where('loan_id', $loan->id)
+                ->whereIn('loan_id', $loanIds)
                 ->whereIn('type', ['earned_interest', 'correction_reversal'])
                 ->orderBy('id')
                 ->lockForUpdate()
@@ -81,7 +150,9 @@ class PaymentService
                 ProfitTransaction::create([
                     'user_id' => $userId,
                     'created_by' => $manager->id,
-                    'loan_id' => $loan->id,
+                    'loan_id' => $installmentId === 'none'
+                        ? $oldLoanId
+                        : ($installmentLoanIds->get((int) $installmentId) ?? $oldLoanId),
                     'installment_id' => $installmentId === 'none' ? null : $installmentId,
                     'type' => 'correction_reversal',
                     'amount' => $amount,
@@ -90,7 +161,7 @@ class PaymentService
                 ]);
             }
 
-            foreach ($installments as $installment) {
+            foreach ($installmentsByLoan->flatten() as $installment) {
                 $installment->forceFill([
                     'paid_amount' => 0,
                     'outstanding_amount' => $installment->scheduled_amount,
@@ -101,15 +172,21 @@ class PaymentService
 
             $payment->forceFill([
                 'amount' => $newAmount,
+                'loan_id' => $newLoanId,
+                'installment_id' => $newInstallmentId,
                 'nominal_source' => 'manual',
             ])->save();
 
-            BorrowerAdvanceTransaction::query()->where('loan_id', $loan->id)->delete();
+            BorrowerAdvanceTransaction::query()->whereIn('loan_id', $loanIds)->delete();
 
             foreach ($approvedPayments as $approvedPayment) {
                 if ((int) $approvedPayment->id === $paymentId) {
                     $approvedPayment->amount = $newAmount;
+                    $approvedPayment->loan_id = $newLoanId;
+                    $approvedPayment->installment_id = $newInstallmentId;
                 }
+                $loan = $loans->get((int) $approvedPayment->loan_id);
+                $installments = $installmentsByLoan->get((int) $approvedPayment->loan_id, collect());
                 $remaining = (int) $approvedPayment->amount;
                 $eligibleInstallments = $installments->when(
                     $approvedPayment->installment_id !== null,
@@ -151,18 +228,25 @@ class PaymentService
                 }
             }
 
-            $advanceBalance = 0;
             foreach (BorrowerAdvanceTransaction::query()
-                ->where('borrower_id', $loan->borrower_id)
+                ->whereIn('borrower_id', $affectedBorrowerIds)
                 ->orderBy('created_at')
                 ->orderBy('id')
                 ->lockForUpdate()
-                ->get() as $advanceTransaction) {
-                $advanceBalance += (int) $advanceTransaction->amount;
-                $advanceTransaction->forceFill(['balance_after' => $advanceBalance])->save();
+                ->get()
+                ->groupBy('borrower_id') as $borrowerTransactions) {
+                $advanceBalance = 0;
+                foreach ($borrowerTransactions as $advanceTransaction) {
+                    $advanceBalance += (int) $advanceTransaction->amount;
+                    $advanceTransaction->forceFill(['balance_after' => $advanceBalance])->save();
+                }
             }
 
             $difference = $newAmount - $oldAmount;
+            CashTransaction::query()
+                ->where('type', 'installment_payment')
+                ->where('reference', 'PAY-' . str_pad((string) $payment->getKey(), 8, '0', STR_PAD_LEFT))
+                ->update(['loan_id' => $newLoanId]);
             if ($difference !== 0) {
                 app(CashLedgerService::class)->post(
                     $manager,
@@ -170,22 +254,32 @@ class PaymentService
                     'payment',
                     $difference > 0 ? 'in' : 'out',
                     abs($difference),
-                    $loan->id,
-                    description: "Koreksi nominal setoran #{$payment->id}: Rp ".number_format($oldAmount, 0, ',', '.')." menjadi Rp ".number_format($newAmount, 0, ',', '.'),
+                    $newLoanId,
+                    description: "Koreksi setoran #{$payment->id}: Rp ".number_format($oldAmount, 0, ',', '.')." menjadi Rp ".number_format($newAmount, 0, ',', '.'),
                 );
             }
 
-            $loan->status = $installments->every(fn (Installment $installment) => (int) $installment->outstanding_amount === 0)
-                ? 'paid'
-                : 'active';
-            $loan->save();
+            foreach ($loans as $loan) {
+                $installments = $installmentsByLoan->get((int) $loan->id, collect());
+                $loan->status = $installments->isNotEmpty() && $installments->every(fn (Installment $installment) => (int) $installment->outstanding_amount === 0)
+                    ? 'paid'
+                    : 'active';
+                $loan->save();
+            }
 
             ActivityLog::create([
                 'user_id' => $manager->id,
                 'action' => 'payment.corrected',
                 'entity_type' => Payment::class,
                 'entity_id' => $payment->id,
-                'metadata' => ['old_amount' => $oldAmount, 'new_amount' => $newAmount],
+                'metadata' => [
+                    'old_amount' => $oldAmount,
+                    'new_amount' => $newAmount,
+                    'old_loan_id' => $oldLoanId,
+                    'new_loan_id' => $newLoanId,
+                    'old_installment_id' => $oldInstallmentId,
+                    'new_installment_id' => $newInstallmentId,
+                ],
                 'ip_address' => request()?->ip(),
             ]);
 
@@ -310,13 +404,13 @@ class PaymentService
         });
     }
 
-    public function rejectPayment(User $manager, int $paymentId): Payment
+    public function rejectPayment(User $manager, int $paymentId, string $reason): Payment
     {
         if (! $manager->isManager()) {
             throw new RuntimeException('Hanya Manager yang dapat menolak pembayaran.');
         }
 
-        return DB::transaction(function () use ($manager, $paymentId) {
+        return DB::transaction(function () use ($manager, $paymentId, $reason) {
             $payment = Payment::query()->lockForUpdate()->findOrFail($paymentId);
             if ($payment->status !== 'pending') {
                 throw ValidationException::withMessages(['payment' => 'Pembayaran tidak lagi menunggu persetujuan.']);
@@ -334,12 +428,23 @@ class PaymentService
                     'reviewed_at' => now(),
                 ]);
 
+            $approval = ApprovalRequest::query()
+                ->where('approvable_type', Payment::class)
+                ->where('approvable_id', $payment->id)
+                ->where('status', 'rejected')
+                ->latest('id')
+                ->first();
+            if ($approval) {
+                $approval->payload = array_merge((array) $approval->payload, ['rejection_reason' => $reason]);
+                $approval->save();
+            }
+
             ActivityLog::create([
                 'user_id' => $manager->id,
                 'action' => 'payment.rejected',
                 'entity_type' => Payment::class,
                 'entity_id' => $payment->id,
-                'metadata' => ['amount' => $payment->amount],
+                'metadata' => ['amount' => $payment->amount, 'rejection_reason' => $reason],
                 'ip_address' => request()?->ip(),
             ]);
 

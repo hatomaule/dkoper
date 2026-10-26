@@ -30,7 +30,7 @@ class PaymentCaptureTest extends TestCase
             'status' => 'active',
         ]);
         $loan = app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
-        $installment = $loan->installments()->orderBy('sequence')->firstOrFail();
+        $installment = $loan->installments()->where('sequence', 2)->firstOrFail();
 
         $this->actingAs($owner)->post(route('cooperative.payments.store'), [
             'loan_id' => $loan->id,
@@ -51,7 +51,7 @@ class PaymentCaptureTest extends TestCase
         $this->actingAs($owner)->get(route('cooperative.payments'))
             ->assertOk()
             ->assertSee('wa.me/6281234567890')
-            ->assertSee('ke-1');
+            ->assertSee('ke-2');
         $this->actingAs($owner)->get(route('cooperative.payments.proof', $payment))->assertOk();
 
         $admin = User::factory()->create(['username' => 'admin', 'role' => 'kasir', 'must_change_password' => false]);
@@ -73,9 +73,11 @@ class PaymentCaptureTest extends TestCase
             'status' => 'active',
         ]);
         $loan = app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
+        $installment = $loan->installments()->orderBy('sequence')->firstOrFail();
 
         $this->actingAs($owner)->from(route('cooperative.payments'))->post(route('cooperative.payments.store'), [
             'loan_id' => $loan->id,
+            'installment_id' => $installment->id,
             'nominal_source' => 'manual',
             'amount' => 10_000,
             'payment_method' => 'cash',
