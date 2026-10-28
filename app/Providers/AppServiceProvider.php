@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\PlatformCooperative;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        View::composer('platform.layout', function ($view): void {
+            $view->with(
+                'platformCooperatives',
+                PlatformCooperative::query()->orderBy('name')->get(['id', 'name', 'status']),
+            );
+        });
     }
 }

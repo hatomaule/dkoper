@@ -1,22 +1,27 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Pinjaman</h2></x-slot>
-    <div class="bg-slate-100 min-h-[calc(100vh-65px)] py-8 px-4">
-        <div class="mx-auto max-w-7xl grid items-stretch gap-5 lg:grid-cols-[minmax(240px,290px)_minmax(0,1fr)]" data-table-tools>
-            <form method="POST" action="{{ route('cooperative.loans.store') }}" class="dk-form-panel self-start">
+    <div class="min-h-[calc(100vh-65px)] bg-slate-100 px-4 py-8">
+        <div class="mx-auto max-w-7xl space-y-5" data-table-tools>
+            <form method="POST" action="{{ route('cooperative.loans.store') }}" class="dk-form-panel">
                 @csrf
                 <h3 class="font-bold text-slate-900">Ajukan Pinjaman</h3>
                 @if (session('status'))<div class="mt-3 text-sm text-emerald-700">{{ session('status') }}</div>@endif
                 @if ($errors->any())<div class="mt-3 text-sm text-red-600">{{ $errors->first() }}</div>@endif
-                <label class="mt-5 block text-xs font-bold uppercase text-slate-600">Nasabah</label>
-                <select name="borrower_id" required class="mt-2 w-full rounded-md border-slate-300">
-                    @foreach ($borrowers as $borrower)
-                        <option value="{{ $borrower->id }}">{{ $borrower->full_name }}</option>
-                    @endforeach
-                </select>
-                <label class="mt-4 block text-xs font-bold uppercase text-slate-600">Pokok Pinjaman</label>
-                <input name="principal_amount" type="text" inputmode="numeric" data-format-rupiah data-min="1000" required class="mt-2 w-full rounded-md border-slate-300" placeholder="1.000.000">
-                <button class="dk-button-primary mt-5 w-fit">Catat</button>
+                <div class="mt-4 grid items-end gap-3 md:grid-cols-[minmax(0,1.4fr)_minmax(180px,1fr)_auto]">
+                    <label class="block text-xs font-bold uppercase text-slate-600">Nasabah
+                        <select name="borrower_id" required class="mt-2 w-full rounded-md border-slate-300">
+                            @foreach ($borrowers as $borrower)
+                                <option value="{{ $borrower->id }}" @selected(old('borrower_id') == $borrower->id)>{{ $borrower->full_name }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="block text-xs font-bold uppercase text-slate-600">Pokok pinjaman
+                        <input name="principal_amount" type="text" inputmode="numeric" data-format-rupiah data-min="1000" required value="{{ old('principal_amount') }}" class="mt-2 w-full rounded-md border-slate-300" placeholder="1.000.000">
+                    </label>
+                    <button class="dk-button-primary h-fit">Catat pinjaman</button>
+                </div>
             </form>
+
             <section class="dk-data-panel min-w-0">
                 <div class="dk-table-toolbar">
                     <label>Filter <input type="search" placeholder="Cari nasabah / pinjaman..." data-table-search></label>
@@ -35,33 +40,71 @@
                     </div>
                 </div>
                 <div class="overflow-x-auto dk-table-view" data-table-view="table">
-                    <table class="w-full text-left text-sm">
-                        <thead><tr><th>Nasabah</th><th>Pokok</th><th>Tagihan</th><th>Status</th></tr></thead>
+                    <table class="w-full text-left text-sm dk-loan-ledger">
+                        <thead>
+                            <tr><th rowspan="2">No</th><th rowspan="2">Nama</th><th rowspan="2">Jumlah</th><th colspan="12" class="text-center">Setoran</th></tr>
+                            <tr>@for ($sequence = 1; $sequence <= 12; $sequence++)<th class="text-center">{{ $sequence }}</th>@endfor</tr>
+                        </thead>
                         <tbody>
                             @forelse ($loans as $loan)
+                                @php($installmentsBySequence = $loan->installments->keyBy('sequence'))
+                                @php($loanStatus = match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) })
                                 <tr data-table-row>
-                                    <td class="font-bold">{{ $loan->borrower->full_name }}</td>
-                                    <td>Rp {{ number_format($loan->principal_amount, 0, ',', '.') }}</td>
-                                    <td>Rp {{ number_format($loan->total_receivable, 0, ',', '.') }}</td>
-                                    <td><span class="dk-status" data-status="{{ $loan->status }}">{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</span></td>
+                                    <td>{{ $loans instanceof \Illuminate\Contracts\Pagination\Paginator ? $loans->firstItem() + $loop->index : $loop->iteration }}</td>
+                                    <td class="font-bold">
+                                        {{ $loan->borrower->full_name }}
+                                        <small class="block text-xs font-normal text-slate-500">{{ $loan->loan_code }} · {{ $loanStatus }}</small>
+                                    </td>
+                                    <td class="whitespace-nowrap">Rp {{ number_format((int) $loan->principal_amount, 0, ',', '.') }}</td>
+                                    @for ($sequence = 1; $sequence <= 12; $sequence++)
+                                        @php($installment = $installmentsBySequence->get($sequence))
+                                        <td class="whitespace-nowrap text-center">
+                                            {{ $installment && $installment->paid_amount > 0 ? 'Rp '.number_format((int) $installment->paid_amount, 0, ',', '.') : '—' }}
+                                        </td>
+                                    @endfor
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="py-8 text-center text-slate-500">Belum ada pinjaman.</td></tr>
+                                <tr><td colspan="15" class="py-8 text-center text-slate-500">Belum ada pinjaman.</td></tr>
                             @endforelse
                         </tbody>
+                        <tfoot>
+                            <tr class="font-bold">
+                                <td colspan="2">TOTAL SELURUH DATA</td>
+                                <td class="whitespace-nowrap">Rp {{ number_format((int) $loanTotals['principal'], 0, ',', '.') }}</td>
+                                @for ($sequence = 1; $sequence <= 12; $sequence++)
+                                    <td class="whitespace-nowrap text-center">Rp {{ number_format((int) ($loanTotals['installments'][$sequence] ?? 0), 0, ',', '.') }}</td>
+                                @endfor
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
                 <div class="dk-payment-cards dk-table-view" data-table-view="cards" hidden>
                     @foreach ($loans as $loan)
+                        @php($installmentsBySequence = $loan->installments->keyBy('sequence'))
+                        @php($loanStatus = match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) })
                         <article class="dk-payment-card" data-table-row>
                             <div>
                                 <strong>{{ $loan->borrower->full_name }}</strong>
-                                <span class="dk-status" data-status="{{ $loan->status }}">{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</span>
+                                <span class="dk-status" data-status="{{ $loan->status }}">{{ $loanStatus }}</span>
                             </div>
-                            <b>Rp {{ number_format((int) $loan->principal_amount, 0, ',', '.') }}</b>
-                            <small>Total tagihan Rp {{ number_format((int) $loan->total_receivable, 0, ',', '.') }}</small>
+                            <small>{{ $loan->loan_code }} · Jumlah pinjaman Rp {{ number_format((int) $loan->principal_amount, 0, ',', '.') }}</small>
+                            <div class="dk-loan-installment-grid">
+                                @for ($sequence = 1; $sequence <= 12; $sequence++)
+                                    @php($installment = $installmentsBySequence->get($sequence))
+                                    <div><small>{{ $sequence }}</small><strong>{{ $installment && $installment->paid_amount > 0 ? number_format((int) $installment->paid_amount, 0, ',', '.') : '—' }}</strong></div>
+                                @endfor
+                            </div>
                         </article>
                     @endforeach
+                    <article class="dk-payment-card dk-loan-total-card">
+                        <strong>TOTAL SELURUH DATA</strong>
+                        <b>Jumlah pinjaman: Rp {{ number_format((int) $loanTotals['principal'], 0, ',', '.') }}</b>
+                        <div class="dk-loan-installment-grid">
+                            @for ($sequence = 1; $sequence <= 12; $sequence++)
+                                <div><small>{{ $sequence }}</small><strong>{{ number_format((int) ($loanTotals['installments'][$sequence] ?? 0), 0, ',', '.') }}</strong></div>
+                            @endfor
+                        </div>
+                    </article>
                 </div>
                 @if ($loans instanceof \Illuminate\Contracts\Pagination\Paginator)<div class="dk-table-footer">{{ $loans->links() }}</div>@endif
             </section>

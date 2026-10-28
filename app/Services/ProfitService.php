@@ -12,17 +12,18 @@ use Illuminate\Validation\ValidationException;
 
 class ProfitService
 {
-    public function withdraw(User $manager, int $staffId, int $amount): ProfitTransaction
+    public function withdraw(User $actor, int $staffId, int $amount): ProfitTransaction
     {
-        if (! $manager->isManager()) {
-            throw new RuntimeException('Hanya Manager yang dapat mencatat penarikan bonus.');
+        if (! $actor->isManager()
+            && ! ($actor->isCashier() && (int) $actor->id === $staffId)) {
+            throw new RuntimeException('Penarikan bonus hanya dapat dicatat Owner atau untuk bonus sendiri.');
         }
 
         if ($amount <= 0) {
             throw ValidationException::withMessages(['amount' => 'Nominal penarikan harus lebih dari nol.']);
         }
 
-        return DB::transaction(function () use ($manager, $staffId, $amount) {
+        return DB::transaction(function () use ($actor, $staffId, $amount) {
             $staff = User::query()->lockForUpdate()->findOrFail($staffId);
             if (! $staff->isManager() && ! $staff->isCashier()) {
                 throw ValidationException::withMessages(['user' => 'Akun tujuan bukan akun staf.']);
@@ -36,7 +37,7 @@ class ProfitService
 
             $transaction = ProfitTransaction::create([
                 'user_id' => $staff->id,
-                'created_by' => $manager->id,
+                'created_by' => $actor->id,
                 'type' => 'withdrawal',
                 'amount' => $amount,
                 'balance_after' => $balance->available_amount,
@@ -44,7 +45,7 @@ class ProfitService
             ]);
 
             app(CashLedgerService::class)->post(
-                $manager,
+                $actor,
                 'staff_withdrawal',
                 'profit',
                 'out',
@@ -53,7 +54,7 @@ class ProfitService
             );
 
             ActivityLog::create([
-                'user_id' => $manager->id,
+                'user_id' => $actor->id,
                 'action' => 'profit.withdrawn',
                 'entity_type' => ProfitTransaction::class,
                 'entity_id' => $transaction->id,
@@ -65,9 +66,9 @@ class ProfitService
         });
     }
 
-    public function transferToCapital(User $manager, int $staffId, int $amount): ProfitTransaction
+    public function transferToCapital(User $actor, int $staffId, int $amount): ProfitTransaction
     {
-        if (! $manager->isManager()) {
+        if (! $actor->isManager()) {
             throw new RuntimeException('Hanya Manager yang dapat memindahkan bonus ke modal.');
         }
 
@@ -75,7 +76,7 @@ class ProfitService
             throw ValidationException::withMessages(['amount' => 'Nominal transfer harus lebih dari nol.']);
         }
 
-        return DB::transaction(function () use ($manager, $staffId, $amount) {
+        return DB::transaction(function () use ($actor, $staffId, $amount) {
             $staff = User::query()->lockForUpdate()->findOrFail($staffId);
             if (! $staff->isManager()) {
                 throw ValidationException::withMessages(['user' => 'Bonus Admin tidak dapat dipindahkan ke modal.']);
@@ -93,7 +94,7 @@ class ProfitService
 
             $transaction = ProfitTransaction::create([
                 'user_id' => $staff->id,
-                'created_by' => $manager->id,
+                'created_by' => $actor->id,
                 'type' => 'transfer_to_modal',
                 'amount' => $amount,
                 'balance_after' => $balance->available_amount,
@@ -101,7 +102,7 @@ class ProfitService
             ]);
 
             ActivityLog::create([
-                'user_id' => $manager->id,
+                'user_id' => $actor->id,
                 'action' => 'profit.transferred_to_modal',
                 'entity_type' => ProfitTransaction::class,
                 'entity_id' => $transaction->id,

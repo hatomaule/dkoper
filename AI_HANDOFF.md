@@ -31,11 +31,58 @@ DKoper is a Laravel-based cooperative loan and cash management system. The sourc
 - Payment entry supports server-calculated oldest-outstanding-installment nominal or manual amount, cash/transfer method, private transfer-proof storage, browser-side WebP compression/camera capture, proof viewing for Owner/Admin, and WhatsApp receipt links when a borrower phone number is available. Payment and loan tables support filtering, 5/10/25/50/all pagination, and table/card views.
 - The local migration `2026_10_26_000000_enhance_payments_and_staff_identity` has been applied. Existing payments were assigned `cash` as their method; no payment, borrower, or loan records were reset. Transfer proofs are stored on the private `local` disk. Production must run the migration before deploying this code.
 - Dashboard date boundaries use the business timezone `Asia/Singapore` (UTC+8) and convert to UTC for database queries; do not compare local wall-clock boundaries directly to UTC timestamps.
-- Preview is currently running with `php artisan serve --host=0.0.0.0 --port=8000`; `http://localhost:8000/login` responds with HTTP 200. Login was visually checked in the browser. The user has another local browser window that reached `/dashboard` after login.
+- Local development port allocation: DKoper uses `8000`, Ekosan uses `8001`, and KosKosan uses `8002`. Start each project from its own directory and avoid taking another project's assigned port.
 - The working tree contains uncommitted business-flow and UI changes. Review `git status` before further edits; do not discard unrelated/pre-existing user changes.
 
-## Imported Borrower Data
+## FIDES Platform Foundation
 
+- Platform branding is now FIDES. The web app still uses one codebase and keeps the existing DKoper data as the first cooperative database.
+- Platform mode is opt-in (`FIDES_ENABLED=false` by default), so existing local sign-in and database routing remain unchanged until the central catalog is installed, the current database is registered, account links are indexed, and the environment is explicitly enabled.
+- The central catalog is configured through the `platform` connection (`FIDES_PLATFORM_DB_*`). It stores cooperative records, encrypted optional tenant connection overrides, login identifier-to-tenant links, and Super Admin accounts. The default platform catalog is a separate local SQLite file; production should configure a dedicated central MySQL/MariaDB database for shared deployment.
+- Each tenant's business data stays in its own database. Tenant context is restored from the authenticated session before implicit route-model binding and application queries. Login accepts the existing username/phone/borrower-code identifiers, resolves the correct tenant from the central index, and asks the user to choose a cooperative if the same identifier/password authenticates in multiple spaces.
+- Tenant user and borrower identity changes update the central login index after the tenant transaction commits. Initial existing users are indexed with the registration command. Transfer proof uploads are stored under per-cooperative paths while legacy proof paths remain readable.
+- The Super Admin portal is available at `/platform`. Bootstrap the central schema with `php artisan fides:install`; create the initial platform account with `php artisan fides:make-super-admin <username> <name> --email=<email>` (the command prompts for a password); register the existing database and index its users with `php artisan fides:register-current "<cooperative name>" <slug>`. Only after these steps should `FIDES_ENABLED=true` be configured and Laravel configuration caches refreshed.
+- Super Admin can create a new cooperative from the portal. Provisioning creates a separate MySQL/MariaDB database when the configured database user has permission, or a dedicated SQLite file when the MySQL server rejects `CREATE DATABASE` with permission error 1044. Both receive the same application migrations and isolated Owner/Admin accounts with forced password change. The generated Admin password is shown once. Existing databases/files are never overwritten.
+- The Super Admin portal provides an account-only dashboard grouped by cooperative, cooperative/user counts, and Owner/Admin account management (name, username, role, and password reset). It intentionally does not expose transaction or financial data. SQLite tenant files are stored under `storage/fides-tenants` and require persistent writable storage and inclusion in backup/recovery procedures.
+- The first platform implementation routes by account-to-tenant mapping after shared login. Public subdomain/DNS/TLS configuration, aggregate comparative reports, per-tenant credential configuration in the portal, automated migration/rollback tooling, and production backup/recovery procedures remain follow-up deployment work. Do not enable the platform in production before provisioning and isolation checks are complete.
+- Platform verification: latest full suite passed (73 tests, 417 assertions), including SQLite permission-fallback provisioning, cooperative account management, tenant login, and isolation. `npm run build`, `php artisan view:cache`, PHP syntax checks, and targeted `git diff --check` passed. Platform activation and provisioning have not been run against the local business database.
+- `phpunit.xml` explicitly sets `FIDES_ENABLED=false` for deterministic legacy test behavior; the FIDES integration tests opt in to platform mode in their test setup. This avoids local `.env` values changing the authentication branch in unrelated tests. Latest full suite: 73 tests, 417 assertions.
+
+## Chat UX Redesign Direction
+
+- Default experience should start in a mailbox-style list view, not in a full conversation panel.
+- A back button must return the user from the active conversation to the list of chats.
+- The user must be able to switch among multiple conversations (for example, different owners or counterparties) without losing the list state.
+- Preserve the legacy behavior of supporting direct property/owner conversations, admin/support chats, private attachments, and personal message folders when they are still useful.
+- Keep the system simple for new users: the inbox should show recent conversations, unread counters, avatars/initials, optional status labels, and a compact preview of the last message.
+- On desktop, prefer a two-column layout: left column for conversation list and right column for active thread. On mobile, use a full-width list view with a dedicated back navigation into the active conversation.
+- The interaction model should remain close to the working behavior in the legacy app, but the UI should not carry over the old visual clutter or heavy complexity.
+
+## Classic vs Pro Theme Direction
+
+- Classic: clean and minimal, light background, restrained cards, clear hierarchy, straightforward typography, simple button states.
+- Pro: dark premium appearance with near-black/navy surfaces, compact data cards, orange accent color, subtle gradients, stronger contrast, and tighter information density.
+- Treat Classic and Pro as presentation modes, not a brand copy of the legacy reference. Use the provided screenshots as inspiration only.
+- The user specifically wants the Pro appearance to feel like a dark cPanel-style dashboard with orange accents and compact cards, but without copying identity, assets, or branding from external systems.
+- Theme selection should be user-controlled or settings-based unless product rules later require role-based presentation.
+
+## Business Logic Migration Principle
+
+- Keep the legacy business logic that is still valid, secure, and maintainable.
+- Replace or redesign flows only when they are inaccurate, unsafe, hard to maintain, or inconsistent with the new product requirements.
+- The established legacy behavior to preserve includes owner submission and admin review for property publication, booking approval/payment proof workflows, and invoice/payment activity mapping.
+- Where the current legacy flow is incomplete or unclear, define the desired behavior explicitly before implementation rather than copying old assumptions blindly.
+
+## Current Safe Next Execution Step
+
+- An authenticated-only interactive UI mockup is available at `/chat-preview` (`prototype.chat.preview`): it switches between Classic and Pro, supports conversation search/filter/selection, marks unread chats as read, has mobile inbox/thread navigation, and accepts mock messages in client-side state.
+- The mockup uses sample content only. It is not connected to a message database, delivery system, notifications, or real file uploads; do not present it as production chat functionality.
+- Focused validation: `php artisan test --filter=ChatPreviewTest --no-coverage` passes (2 tests, 8 assertions); `npm run build` succeeds.
+- Before building production chat, confirm message retention, recipient/owner scope, unread state synchronization, attachment policy/storage, and whether real-time delivery is required.
+- Keep the app in a safe, non-production state until the product rules and environment are confirmed.
+
+## Imported Borrower Dat
+a
 - The supplied borrower table has been loaded into the local database: 13 borrowers, 13 borrower login accounts, 13 active loans, 156 installments, and 84 approved payments. All 13 borrower accounts require a password change on first login; no password values are recorded here.
 - Source data totals: Rp19,000,000 principal, Rp22,800,000 total receivable, Rp11,240,000 paid, Rp11,560,000 outstanding, and Rp1,330,000 administration fees.
 - Opening capital was recorded as Rp19,000,000. Cash ledger ending balance and `cash_accounts.balance` both reconcile to Rp12,570,000.
@@ -145,7 +192,7 @@ Latest verification in this session:
 2. Review `git status` and preserve all existing worktree changes.
 3. Confirm `.env` targets the intended local database; never publish real database or account credentials.
 4. Start MariaDB if necessary: `sudo service mariadb start`.
-5. Start the preview if it is not already running: `php artisan serve --host=0.0.0.0 --port=8000`, then open `http://localhost:8000/login`.
+5. Start the preview if it is not already running with `./start-local.sh`, then open `http://localhost:8000/login`.
 6. On the current manager browser session, select and save a private password on `/password/change`. The starter password must not be retained for normal use.
 7. Review the current business flows against `AI_HANDOFF.md`, especially negative-balance withdrawals, transfer-to-capital semantics, and borrower-role access restrictions.
 8. Continue polishing responsive pages and verify all role-specific workflows in browser; the dashboard is currently manager/staff-oriented and should be checked alongside the borrower view.
@@ -173,7 +220,7 @@ Latest verification in this session:
 
 ## Current Stop Point
 
-The core service and approval flows, borrower data import, cumulative profit allocation, identity/payment migration, and requested visual redesign are implemented. The latest full test suite passes (42 tests, 177 assertions), the frontend production build and Blade compilation pass, and the local database import reconciles. The preview server is running at `http://localhost:8000`; the shared browser tab is at `/login`. Alan is the Owner; Chalo is the employee/Admin operator. Usernames are `owner` and `admin`; no password values are saved here.
+The core service and approval flows, borrower data import, cumulative profit allocation, identity/payment migration, and requested visual redesign are implemented. The latest full test suite passes (42 tests, 177 assertions), the frontend production build and Blade compilation pass, and the local database import reconciles. DKoper uses local port `8000`; start it with `./start-local.sh` when needed. Alan is the Owner; Chalo is the employee/Admin operator. Usernames are `owner` and `admin`; no password values are saved here.
 
 ### Latest follow-up implementation
 
@@ -201,7 +248,7 @@ The core service and approval flows, borrower data import, cumulative profit all
 - Paid loans are retained as historical records; they are shown with the “Lunas” status in staff and borrower loan lists, and their installments/payment history remain available.
 - The staff Nasabah table and card view show each borrower's combined billed total and paid installment total across active and paid contracts; pending/rejected loan applications are excluded from these financial totals.
 - Mobile navigation uses an animated right-side drawer with overlay and Escape/link close behavior. Borrower installment history shows all installments without a page-size selector and defaults to interactive cards on phone-sized screens; the table view remains available via the view switch.
-- The local preview server is already bound to `0.0.0.0:8000`; phone access depends on the phone being able to route to this development host. Keep this unauthenticated-transport HTTP preview on a trusted network only; do not expose it publicly.
+- `./start-local.sh` binds the development preview to `127.0.0.1:8000`. Do not expose the unauthenticated-transport HTTP preview publicly.
 - Owner correction can change amount, borrower/contract, and installment. Approved payments are reallocated transactionally across both affected loans, including bonus reversals/replay, advance balances, loan statuses, and cash-ledger references. Pending payment corrections also update the approval payload.
 - Keuangan now includes a responsive 12-month cash-in/cash-out chart using `Asia/Singapore` month boundaries. Dashboard monthly bars continue to show transaction amounts, not transaction counts.
 - Loan/payment rejection now requires a written reason (3–1000 characters); the reason is stored with the approval request and activity audit record. Rejection remains protected by a confirmation dialog.
@@ -221,3 +268,22 @@ Remaining follow-up:
 - Review migration/schema consistency and PHP 8.3 deployment readiness.
 - Apply the identity/payment migration to the production database before deploying the updated application. Do not rerun the one-time borrower import.
 - Confirm production database credentials and rotate any development credentials before deployment.
+
+### DKoper bonus and FIDES hardening follow-up (28 October 2026)
+
+- Bonus withdrawals now allow an Admin to withdraw only their own bonus; the Owner can record staff withdrawals. A withdrawal may leave a visible negative bonus balance. Owner transfers to capital cannot exceed available bonus and do not double-count cash already recorded from loan payments.
+- Tenant restoration purges and removes the active `fides_tenant` connection configuration. Provisioning validates sanitized slugs and verifies SQLite database file creation; isolated temporary-SQLite tests cover independent cooperatives, overwrite refusal, migration failure state, and invalid slugs.
+- Cooperative selection login test now simulates a provisioned tenant connection while retaining an intentionally unprovisioned fixture database name; this exercises the selection/authentication flow without creating databases.
+- Platform cooperative names and database paths wrap on narrow screens. Login was checked at 390px in light and dark themes with no horizontal overflow. Authenticated platform/staff pages still need visual review with a safe test account.
+- Verification completed: `php artisan test --no-coverage` passed (65 tests, 338 assertions); `npm run build`, `php artisan view:cache`, and the focused `git diff --check` passed. Run tests that share `dkoper_test` sequentially, not in parallel.
+- No production/business database provisioning, migration, or data changes were performed. The worktree remains uncommitted; preserve all existing local changes and review `git status` before any commit/push.
+
+### FIDES platform management and dashboard follow-up (29 October 2026)
+
+- Added the FIDES platform portal with isolated per-cooperative databases, account directory links, cooperative provisioning, cooperative selection during login, and the synthetic Cair Dana demo tenant. Production/business databases were not provisioned, migrated, or modified during this work.
+- Platform account management is grouped through a sidebar submenu with a dynamic entry per cooperative. Account cards default to card mode, show fixed identity, and allow role changes for Owner/Admin; reset password, activation, and account deletion use confirmation dialogs. Accounts with operational history cannot be deleted.
+- Cooperative management supports search, status filtering, pagination, card/table icon switch, and registration through a modal. Permanent deletion requires exact cooperative-name confirmation and a separate acknowledgement; the controller rejects shared application/catalog databases, verifies tenant DB names/paths, marks deletion failures, and logs failed database drops. A separate SQLite tenant deletion and shared-database refusal are covered by feature tests.
+- Platform dashboard shows account/borrower comparison bars above the KPI cards. Superuser password change is in a modal; successful/validation flows retain explicit feedback.
+- Account and cooperative listings refresh every 60 seconds only when the page is visible and no form is dirty, dialog is open, or field is focused.
+- Latest complete verification: `php artisan test --no-coverage` passed (83 tests, 512 assertions). `npm run build`, `php artisan view:cache`, PHP syntax checks, and focused `git diff --check` passed. The FIDES tenant suite has 14 tests covering the account submenu, role-only edits, account/cooperative status, protected history, permanent isolated-SQLite tenant deletion, and refusal to delete the shared application database.
+- Preserve `storage/fides-tenants` and `database/fides-platform.sqlite` as runtime data; these are intentionally ignored by Git. Never run demo seeding against a real tenant or drop shared DKoper/application databases.

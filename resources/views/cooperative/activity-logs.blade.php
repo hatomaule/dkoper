@@ -14,6 +14,7 @@
                 'borrower.created' => 'Nasabah ditambahkan',
                 'borrower.password_reset' => 'Password nasabah direset',
                 'borrower.password_changed' => 'Password nasabah diperbarui',
+                'borrower.deleted' => 'Akun nasabah dihapus',
                 'staff.password_changed' => 'Password akun pengelola diperbarui',
                 'cash.adjusted' => 'Kas disesuaikan',
                 'profit.withdrawn' => 'Bonus ditarik',

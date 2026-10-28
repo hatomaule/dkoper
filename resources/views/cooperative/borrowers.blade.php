@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Nasabah</h2></x-slot>
     <div class="bg-slate-100 min-h-[calc(100vh-65px)] py-8 px-4">
-        <div class="mx-auto max-w-7xl grid items-stretch gap-5 lg:grid-cols-[minmax(240px,290px)_minmax(0,1fr)]" data-table-tools x-data="{ passwordOpen:false, passwordMode:'reset', borrowerId:'', borrowerName:'' }" @borrower-password-open.window="passwordOpen=true; borrowerId=$event.detail.id; borrowerName=$event.detail.name; passwordMode='reset'">
+        <div class="mx-auto max-w-7xl grid items-stretch gap-5 lg:grid-cols-[minmax(240px,290px)_minmax(0,1fr)]" data-table-tools x-data="{ passwordOpen:false, deleteOpen:false, passwordMode:'reset', borrowerId:'', borrowerName:'', deleteBorrowerId:'', deleteBorrowerName:'' }" @borrower-password-open.window="passwordOpen=true; borrowerId=$event.detail.id; borrowerName=$event.detail.name; passwordMode='reset'" @borrower-delete-open.window="deleteOpen=true; deleteBorrowerId=$event.detail.id; deleteBorrowerName=$event.detail.name">
             @if (auth()->user()->isManager() || auth()->user()->isCashier())
                 <form method="POST" action="{{ route('cooperative.borrowers.store') }}" class="dk-form-panel self-start">
                     @csrf
@@ -28,44 +28,46 @@
                 </div>
                 <div class="overflow-x-auto dk-table-view" data-table-view="table">
                     <table class="w-full text-left text-sm">
-                        <thead><tr><th>Nama</th><th>Username</th><th>HP</th><th>Pinjaman</th><th>Total tagihan</th><th>Total dibayar</th><th>Aksi</th></tr></thead>
+                        <thead><tr><th>Nama</th><th>Username</th><th>HP</th><th>Status akun</th><th>Aksi</th></tr></thead>
                         <tbody>
                             @forelse ($borrowers as $borrower)
-                                @php
-                                    $accountLoans = $borrower->loans->whereIn('status', ['active', 'paid']);
-                                    $totalBilled = (int) $accountLoans->sum('total_receivable');
-                                    $totalPaid = (int) $accountLoans->sum(fn ($loan) => $loan->installments->sum('paid_amount'));
-                                @endphp
                                 <tr data-table-row>
                                     <td class="font-bold">{{ $borrower->full_name }}</td>
                                     <td>{{ $borrower->user?->username }}</td>
                                     <td>{{ $borrower->phone ?: '—' }}</td>
-                                    <td>{{ $borrower->loans->count() }}</td>
-                                    <td class="whitespace-nowrap font-semibold">Rp {{ number_format($totalBilled, 0, ',', '.') }}</td>
-                                    <td class="whitespace-nowrap font-semibold">Rp {{ number_format($totalPaid, 0, ',', '.') }}</td>
-                                    <td>@if ($borrower->user)<button type="button" class="dk-inline-action" @click="$dispatch('borrower-password-open', { id: {{ $borrower->id }}, name: @js($borrower->full_name) })">Password</button>@endif</td>
+                                    <td>{{ $borrower->user ? 'Aktif' : 'Akun tanpa login' }}</td>
+                                    <td class="whitespace-nowrap">
+                                        @if ($borrower->user)
+                                            <button type="button" class="dk-inline-action" @click="$dispatch('borrower-password-open', { id: {{ $borrower->id }}, name: @js($borrower->full_name) })">Password</button>
+                                        @endif
+                                        @if (auth()->user()->isManager())
+                                            @if ($borrower->loans_count === 0 && $borrower->advance_transactions_count === 0)
+                                                <button type="button" class="dk-inline-action dk-inline-danger" @click="$dispatch('borrower-delete-open', { id: {{ $borrower->id }}, name: @js($borrower->full_name) })">Hapus</button>
+                                            @else
+                                                <span class="text-xs text-slate-500" title="Data dengan riwayat keuangan tidak dapat dihapus">Riwayat tersimpan</span>
+                                            @endif
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="7" class="py-8 text-center text-slate-500">Belum ada nasabah.</td></tr>
+                                <tr><td colspan="5" class="py-8 text-center text-slate-500">Belum ada nasabah.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
                 <div class="dk-payment-cards dk-table-view" data-table-view="cards" hidden>
                     @foreach ($borrowers as $borrower)
-                        @php
-                            $accountLoans = $borrower->loans->whereIn('status', ['active', 'paid']);
-                            $totalBilled = (int) $accountLoans->sum('total_receivable');
-                            $totalPaid = (int) $accountLoans->sum(fn ($loan) => $loan->installments->sum('paid_amount'));
-                        @endphp
                         <article class="dk-payment-card" data-table-row>
-                            <div><strong>{{ $borrower->full_name }}</strong><span>{{ $borrower->loans->count() }} pinjaman</span></div>
+                            <div><strong>{{ $borrower->full_name }}</strong><span>{{ $borrower->user ? 'Akun aktif' : 'Akun tanpa login' }}</span></div>
                             <p>{{ $borrower->user?->username }} · {{ $borrower->phone ?: 'Nomor HP belum diisi' }}</p>
-                            <dl class="dk-borrower-totals">
-                                <div><dt>Total tagihan</dt><dd>Rp {{ number_format($totalBilled, 0, ',', '.') }}</dd></div>
-                                <div><dt>Total dibayar</dt><dd>Rp {{ number_format($totalPaid, 0, ',', '.') }}</dd></div>
-                            </dl>
                             @if ($borrower->user)<button type="button" class="dk-inline-action w-fit" @click="$dispatch('borrower-password-open', { id: {{ $borrower->id }}, name: @js($borrower->full_name) })">Kelola password</button>@endif
+                            @if (auth()->user()->isManager())
+                                @if ($borrower->loans_count === 0 && $borrower->advance_transactions_count === 0)
+                                    <button type="button" class="dk-inline-action dk-inline-danger w-fit" @click="$dispatch('borrower-delete-open', { id: {{ $borrower->id }}, name: @js($borrower->full_name) })">Hapus akun</button>
+                                @else
+                                    <small>Riwayat keuangan tersimpan; akun ini tidak dapat dihapus.</small>
+                                @endif
+                            @endif
                         </article>
                     @endforeach
                 </div>
@@ -98,6 +100,20 @@
                             <button type="submit" class="dk-button-primary">Simpan password</button>
                         </form>
                     @endif
+                </section>
+            </div>
+            <div class="dk-modal-backdrop" x-show="deleteOpen" x-transition.opacity x-cloak @click.self="deleteOpen=false" @keydown.escape.window="deleteOpen=false">
+                <section class="dk-password-dialog" role="dialog" aria-modal="true" aria-labelledby="borrower-delete-title">
+                    <button type="button" class="dk-modal-close" aria-label="Tutup" @click="deleteOpen=false">×</button>
+                    <p class="dk-eyebrow">KONFIRMASI PENGHAPUSAN</p>
+                    <h3 id="borrower-delete-title">Hapus akun <span x-text="deleteBorrowerName"></span>?</h3>
+                    <p class="mt-3 text-sm text-slate-600">Akun login dan data nasabah tanpa riwayat keuangan akan dihapus permanen. Tindakan ini tidak dapat dibatalkan.</p>
+                    <form method="POST" class="mt-5 flex justify-end gap-2" :action="'{{ url('/cooperative/borrowers') }}/' + deleteBorrowerId">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" class="dk-button-secondary" @click="deleteOpen=false">Batal</button>
+                        <button type="submit" class="dk-button-danger">Hapus akun</button>
+                    </form>
                 </section>
             </div>
         </div>

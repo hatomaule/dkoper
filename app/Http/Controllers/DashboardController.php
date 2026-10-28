@@ -21,7 +21,7 @@ class DashboardController extends Controller
         if ($user->isBorrower()) {
             $borrower = Borrower::query()
                 ->with(['loans' => fn ($query) => $query->whereIn('status', ['active', 'pending', 'paid'])
-                    ->with('installments')
+                    ->with(['installments' => fn ($installments) => $installments->orderByDesc('sequence')])
                     ->orderByDesc('created_at')
                     ->orderByDesc('id')])
                 ->where('user_id', $user->id)
@@ -88,6 +88,8 @@ class DashboardController extends Controller
             'cash_balance' => DB::table('cash_accounts')->where('id', 1)->value('balance') ?? CashTransaction::query()->latest('id')->value('balance_after') ?? 0,
             'owner_profit' => $owner?->profitBalance?->available_amount ?? 0,
             'admin_profit' => $admin?->profitBalance?->available_amount ?? 0,
+            'owner_earned_bonus' => $owner?->profitBalance?->earned_amount ?? 0,
+            'admin_earned_bonus' => $admin?->profitBalance?->earned_amount ?? 0,
             'owner_future_bonus' => (clone $futureInstallments)->sum('alan_profit_amount'),
             'admin_future_bonus' => (clone $futureInstallments)->sum('chalo_profit_amount'),
             'my_profit' => ProfitBalance::query()->where('user_id', $user->id)->value('available_amount') ?? 0,

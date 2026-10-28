@@ -7,7 +7,7 @@
         <meta name="theme-color" content="#f6f8fb">
         <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
-        <title>DKoper · Keuangan Koperasi</title>
+        <title>{{ config('app.name') }} · Platform Keuangan Koperasi</title>
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -17,7 +17,7 @@
 
             <div class="dk-workspace">
                 @isset($header)
-                    <header class="dk-page-heading">
+                    <header class="dk-page-heading {{ request()->routeIs('dashboard') ? 'dk-dashboard-heading' : '' }}">
                         <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                             <div class="dk-heading-layout">{{ $header }}</div>
                         </div>

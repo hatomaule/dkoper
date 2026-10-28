@@ -13,6 +13,12 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    protected static function booted(): void
+    {
+        static::saved(fn (User $user) => app(\App\Services\FidesAccountDirectory::class)->syncUser($user));
+        static::deleted(fn (User $user) => app(\App\Services\FidesAccountDirectory::class)->removeUser($user));
+    }
+
     /**
      * The attributes that are mass assignable.
      *

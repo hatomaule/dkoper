@@ -3,15 +3,43 @@
 use App\Http\Controllers\CooperativeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PlatformController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rules\Password;
 
 Route::get('/', function () {
+    if (auth('platform')->check()) {
+        return redirect()->route('platform.dashboard');
+    }
+
     return auth()->check()
         ? redirect()->route('dashboard')
         : redirect()->route('login');
+});
+
+Route::get('/choose-cooperative', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'selectCooperative'])
+    ->middleware('guest')
+    ->name('login.cooperative.select');
+Route::post('/choose-cooperative', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'authenticateSelectedCooperative'])
+    ->middleware('guest')
+    ->name('login.cooperative.authenticate');
+
+Route::middleware('auth:platform')->prefix('platform')->name('platform.')->group(function () {
+    Route::get('/', [PlatformController::class, 'index'])->name('dashboard');
+    Route::get('/accounts', [PlatformController::class, 'accounts'])->name('accounts');
+    Route::get('/cooperatives', [PlatformController::class, 'cooperatives'])->name('cooperatives');
+    Route::get('/cooperatives/{cooperative}', [PlatformController::class, 'show'])->name('cooperatives.show');
+    Route::post('/cooperatives', [PlatformController::class, 'store'])->name('cooperatives.store');
+    Route::patch('/cooperatives/{cooperative}/status', [PlatformController::class, 'updateCooperativeStatus'])->name('cooperatives.status');
+    Route::delete('/cooperatives/{cooperative}', [PlatformController::class, 'destroyCooperative'])->name('cooperatives.destroy');
+    Route::patch('/cooperatives/{cooperativeId}/accounts/{userId}', [PlatformController::class, 'updateAccount'])->name('accounts.update');
+    Route::post('/cooperatives/{cooperativeId}/accounts/{userId}/reset-password', [PlatformController::class, 'resetAccountPassword'])->name('accounts.reset-password');
+    Route::patch('/cooperatives/{cooperativeId}/accounts/{userId}/status', [PlatformController::class, 'updateAccountStatus'])->name('accounts.status');
+    Route::delete('/cooperatives/{cooperativeId}/accounts/{userId}', [PlatformController::class, 'destroyAccount'])->name('accounts.destroy');
+    Route::post('/profile/password', [PlatformController::class, 'updateProfilePassword'])->name('profile.password');
+    Route::post('/logout', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
 
 Route::get('/dashboard', DashboardController::class)
@@ -41,6 +69,7 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::post('/cooperative/borrowers', [CooperativeController::class, 'storeBorrower'])->name('cooperative.borrowers.store');
     Route::post('/cooperative/borrowers/{borrower}/reset-password', [CooperativeController::class, 'resetBorrowerPassword'])->name('cooperative.borrowers.reset-password');
     Route::post('/cooperative/borrowers/{borrower}/password', [CooperativeController::class, 'updateBorrowerPassword'])->name('cooperative.borrowers.update-password');
+    Route::delete('/cooperative/borrowers/{borrower}', [CooperativeController::class, 'destroyBorrower'])->name('cooperative.borrowers.destroy');
     Route::post('/cooperative/staff/{user}/password', [CooperativeController::class, 'updateStaffPassword'])->name('cooperative.staff.update-password');
     Route::get('/cooperative/loans', [CooperativeController::class, 'loans'])->name('cooperative.loans');
     Route::post('/cooperative/loans', [CooperativeController::class, 'storeLoan'])->name('cooperative.loans.store');

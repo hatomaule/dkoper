@@ -31,6 +31,7 @@ class DashboardAccessTest extends TestCase
         $this->actingAs($manager)
             ->get('/dashboard')
             ->assertSee('Dashboard')
+            ->assertSee('dk-dashboard-heading', false)
             ->assertSee('Saldo dan proyeksi bonus')
             ->assertSee('Debit dan kredit mingguan')
             ->assertSee('Nominal transaksi per bulan')
@@ -51,6 +52,39 @@ class DashboardAccessTest extends TestCase
             ->assertSee('Chalo Admin')
             ->assertSee('Rp 10.000')
             ->assertSee('Rp 7.000');
+    }
+
+    public function test_dashboard_shows_realized_and_projected_bonus_as_the_overall_total(): void
+    {
+        $owner = User::factory()->create([
+            'name' => 'Alan Owner',
+            'username' => 'owner',
+            'role' => 'manager',
+            'must_change_password' => false,
+        ]);
+        User::factory()->create([
+            'name' => 'Chalo Admin',
+            'username' => 'admin',
+            'role' => 'kasir',
+            'must_change_password' => false,
+        ]);
+        $borrower = Borrower::create([
+            'full_name' => 'Nasabah Bonus',
+            'borrower_code' => 'DK_BONUS_TOTAL',
+            'phone' => '081299998887',
+            'status' => 'active',
+        ]);
+        app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
+        ProfitBalance::create(['user_id' => $owner->id, 'earned_amount' => 12_000, 'available_amount' => 10_000]);
+
+        $this->actingAs($owner)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('TOTAL BONUS KESELURUHAN')
+            ->assertSee('Terealisasi Rp 12.000 + proyeksi pinjaman aktif Rp 120.000')
+            ->assertSee('Rp 132.000')
+            ->assertSee('SALDO BONUS TERSEDIA')
+            ->assertSee('Rp 10.000');
     }
 
     public function test_user_with_default_password_is_redirected_to_change_password(): void

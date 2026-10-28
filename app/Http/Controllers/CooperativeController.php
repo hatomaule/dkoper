@@ -19,6 +19,7 @@ use App\Services\PaymentService;
 use App\Services\ProfitService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -31,7 +32,11 @@ class CooperativeController extends Controller
     {
         $this->authorizeStaff();
         $perPage = $this->perPage(request());
-        $query = Borrower::with(['user', 'loans.installments'])->orderByDesc('created_at')->orderByDesc('id');
+        $query = Borrower::with('user')
+            ->withCount(['loans', 'advanceTransactions'])
+            ->customerAccount()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
 
         return view('cooperative.borrowers', [
             'borrowers' => $perPage === 'all' ? $query->get() : $query->paginate($perPage)->withQueryString(),
@@ -97,6 +102,40 @@ class CooperativeController extends Controller
         return redirect()->route('cooperative.borrowers')->with('status', "Password {$borrower->full_name} berhasil diperbarui.");
     }
 
+    public function destroyBorrower(Request $request, Borrower $borrower): RedirectResponse
+    {
+        abort_unless($request->user()->isManager(), 403);
+
+        return DB::transaction(function () use ($request, $borrower) {
+            $borrower = Borrower::query()->lockForUpdate()->findOrFail($borrower->id);
+
+            if ($borrower->loans()->exists() || $borrower->advanceTransactions()->exists()) {
+                return redirect()->route('cooperative.borrowers')
+                    ->withErrors(['borrower' => 'Akun tidak dapat dihapus karena memiliki riwayat pinjaman atau transaksi.']);
+            }
+
+            $borrower->load('user');
+            $borrowerName = $borrower->full_name;
+            $borrowerCode = $borrower->borrower_code;
+            $borrowerId = $borrower->id;
+
+            $borrower->delete();
+            $borrower->user?->delete();
+
+            ActivityLog::create([
+                'user_id' => $request->user()->id,
+                'action' => 'borrower.deleted',
+                'entity_type' => Borrower::class,
+                'entity_id' => $borrowerId,
+                'metadata' => ['borrower_code' => $borrowerCode, 'full_name' => $borrowerName],
+                'ip_address' => $request->ip(),
+            ]);
+
+            return redirect()->route('cooperative.borrowers')
+                ->with('status', "Akun nasabah {$borrowerName} berhasil dihapus.");
+        });
+    }
+
     public function updateStaffPassword(Request $request, User $user): RedirectResponse
     {
         $isOwner = $request->user()->isManager();
@@ -128,11 +167,31 @@ class CooperativeController extends Controller
     {
         $this->authorizeStaff();
         $perPage = $this->perPage(request());
-        $query = Loan::with('borrower')->orderByDesc('created_at')->orderByDesc('id');
+        $query = Loan::with(['borrower', 'installments'])
+            ->whereHas('borrower', fn ($query) => $query->customerAccount())
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
 
         return view('cooperative.loans', [
-            'borrowers' => Borrower::with('user')->orderBy('full_name')->get(),
+            'borrowers' => Borrower::with('user')
+                ->customerAccount()
+                ->where('status', 'active')
+                ->orderBy('full_name')
+                ->get(),
             'loans' => $perPage === 'all' ? $query->get() : $query->paginate($perPage)->withQueryString(),
+            'loanTotals' => [
+                'principal' => Loan::query()
+                    ->whereIn('status', ['active', 'paid'])
+                    ->whereHas('borrower', fn ($query) => $query->customerAccount())
+                    ->sum('principal_amount'),
+                'installments' => Installment::query()
+                    ->whereHas('loan', fn ($loanQuery) => $loanQuery
+                        ->whereIn('status', ['active', 'paid'])
+                        ->whereHas('borrower', fn ($query) => $query->customerAccount()))
+                    ->selectRaw('sequence, SUM(paid_amount) AS paid_total')
+                    ->groupBy('sequence')
+                    ->pluck('paid_total', 'sequence'),
+            ],
             'perPage' => $perPage,
         ]);
     }
@@ -141,6 +200,15 @@ class CooperativeController extends Controller
     {
         $this->authorizeStaff();
         $validated = $request->validate(['borrower_id' => ['required', 'exists:borrowers,id'], 'principal_amount' => ['required', 'integer', 'min:1000']]);
+        $eligibleBorrower = Borrower::query()
+            ->customerAccount()
+            ->whereKey($validated['borrower_id'])
+            ->where('status', 'active')
+            ->exists();
+        if (! $eligibleBorrower) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['borrower_id' => 'Pilih akun nasabah yang aktif.']);
+        }
+
         $loan = $service->createLoan($request->user(), (int) $validated['borrower_id'], (int) $validated['principal_amount']);
         $message = $loan->status === 'active'
             ? "Pinjaman {$loan->loan_code} berhasil disetujui dan dicatat."
@@ -159,13 +227,15 @@ class CooperativeController extends Controller
         $paymentLoans = Loan::with([
             'borrower',
             'installments' => fn ($query) => $query->where('outstanding_amount', '>', 0)->orderBy('sequence'),
-        ])->where('status', 'active')
-            ->whereHas('installments', fn ($query) => $query->where('outstanding_amount', '>', 0))
+        ])        ->where('status', 'active')
+        ->whereHas('installments', fn ($query) => $query->where('outstanding_amount', '>', 0))
+        ->whereHas('borrower', fn ($query) => $query->customerAccount()->where('status', 'active'))
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
         $correctionLoans = Loan::with(['borrower', 'installments' => fn ($query) => $query->orderBy('sequence')])
             ->whereIn('status', ['active', 'paid'])
+            ->whereHas('borrower', fn ($query) => $query->customerAccount())
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
@@ -189,6 +259,14 @@ class CooperativeController extends Controller
             'amount' => ['required_if:nominal_source,manual', 'nullable', 'integer', 'min:1'],
             'proof' => ['required_if:payment_method,transfer', 'nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
         ]);
+        $eligibleLoan = Loan::query()
+            ->whereKey($validated['loan_id'])
+            ->where('status', 'active')
+            ->whereHas('borrower', fn ($query) => $query->customerAccount()->where('status', 'active'))
+            ->exists();
+        if (! $eligibleLoan) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['loan_id' => 'Pilih pinjaman aktif milik nasabah.']);
+        }
 
         $installment = Installment::query()
             ->where('loan_id', $validated['loan_id'])
@@ -204,7 +282,12 @@ class CooperativeController extends Controller
         }
 
         $proofPath = $request->hasFile('proof')
-            ? $request->file('proof')->store('payment-proofs', 'local')
+            ? $request->file('proof')->store(
+                config('fides.enabled')
+                    ? 'cooperatives/'.(int) config('fides.current_tenant_id').'/payment-proofs'
+                    : 'payment-proofs',
+                'local',
+            )
             : null;
 
         $payment = Payment::create([
@@ -258,7 +341,10 @@ class CooperativeController extends Controller
             'amount' => ['required', 'integer', 'min:1'],
         ]);
         $targetLoan = Loan::query()->findOrFail($validated['loan_id']);
+        $eligibleBorrower = $targetLoan->borrower()->customerAccount()
+            ->exists();
         if (! in_array($targetLoan->status, ['active', 'paid'], true)
+            || ! $eligibleBorrower
             || ! Installment::query()->where('loan_id', $targetLoan->id)->whereKey($validated['installment_id'])->exists()) {
             throw \Illuminate\Validation\ValidationException::withMessages(['installment_id' => 'Pilih cicilan yang sesuai dengan kontrak pinjaman.']);
         }
@@ -386,8 +472,22 @@ class CooperativeController extends Controller
     {
         abort_unless($request->user()->isManager() || $request->user()->isCashier(), 403);
 
+        $projectedBonus = Installment::query()
+            ->whereHas('loan', fn ($query) => $query->where('status', 'active'))
+            ->where('outstanding_amount', '>', 0)
+            ->selectRaw('SUM(alan_profit_amount) AS owner_total, SUM(chalo_profit_amount) AS admin_total')
+            ->first();
+
         return view('cooperative.profits', [
-            'balances' => ProfitBalance::with('user')->whereHas('user', fn ($query) => $query->whereIn('role', ['manager', 'kasir']))->orderBy('user_id')->get(),
+            'balances' => ProfitBalance::with('user')
+                ->whereHas('user', fn ($query) => $query->whereIn('role', ['manager', 'kasir']))
+                ->orderBy('user_id')
+                ->get()
+                ->each(function (ProfitBalance $balance) use ($projectedBonus): void {
+                    $balance->projected_amount = (int) ($balance->user->isManager()
+                        ? ($projectedBonus->owner_total ?? 0)
+                        : ($projectedBonus->admin_total ?? 0));
+                }),
             'transactions' => $this->paginated(ProfitTransaction::with(['user', 'creator'])->orderByDesc('created_at')->orderByDesc('id'), $request),
         ]);
     }

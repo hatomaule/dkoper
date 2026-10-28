@@ -16,6 +16,8 @@
 /public/build
 /public/hot
 /public/storage
+/database/fides-platform.sqlite
+/storage/fides-tenants/
 /storage/*.key
 /storage/pail
 /vendor

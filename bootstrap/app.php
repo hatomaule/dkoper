@@ -10,7 +10,16 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withCommands([
+        \App\Console\Commands\InstallFidesPlatform::class,
+        \App\Console\Commands\CreateFidesSuperAdmin::class,
+        \App\Console\Commands\RegisterCurrentFidesCooperative::class,
+        \App\Console\Commands\SeedDemoFidesCooperative::class,
+    ])
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(replace: [
+            \Illuminate\Routing\Middleware\SubstituteBindings::class => \App\Http\Middleware\ResolveFidesTenant::class,
+        ]);
         $middleware->alias([
             'password.changed' => \App\Http\Middleware\EnsurePasswordWasChanged::class,
         ]);

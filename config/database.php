@@ -64,6 +64,27 @@ return [
             ]) : [],
         ],
 
+        'platform' => [
+            'driver' => env('FIDES_PLATFORM_DB_CONNECTION', 'sqlite'),
+            'url' => env('FIDES_PLATFORM_DB_URL'),
+            'database' => env('FIDES_PLATFORM_DB_DATABASE', database_path('fides-platform.sqlite')),
+            'host' => env('FIDES_PLATFORM_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('FIDES_PLATFORM_DB_PORT', env('DB_PORT', '3306')),
+            'username' => env('FIDES_PLATFORM_DB_USERNAME', env('DB_USERNAME')),
+            'password' => env('FIDES_PLATFORM_DB_PASSWORD', env('DB_PASSWORD')),
+            'unix_socket' => env('FIDES_PLATFORM_DB_SOCKET', ''),
+            'charset' => env('FIDES_PLATFORM_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('FIDES_PLATFORM_DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'foreign_key_constraints' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('FIDES_PLATFORM_DB_SSL_CA'),
+            ]) : [],
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),

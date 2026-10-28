@@ -3,9 +3,9 @@
         @php($adminAccount = \App\Models\User::query()->where('username', 'admin')->where('role', 'kasir')->first())
     @endif
     <div class="dk-sidebar">
-        <a href="{{ route('dashboard') }}" class="dk-brand" aria-label="DKoper, Dashboard">
+        <a href="{{ route('dashboard') }}" class="dk-brand" aria-label="{{ config('app.name') }}, Dashboard">
             <img src="{{ asset('logo.svg') }}" class="dk-brand-mark" alt="">
-            <span class="dk-brand-name"><span class="dk-brand-title">DKoper<span>.</span></span><small>COOPERATIVE FINANCE</small></span>
+            <span class="dk-brand-name"><span class="dk-brand-title">{{ config('app.name') }}<span>.</span></span><small>COOPERATIVE FINANCE</small></span>
         </a>
 
         <div class="dk-sidebar-caption">MENU UTAMA</div>
@@ -54,9 +54,9 @@
     </div>
 
     <div class="dk-mobile-bar">
-        <a href="{{ route('dashboard') }}" class="dk-brand" aria-label="DKoper, Dashboard">
+        <a href="{{ route('dashboard') }}" class="dk-brand" aria-label="{{ config('app.name') }}, Dashboard">
             <img src="{{ asset('logo.svg') }}" class="dk-brand-mark" alt="">
-            <span class="dk-brand-name"><span class="dk-brand-title">DKoper<span>.</span></span><small>COOPERATIVE FINANCE</small></span>
+            <span class="dk-brand-name"><span class="dk-brand-title">{{ config('app.name') }}<span>.</span></span><small>COOPERATIVE FINANCE</small></span>
         </a>
         <button class="dk-menu-toggle" type="button" @click="open = ! open" :aria-expanded="open.toString()" :aria-label="open ? 'Tutup navigasi' : 'Buka navigasi'" aria-controls="mobile-navigation-menu">
             <svg x-show="!open" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
@@ -103,9 +103,8 @@
             <svg x-show="dark" x-cloak viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.8 8.8 0 1 0 20.2 15.1Z"/></svg>
         </button>
         <span class="dk-topbar-name">{{ Auth::user()->name }}<small>{{ Auth::user()->isManager() ? 'Owner' : (Auth::user()->isCashier() ? 'Admin' : 'Nasabah') }}</small></span>
-        <span class="dk-user-avatar">{{ mb_substr(Auth::user()->name, 0, 1) }}</span>
         <x-dropdown align="right" width="48">
-            <x-slot name="trigger"><button class="dk-user-trigger" type="button" aria-label="Buka menu akun"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="4" cy="10" r="1"/><circle cx="10" cy="10" r="1"/><circle cx="16" cy="10" r="1"/></svg></button></x-slot>
+            <x-slot name="trigger"><button class="dk-user-trigger dk-user-avatar" type="button" aria-label="Buka menu akun">{{ mb_substr(Auth::user()->name, 0, 1) }}</button></x-slot>
             <x-slot name="content">
                 <x-dropdown-link :href="route('profile.edit')">Profil</x-dropdown-link>
                 @if (Auth::user()->isManager() || Auth::user()->isCashier())
@@ -152,7 +151,7 @@
     <div class="dk-logout-backdrop" x-show="showLogout" x-transition.opacity x-cloak @click.self="showLogout = false" @keydown.escape.window="showLogout = false">
         <section class="dk-logout-dialog" role="dialog" aria-modal="true" aria-labelledby="logout-title">
             <span class="dk-logout-icon" aria-hidden="true">↗</span>
-            <h2 id="logout-title">Keluar dari DKoper?</h2>
+            <h2 id="logout-title">Keluar dari {{ config('app.name') }}?</h2>
             <p>Sesi akun akan diakhiri pada perangkat ini.</p>
             <div class="dk-logout-actions">
                 <button type="button" class="dk-logout-cancel" @click="showLogout = false">Batal</button>

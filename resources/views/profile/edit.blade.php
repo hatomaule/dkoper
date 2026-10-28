@@ -3,7 +3,7 @@
         <x-slot name="header">
             <div>
                 <h2 class="text-xl font-semibold text-slate-900">Amankan akun Anda</h2>
-                <p class="mt-1 text-sm text-slate-500">Buat kata sandi baru sebelum melanjutkan ke DKoper.</p>
+                <p class="mt-1 text-sm text-slate-500">Buat kata sandi baru sebelum melanjutkan ke {{ config('app.name') }}.</p>
             </div>
         </x-slot>
 

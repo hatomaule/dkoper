@@ -114,9 +114,103 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    document.querySelectorAll('[data-list-tools]').forEach((panel) => {
+        const search = panel.querySelector('[data-list-search]');
+        const rows = [...panel.querySelectorAll('[data-list-row]')];
+        const items = new Map();
+        rows.forEach((row, index) => {
+            const key = row.dataset.listKey || `row-${index}`;
+            const item = items.get(key) || { nodes: [], text: '', role: row.dataset.role, status: row.dataset.status };
+            item.nodes.push(row);
+            const fieldText = [...row.querySelectorAll('input, select')].map((field) => field.value).join(' ');
+            item.text += ` ${row.textContent || ''} ${fieldText}`;
+            items.set(key, item);
+        });
+        const pageSize = panel.querySelector('[data-list-page-size]');
+        let currentPage = 1;
+        const filterValues = () => [...panel.querySelectorAll('[data-list-filter]')]
+            .reduce((values, select) => ({ ...values, [select.dataset.listFilter]: select.value }), {});
+        const render = () => {
+            const needle = search?.value.trim().toLocaleLowerCase() || '';
+            const filters = filterValues();
+            const filtered = [...items.values()].filter((item) => {
+                return (!needle || item.text.toLocaleLowerCase().includes(needle))
+                    && Object.entries(filters).every(([key, value]) => !value || item[key] === value);
+            });
+            const requestedSize = pageSize?.value || 'all';
+            const size = requestedSize === 'all' ? Math.max(filtered.length, 1) : Math.max(Number(requestedSize) || 10, 1);
+            const pageCount = Math.max(Math.ceil(filtered.length / size), 1);
+            currentPage = Math.min(currentPage, pageCount);
+            const start = (currentPage - 1) * size;
+            const visible = new Set(filtered.slice(start, start + size));
+            items.forEach((item) => item.nodes.forEach((node) => {
+                node.hidden = !visible.has(item);
+            }));
+
+            const empty = panel.querySelector('[data-list-empty]');
+            if (empty) empty.hidden = filtered.length !== 0;
+            const summary = panel.querySelector('[data-list-summary]');
+            if (summary) {
+                summary.textContent = filtered.length
+                    ? `Menampilkan ${start + 1}–${Math.min(start + size, filtered.length)} dari ${filtered.length} data`
+                    : 'Tidak ada data yang cocok';
+            }
+            const pageLabel = panel.querySelector('[data-list-page]');
+            if (pageLabel) pageLabel.textContent = `${currentPage} / ${pageCount}`;
+            const previous = panel.querySelector('[data-list-prev]');
+            const next = panel.querySelector('[data-list-next]');
+            if (previous) previous.disabled = currentPage <= 1;
+            if (next) next.disabled = currentPage >= pageCount;
+        };
+
+        search?.addEventListener('input', () => { currentPage = 1; render(); });
+        panel.querySelectorAll('[data-list-filter]').forEach((select) => select.addEventListener('change', () => {
+            currentPage = 1;
+            render();
+        }));
+        pageSize?.addEventListener('change', () => { currentPage = 1; render(); });
+        panel.querySelector('[data-list-prev]')?.addEventListener('click', () => {
+            currentPage = Math.max(1, currentPage - 1);
+            render();
+        });
+        panel.querySelector('[data-list-next]')?.addEventListener('click', () => {
+            currentPage += 1;
+            render();
+        });
+        panel.querySelectorAll('[data-list-view-mode]').forEach((button) => {
+            button.addEventListener('click', () => {
+                panel.querySelectorAll('[data-list-view]').forEach((view) => {
+                    view.hidden = view.dataset.listView !== button.dataset.listViewMode;
+                });
+                panel.classList.toggle('is-card-view', button.dataset.listViewMode === 'cards');
+                panel.querySelectorAll('[data-list-view-mode]').forEach((toggle) => {
+                    const isActive = toggle === button;
+                    toggle.classList.toggle('is-active', isActive);
+                    toggle.classList.toggle('bg-slate-700', isActive);
+                    toggle.classList.toggle('text-white', isActive);
+                    toggle.classList.toggle('text-slate-300', !isActive);
+                });
+            });
+        });
+        const activeView = panel.querySelector('[data-list-view-mode].is-active');
+        if (activeView) {
+            panel.querySelectorAll('[data-list-view]').forEach((view) => {
+                view.hidden = view.dataset.listView !== activeView.dataset.listViewMode;
+            });
+            panel.classList.toggle('is-card-view', activeView.dataset.listViewMode === 'cards');
+            panel.querySelectorAll('[data-list-view-mode]').forEach((button) => {
+                const isActive = button === activeView;
+                button.classList.toggle('bg-slate-700', isActive);
+                button.classList.toggle('text-white', isActive);
+                button.classList.toggle('text-slate-300', !isActive);
+            });
+        }
+        render();
+    });
+
     document.querySelectorAll('[data-open-dialog]').forEach((button) => {
         button.addEventListener('click', () => {
-            document.querySelector(button.dataset.openDialog)?.showModal();
+            document.getElementById(button.dataset.openDialog)?.showModal();
         });
     });
     document.querySelectorAll('[data-close-dialog]').forEach((button) => {
@@ -125,6 +219,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     document.querySelectorAll('dialog[data-open-on-error]').forEach((dialog) => dialog.showModal());
+
+    const refreshInterval = Number(document.body.dataset.platformAutoRefresh);
+    if (refreshInterval > 0) {
+        document.querySelectorAll('form').forEach((form) => {
+            form.addEventListener('input', () => { form.dataset.unsavedChanges = 'true'; });
+            form.addEventListener('change', () => { form.dataset.unsavedChanges = 'true'; });
+            form.addEventListener('submit', () => { delete form.dataset.unsavedChanges; });
+        });
+        window.setInterval(() => {
+            const hasUnsavedChanges = [...document.forms].some((form) => form.dataset.unsavedChanges === 'true');
+            const dialogOpen = document.querySelector('dialog[open]');
+            const editing = document.activeElement?.matches('input, textarea, select');
+            if (document.visibilityState === 'visible' && !hasUnsavedChanges && !dialogOpen && !editing) {
+                window.location.reload();
+            }
+        }, refreshInterval);
+    }
 
     const loanSelect = document.querySelector('[data-loan-select]');
     const installmentSelect = document.querySelector('[data-installment-select]');

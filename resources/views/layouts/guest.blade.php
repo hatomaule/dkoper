@@ -7,7 +7,7 @@
         <meta name="theme-color" content="#f6f8fb">
         <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
-        <title>DKoper · Keuangan Koperasi</title>
+        <title>{{ config('app.name') }} · Platform Keuangan Koperasi</title>
 
         <!-- Fonts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -20,7 +20,7 @@
             </button>
             <a href="/" class="dk-guest-brand">
                 <img src="{{ asset('logo.svg') }}" class="dk-brand-mark" alt="">
-                <span class="dk-brand-name"><span class="dk-brand-title">DKoper<span>.</span></span><small>KEUANGAN KOPERASI</small></span>
+                <span class="dk-brand-name"><span class="dk-brand-title">{{ config('app.name') }}<span>.</span></span><small>COOPERATIVE FINANCE PLATFORM</small></span>
             </a>
             <section class="dk-guest-card dk-login-card">
                 <p class="dk-eyebrow">RUANG KERJA KOPERASI</p>

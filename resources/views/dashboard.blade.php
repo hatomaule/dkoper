@@ -74,12 +74,12 @@
             <div class="dk-section-title"><div><span>BONUS</span><h3>Saldo dan proyeksi bonus</h3></div></div>
             <div class="grid gap-3 md:grid-cols-2">
                 @foreach ([
-                    [$owner_name, $owner_profit, $owner_future_bonus, 'dk-bonus-owner'],
-                    [$admin_name, $admin_profit, $admin_future_bonus, 'dk-bonus-admin'],
-                ] as [$staffName, $available, $projected, $tone])
+                    [$owner_name, $owner_profit, $owner_earned_bonus, $owner_future_bonus, 'dk-bonus-owner'],
+                    [$admin_name, $admin_profit, $admin_earned_bonus, $admin_future_bonus, 'dk-bonus-admin'],
+                ] as [$staffName, $available, $earned, $projected, $tone])
                     <section class="dk-bonus-summary {{ $tone }}">
-                        <div class="dk-bonus-earned"><span>SALDO BONUS</span><h4>{{ $staffName }}</h4><strong>{{ $rupiah($available) }}</strong><small>Bonus dari cicilan lunas</small></div>
-                        <div class="dk-bonus-total"><span>TOTAL BONUS PINJAMAN AKTIF</span><strong>{{ $rupiah((int) $available + (int) $projected) }}</strong><small>Termasuk proyeksi cicilan aktif yang belum lunas</small></div>
+                        <div class="dk-bonus-earned"><span>SALDO BONUS TERSEDIA</span><h4>{{ $staffName }}</h4><strong>{{ $rupiah($available) }}</strong><small>Setelah penarikan dan transfer ke modal</small></div>
+                        <div class="dk-bonus-total"><span>TOTAL BONUS KESELURUHAN</span><strong>{{ $rupiah((int) $earned + (int) $projected) }}</strong><small>Terealisasi {{ $rupiah($earned) }} + proyeksi pinjaman aktif {{ $rupiah($projected) }}</small></div>
                     </section>
                 @endforeach
             </div>
