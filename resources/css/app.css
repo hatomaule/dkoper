@@ -1595,6 +1595,509 @@ html[data-theme="dark"] .dk-period-card::after {
     }
 }
 
+.dk-page-heading > div {
+    padding: 10px 26px 9px !important;
+}
+
+.dk-main {
+    padding-top: 14px;
+}
+
+.dk-main > .bg-slate-100 {
+    padding-top: 12px !important;
+}
+
+.dk-dashboard-page {
+    margin-top: 0;
+}
+
+.dk-dashboard-charts {
+    margin-top: 5px;
+}
+
+.dk-dashboard-charts .dk-chart-panel,
+.dk-chart-panel {
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent !important;
+    padding: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.dk-dashboard-charts .dk-section-title {
+    margin-bottom: 14px;
+}
+
+.dk-data-panel.is-card-view {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.dk-data-panel.is-card-view .dk-table-toolbar {
+    border: 0;
+    background: transparent;
+    padding-right: 0;
+    padding-left: 0;
+}
+
+.dk-data-panel.is-card-view .dk-payment-cards {
+    padding: 8px 0 0;
+}
+
+.dk-monthly-bar-row {
+    grid-template-columns: 42px minmax(0, 1fr) minmax(95px, auto);
+    gap: 10px;
+}
+
+.dk-monthly-bar-row b {
+    white-space: nowrap;
+}
+
+.dk-inline-action {
+    display: inline;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    color: #137b5d;
+    font-size: 11px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.dk-inline-action:hover,
+.dk-inline-action:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.dk-inline-danger {
+    background: transparent;
+    color: #b83c35;
+}
+
+.dk-loan-ledger tbody td {
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.dk-main table tbody td {
+    border-bottom: 1px solid #d5dee3;
+}
+
+.dk-loan-total-row {
+    background: #edf5f2;
+    font-weight: 800;
+}
+
+.dk-loan-total-row td {
+    border-bottom: 2px solid #8da99e !important;
+    color: #193d34;
+}
+
+.dk-payment-create-dialog {
+    width: min(100% - 28px, 560px);
+    max-width: 560px;
+}
+
+.dk-payment-create-dialog .dk-password-form {
+    max-height: min(88vh, 760px);
+    overflow-y: auto;
+}
+
+.dk-password-native-dialog .dk-password-form select {
+    min-height: 40px;
+    border: 1px solid var(--dk-line);
+    border-radius: 9px;
+    background: var(--dk-paper);
+    padding: 8px 10px;
+    color: var(--dk-ink);
+    font-size: 12px;
+}
+
+.dk-loan-modal-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(160px, 1fr);
+    gap: 12px;
+}
+
+.dk-confirmation-check {
+    display: flex !important;
+    grid-template-columns: none !important;
+    align-items: flex-start;
+    gap: 9px !important;
+    color: var(--dk-muted);
+    font-size: 11px !important;
+    font-weight: 550 !important;
+}
+
+.dk-confirmation-check input[type="checkbox"] {
+    width: 16px;
+    min-height: 16px !important;
+    height: 16px;
+    flex: 0 0 auto;
+    margin: 0;
+    accent-color: var(--dk-green);
+}
+
+.dk-password-native-dialog .dk-password-form input[type="checkbox"] {
+    min-height: 16px;
+    height: 16px;
+    padding: 0;
+}
+
+.dk-proof-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.dk-proof-status,
+[data-proof-status] {
+    color: var(--dk-muted);
+    font-size: 10px;
+}
+
+.dk-profile-trigger {
+    display: flex !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 38px;
+    align-items: center;
+    gap: 9px;
+    border: 0 !important;
+    border-radius: 12px !important;
+    background: transparent !important;
+    padding: 3px 7px 3px 3px !important;
+    text-align: left;
+}
+
+.dk-topbar-controls .dk-profile-trigger:hover {
+    background: rgb(20 125 103 / 8%) !important;
+}
+
+.dk-profile-copy {
+    display: grid;
+    gap: 2px;
+    text-align: left;
+}
+
+.dk-profile-copy strong {
+    max-width: 160px;
+    overflow: hidden;
+    color: var(--dk-ink);
+    font-size: 11px;
+    font-weight: 750;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dk-profile-copy small {
+    color: var(--dk-muted);
+    font-size: 9px;
+    font-weight: 550;
+}
+
+.dk-profile-chevron {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: var(--dk-muted);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+}
+
+.dk-notification-menu {
+    position: relative;
+    display: inline-flex;
+}
+
+.dk-notification-trigger {
+    position: relative;
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    border: 1px solid var(--dk-line);
+    border-radius: 50%;
+    background: var(--dk-paper);
+    color: var(--dk-ink);
+    cursor: pointer;
+}
+
+.dk-notification-trigger svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+}
+
+.dk-notification-count {
+    position: absolute;
+    top: -4px;
+    right: -5px;
+    display: grid;
+    min-width: 17px;
+    height: 17px;
+    place-items: center;
+    border: 2px solid var(--dk-paper);
+    border-radius: 999px;
+    background: #d34b4b;
+    color: #fff;
+    padding: 0 4px;
+    font-size: 8px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.dk-notification-count[hidden] {
+    display: none;
+}
+
+.dk-notification-popover {
+    position: absolute;
+    top: calc(100% + 11px);
+    right: -8px;
+    z-index: 80;
+    width: min(350px, calc(100vw - 24px));
+    overflow: hidden;
+    border: 1px solid var(--dk-line);
+    border-radius: 15px;
+    background: var(--dk-paper);
+    box-shadow: 0 18px 44px rgb(17 33 46 / 20%);
+}
+
+.dk-notification-popover > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--dk-line);
+    padding: 12px 14px;
+    color: var(--dk-ink);
+    font-size: 12px;
+}
+
+.dk-notification-popover > header a,
+.dk-notification-footer button {
+    color: var(--dk-green-dark);
+    font-size: 10px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.dk-notification-items {
+    max-height: min(55vh, 340px);
+    overflow-y: auto;
+    padding: 4px 8px;
+}
+
+.dk-notification-items form {
+    margin: 0;
+}
+
+.dk-notification-item {
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid var(--dk-line);
+    background: transparent;
+    padding: 10px 8px;
+    color: var(--dk-ink);
+    cursor: pointer;
+    text-align: left;
+}
+
+.dk-notification-item span {
+    display: grid;
+    gap: 4px;
+}
+
+.dk-notification-item strong {
+    font-size: 11px;
+}
+
+.dk-notification-item small,
+.dk-notification-item time {
+    color: var(--dk-muted);
+    font-size: 9px;
+    line-height: 1.4;
+}
+
+.dk-notification-item.is-unread {
+    background: color-mix(in srgb, var(--dk-green), transparent 94%);
+}
+
+.dk-notification-footer {
+    border-top: 1px solid var(--dk-line);
+    padding: 10px 14px;
+    text-align: center;
+}
+
+.dk-notification-footer button {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.dk-notification-empty {
+    padding: 18px;
+    color: var(--dk-muted);
+    font-size: 11px;
+    text-align: center;
+}
+
+.dk-notification-list {
+    padding: 0 14px;
+}
+
+.dk-notification-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid var(--dk-line);
+    padding: 14px 5px;
+}
+
+.dk-notification-row > div:first-child {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.dk-notification-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    margin-top: 5px;
+    border-radius: 50%;
+    background: transparent;
+}
+
+.dk-notification-row.is-unread .dk-notification-dot {
+    background: #0d9c71;
+}
+
+.dk-notification-row h3 {
+    color: var(--dk-ink);
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.dk-notification-row p,
+.dk-notification-row time,
+.dk-notification-summary {
+    color: var(--dk-muted);
+    font-size: 10px;
+}
+
+.dk-notification-row p {
+    margin: 3px 0;
+}
+
+.dk-notification-actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 12px;
+}
+
+.dk-notification-actions form {
+    margin: 0;
+}
+
+.dk-notification-summary {
+    margin-right: auto;
+}
+
+.dk-borrower-loan-card {
+    border: 1px solid var(--dk-line);
+    border-radius: 17px;
+    background: var(--dk-paper);
+    padding: 16px;
+    box-shadow: 0 14px 34px rgb(30 49 68 / 8%);
+}
+
+.dk-borrower-loan-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--dk-line);
+    padding-bottom: 12px;
+}
+
+.dk-borrower-installments {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    padding-top: 12px;
+}
+
+@media (max-width: 800px) {
+    .dk-profile-copy,
+    .dk-profile-chevron {
+        display: none;
+    }
+
+    .dk-profile-trigger {
+        width: 38px !important;
+        height: 38px !important;
+        justify-content: center;
+        padding: 2px !important;
+    }
+}
+
+@media (max-width: 540px) {
+    .dk-loan-modal-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .dk-notification-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+
+html[data-theme="dark"] .dk-loan-total-row {
+    background: #203b33;
+}
+
+html[data-theme="dark"] .dk-loan-total-row td {
+    border-color: #537266 !important;
+    color: #d8ede4;
+}
+
+html[data-theme="dark"] .dk-main table tbody td {
+    border-color: #3a4b56;
+}
+
+html[data-theme="dark"] .dk-borrower-loan-card {
+    background: #1b2a34;
+}
+
+html[data-theme="dark"] .dk-inline-action {
+    background: transparent;
+    color: #8fe0bc;
+}
+
+html[data-theme="dark"] .dk-inline-danger {
+    background: transparent;
+    color: #ff9a91;
+}
+
+html[data-theme="dark"] .dk-data-panel.is-card-view,
+html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
+    background: transparent;
+}
+
 /* Refined dashboard, shared form/table surfaces, and accessible theme controls */
 .dk-brand-mark {
     object-fit: contain;

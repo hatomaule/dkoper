@@ -1,59 +1,12 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Pembayaran</h2></x-slot>
     <div class="min-h-[calc(100vh-65px)] bg-slate-100 py-8 px-4">
-        <div class="mx-auto grid max-w-7xl items-stretch gap-5 lg:grid-cols-[minmax(240px,290px)_minmax(0,1fr)]">
-            <form method="POST" action="{{ route('cooperative.payments.store') }}" enctype="multipart/form-data" class="dk-form-panel self-start" data-payment-form>
-                @csrf
-                <h3 class="font-bold text-slate-900">Catat Setoran</h3>
-                <p class="mt-1 text-xs text-slate-500">{{ auth()->user()->isManager() ? 'Setoran Owner langsung disetujui.' : 'Setoran Admin menunggu persetujuan Owner.' }}</p>
-                @if ($errors->any())<div class="dk-form-alert">{{ $errors->first() }}</div>@endif
-                @if (session('status'))<div class="dk-form-success">{{ session('status') }}</div>@endif
-                <label class="mt-5 block text-xs font-bold uppercase text-slate-600" for="payment-loan">Pinjaman</label>
-                <select id="payment-loan" name="loan_id" required class="mt-2 w-full" data-loan-select>
-                    @forelse ($paymentLoans as $loan)
-                        <option value="{{ $loan->id }}" data-installments="{{ $loan->installments->map(fn ($installment) => ['id' => $installment->id, 'sequence' => $installment->sequence, 'amount' => $installment->outstanding_amount])->values()->toJson() }}">
-                            {{ $loan->borrower->full_name }} · {{ $loan->loan_code }}
-                        </option>
-                    @empty
-                        <option value="" data-installments="[]">Tidak ada pinjaman aktif dengan cicilan tersisa</option>
-                    @endforelse
-                </select>
-                <label class="mt-4 block text-xs font-bold uppercase text-slate-600" for="payment-installment">Cicilan yang dibayar</label>
-                <select id="payment-installment" name="installment_id" required class="mt-2 w-full" data-installment-select>
-                    <option value="">Pilih cicilan</option>
-                </select>
-                <label class="mt-4 block text-xs font-bold uppercase text-slate-600" for="nominal-source">Jenis Nominal</label>
-                <select id="nominal-source" name="nominal_source" required class="mt-2 w-full" data-nominal-source>
-                    <option value="system">Nominal Sistem</option><option value="manual">Nominal Manual</option>
-                </select>
-                <div class="dk-system-installment mt-3" data-system-installment>
-                    <span>SETORAN OTOMATIS</span>
-                    <strong data-installment-label>Pilih cicilan</strong>
-                    <b data-installment-amount>Rp 0</b>
-                </div>
-                <div class="mt-4 hidden" data-manual-amount>
-                    <label class="block text-xs font-bold uppercase text-slate-600" for="payment-amount">Nominal Diterima (Rp)</label>
-                    <input id="payment-amount" name="amount" type="text" inputmode="numeric" data-format-rupiah data-min="1" class="mt-2 w-full" disabled>
-                </div>
-                <label class="mt-4 block text-xs font-bold uppercase text-slate-600" for="payment-method">Jenis Pembayaran</label>
-                <select id="payment-method" name="payment_method" required class="mt-2 w-full" data-payment-method>
-                    <option value="cash">Tunai</option><option value="transfer">Transfer</option>
-                </select>
-                <div class="dk-transfer-proof mt-4 hidden" data-transfer-proof>
-                    <label class="block text-xs font-bold uppercase text-slate-600">Bukti Transfer</label>
-                    <div class="mt-2 grid grid-cols-2 gap-2">
-                        <label class="dk-file-button">Pilih Foto<input type="file" accept="image/*" class="dk-proof-source" aria-label="Pilih bukti transfer"></label>
-                        <label class="dk-file-button">Ambil Foto<input type="file" accept="image/*" capture="environment" class="dk-proof-source" aria-label="Foto bukti transfer"></label>
-                    </div>
-                    <input type="file" name="proof" class="dk-proof-final" accept="image/webp" hidden>
-                    <p class="mt-2 text-xs text-slate-500" data-proof-status>Gambar dikompres otomatis ke WebP sebelum diunggah.</p>
-                    <img class="dk-proof-preview mt-3 hidden" alt="Pratinjau bukti transfer" data-proof-preview>
-                </div>
-                <button class="dk-button-primary mt-5 w-fit px-4 py-2 font-bold">Catat</button>
-            </form>
-
+        <div class="mx-auto max-w-7xl">
+            @if ($errors->any())<div class="dk-form-alert mb-3">{{ $errors->first() }}</div>@endif
+            @if (session('status'))<div class="dk-form-success mb-3">{{ session('status') }}</div>@endif
             <section class="dk-data-panel min-w-0" data-table-tools>
                 <div class="dk-table-toolbar">
+                    <button type="button" class="dk-button-primary" data-open-dialog="#payment-create-dialog">Catat Pembayaran</button>
                     <label>Filter <input type="search" placeholder="Cari nama, pinjaman..." data-table-search></label>
                     <label>Tampilkan
                         <select data-page-size>
@@ -154,6 +107,59 @@
                     </dialog>
                 @endif
             </section>
+
+            <dialog class="dk-password-native-dialog dk-payment-create-dialog" id="payment-create-dialog" @if ($errors->any() && old('_form') === 'payment-create') data-open-on-error @endif>
+                <form method="POST" action="{{ route('cooperative.payments.store') }}" enctype="multipart/form-data" class="dk-password-form" data-payment-form>
+                    @csrf
+                    <input type="hidden" name="_form" value="payment-create">
+                    <button type="button" class="dk-modal-close" aria-label="Tutup" data-close-dialog>×</button>
+                    <p class="dk-eyebrow">PEMBAYARAN</p>
+                    <h3>Catat setoran</h3>
+                    <p class="dk-modal-note">{{ auth()->user()->isManager() ? 'Setoran Owner langsung disetujui.' : 'Setoran Admin menunggu persetujuan Owner.' }}</p>
+                    <label for="payment-loan">Pinjaman</label>
+                    <select id="payment-loan" name="loan_id" required data-loan-select>
+                        @forelse ($paymentLoans as $loan)
+                            <option value="{{ $loan->id }}" data-installments="{{ $loan->installments->map(fn ($installment) => ['id' => $installment->id, 'sequence' => $installment->sequence, 'amount' => $installment->outstanding_amount])->values()->toJson() }}" @selected(old('loan_id') == $loan->id)>
+                                {{ $loan->borrower->full_name }} · {{ $loan->loan_code }}
+                            </option>
+                        @empty
+                            <option value="" data-installments="[]">Tidak ada pinjaman aktif dengan cicilan tersisa</option>
+                        @endforelse
+                    </select>
+                    <label for="payment-installment">Cicilan yang dibayar</label>
+                    <select id="payment-installment" name="installment_id" required data-installment-select>
+                        <option value="">Pilih cicilan</option>
+                    </select>
+                    <label for="nominal-source">Jenis nominal</label>
+                    <select id="nominal-source" name="nominal_source" required data-nominal-source>
+                        <option value="system">Nominal sistem</option><option value="manual" @selected(old('nominal_source') === 'manual')>Nominal manual</option>
+                    </select>
+                    <div class="dk-system-installment" data-system-installment>
+                        <span>SETORAN OTOMATIS</span>
+                        <strong data-installment-label>Pilih cicilan</strong>
+                        <b data-installment-amount>Rp 0</b>
+                    </div>
+                    <div class="hidden" data-manual-amount>
+                        <label for="payment-amount">Nominal diterima (Rp)</label>
+                        <input id="payment-amount" name="amount" type="text" inputmode="numeric" data-format-rupiah data-min="1" value="{{ old('amount') }}" disabled>
+                    </div>
+                    <label for="payment-method">Jenis pembayaran</label>
+                    <select id="payment-method" name="payment_method" required data-payment-method>
+                        <option value="cash">Tunai</option><option value="transfer" @selected(old('payment_method') === 'transfer')>Transfer</option>
+                    </select>
+                    <div class="dk-transfer-proof hidden" data-transfer-proof>
+                        <label>Bukti transfer</label>
+                        <div class="dk-proof-actions">
+                            <label class="dk-file-button">Pilih Foto<input type="file" accept="image/*" class="dk-proof-source" aria-label="Pilih bukti transfer"></label>
+                            <label class="dk-file-button">Ambil Foto<input type="file" accept="image/*" capture="environment" class="dk-proof-source" aria-label="Foto bukti transfer"></label>
+                        </div>
+                        <input type="file" name="proof" class="dk-proof-final" accept="image/webp" hidden>
+                        <p data-proof-status>Gambar dikompres otomatis ke WebP sebelum diunggah.</p>
+                        <img class="dk-proof-preview hidden" alt="Pratinjau bukti transfer" data-proof-preview>
+                    </div>
+                    <button class="dk-button-primary">Catat Pembayaran</button>
+                </form>
+            </dialog>
         </div>
     </div>
 </x-app-layout>

@@ -29,7 +29,8 @@ class CooperativeRoleAccessTest extends TestCase
                 ->get(route('profile.edit'))
                 ->assertOk()
                 ->assertSee('aria-label="Buka menu akun"', false)
-                ->assertSee('>A</button>', false)
+                ->assertSee('class="dk-profile-copy"', false)
+                ->assertSee('>A</span>', false)
                 ->assertSee('Profil')
                 ->assertSee('Keluar')
                 ->assertDontSee('<circle cx="4" cy="10" r="1"/>', false);
@@ -177,7 +178,7 @@ class CooperativeRoleAccessTest extends TestCase
             'status' => 'partial',
         ])->save();
 
-        $this->actingAs($owner)
+        $loanResponse = $this->actingAs($owner)
             ->get(route('cooperative.loans'))
             ->assertOk()
             ->assertSee('Setoran')
@@ -186,6 +187,10 @@ class CooperativeRoleAccessTest extends TestCase
             ->assertSee('TOTAL SELURUH DATA')
             ->assertViewHas('borrowers', fn ($borrowers) => $borrowers->pluck('id')->all() === [$customer->id])
             ->assertViewHas('loans', fn ($loans) => $loans->getCollection()->pluck('id')->all() === [$customerLoan->id]);
+        $this->assertLessThan(
+            strpos($loanResponse->getContent(), $customerLoan->loan_code),
+            strpos($loanResponse->getContent(), 'TOTAL SELURUH DATA'),
+        );
 
         $this->actingAs($owner)
             ->get(route('cooperative.payments'))
@@ -276,13 +281,16 @@ class CooperativeRoleAccessTest extends TestCase
             ->assertViewHas('loans', fn ($loans) => $loans->getCollection()->pluck('id')->all() === [$newerLoan->id, $olderLoan->id]);
 
         $olderLoan->forceFill(['status' => 'paid'])->save();
-        $this->actingAs($borrowerUser)
+        $borrowerResponse = $this->actingAs($borrowerUser)
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee($olderLoan->loan_code)
             ->assertSee($newerLoan->loan_code)
             ->assertSee('Lunas')
-            ->assertViewHas('borrower', fn ($loadedBorrower) => $loadedBorrower->loans->first()->installments->pluck('sequence')->all() === range(12, 1));
+            ->assertViewHas('borrower', fn ($loadedBorrower) => $loadedBorrower->loans->first()->installments->pluck('sequence')->all() === range(1, 12));
+        $borrowerResponse->assertDontSee('data-view-mode="table"', false)
+            ->assertDontSee('<table', false)
+            ->assertSee('dk-borrower-installments', false);
     }
 
     public function test_borrower_page_is_for_account_management_not_financial_totals(): void
@@ -420,12 +428,13 @@ class CooperativeRoleAccessTest extends TestCase
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Informasi Pinjaman Saya')
-            ->assertSee('data-view-mode="cards"', false)
-            ->assertSee('data-mobile-default="cards"', false)
+            ->assertDontSee('data-view-mode="table"', false)
+            ->assertDontSee('data-view-mode="cards"', false)
             ->assertDontSee('data-local-page-size', false)
             ->assertSee('Cicilan ke-', false)
-            ->assertSee('data-table-view="table"', false)
-            ->assertSee('data-table-view="cards"', false);
+            ->assertDontSee('data-table-view="table"', false)
+            ->assertDontSee('<table', false)
+            ->assertSee('dk-borrower-installments', false);
 
         $this->actingAs($borrowerUser)->get(route('cooperative.borrowers'))->assertForbidden();
         $this->actingAs($borrowerUser)->get(route('cooperative.profits'))->assertForbidden();

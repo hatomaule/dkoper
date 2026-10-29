@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         panel.querySelectorAll('[data-view-mode]').forEach((button) => {
             button.addEventListener('click', () => {
+                panel.classList.toggle('is-card-view', button.dataset.viewMode === 'cards');
                 panel.querySelectorAll('[data-table-view]').forEach((view) => {
                     view.hidden = view.dataset.tableView !== button.dataset.viewMode;
                     view.classList.toggle('hidden', view.hidden);
@@ -104,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ? mobileDefault
             : panel.querySelector('[data-view-mode].is-active')?.dataset.viewMode;
         if (initialView) {
+            panel.classList.toggle('is-card-view', initialView === 'cards');
             panel.querySelectorAll('[data-table-view]').forEach((view) => {
                 view.hidden = view.dataset.tableView !== initialView;
                 view.classList.toggle('hidden', view.hidden);
@@ -234,6 +236,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.visibilityState === 'visible' && !hasUnsavedChanges && !dialogOpen && !editing) {
                 window.location.reload();
             }
+
+            const notificationCount = document.querySelector('[data-notification-count]');
+            if (notificationCount) {
+                window.setInterval(async () => {
+                    if (document.visibilityState !== 'visible') return;
+
+                    try {
+                        const response = await fetch(notificationCount.dataset.endpoint, {
+                            headers: { Accept: 'application/json' },
+                            credentials: 'same-origin',
+                        });
+                        if (!response.ok) throw new Error(`Notification refresh failed with HTTP ${response.status}.`);
+                        const state = await response.json();
+                        notificationCount.textContent = String(state.unread_count);
+                        notificationCount.hidden = state.unread_count === 0;
+                    } catch (error) {
+                        console.error('Unable to refresh cooperative notifications.', error);
+                    }
+                }, 60_000);
+            }
         }, refreshInterval);
     }
 
@@ -324,6 +346,9 @@ document.addEventListener('DOMContentLoaded', () => {
         proofPanel?.classList.toggle('hidden', methodSelect.value !== 'transfer');
         if (methodSelect.value !== 'transfer' && finalProofInput) finalProofInput.value = '';
     });
+    if (methodSelect) {
+        proofPanel?.classList.toggle('hidden', methodSelect.value !== 'transfer');
+    }
 
     document.querySelectorAll('.dk-proof-source').forEach((sourceInput) => {
         sourceInput.addEventListener('change', async () => {

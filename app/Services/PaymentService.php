@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Models\ProfitBalance;
 use App\Models\ProfitTransaction;
 use App\Models\User;
+use App\Services\CooperativeNotificationService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Illuminate\Validation\ValidationException;
@@ -399,6 +400,19 @@ class PaymentService
                 'metadata' => ['amount' => $payment->amount, 'allocations' => $allocations, 'advance_credit' => $remaining],
                 'ip_address' => request()?->ip(),
             ]);
+            $payment->loadMissing('loan.borrower.user', 'recorder');
+            app(CooperativeNotificationService::class)->notifyUser(
+                $payment->recorder,
+                'Setoran disetujui',
+                "Setoran Rp ".number_format((int) $payment->amount, 0, ',', '.').' telah disetujui Owner.',
+                route('cooperative.payments', [], false),
+            );
+            app(CooperativeNotificationService::class)->notifyBorrower(
+                $payment->loan->borrower,
+                'Setoran disetujui',
+                "Setoran Rp ".number_format((int) $payment->amount, 0, ',', '.').' telah disetujui.',
+                route('dashboard', [], false),
+            );
 
             return $payment->fresh();
         });
@@ -447,6 +461,19 @@ class PaymentService
                 'metadata' => ['amount' => $payment->amount, 'rejection_reason' => $reason],
                 'ip_address' => request()?->ip(),
             ]);
+            $payment->loadMissing('loan.borrower.user', 'recorder');
+            app(CooperativeNotificationService::class)->notifyUser(
+                $payment->recorder,
+                'Setoran ditolak',
+                "Setoran Rp ".number_format((int) $payment->amount, 0, ',', '.')." ditolak. Alasan: {$reason}",
+                route('cooperative.payments', [], false),
+            );
+            app(CooperativeNotificationService::class)->notifyBorrower(
+                $payment->loan->borrower,
+                'Setoran ditolak',
+                "Setoran Rp ".number_format((int) $payment->amount, 0, ',', '.').' ditolak. Silakan hubungi Admin atau Owner.',
+                route('dashboard', [], false),
+            );
 
             return $payment->fresh();
         });

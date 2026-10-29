@@ -12,8 +12,10 @@ use App\Models\Payment;
 use App\Models\ProfitBalance;
 use App\Models\ProfitTransaction;
 use App\Models\User;
+use App\Models\UserNotification;
 use App\Services\BorrowerService;
 use App\Services\CashLedgerService;
+use App\Services\CooperativeNotificationService;
 use App\Services\LoanService;
 use App\Services\PaymentService;
 use App\Services\ProfitService;
@@ -52,6 +54,14 @@ class CooperativeController extends Controller
             'phone' => ['required', 'string', 'max:30', 'unique:borrowers,phone', 'unique:users,phone'],
         ]);
         $borrower = $service->createWithAccount($request->user(), $validated['full_name'], $validated['phone']);
+        app(CooperativeNotificationService::class)->notifyRoles(
+            $request->user()->isCashier() ? ['manager'] : ['kasir'],
+            'Akun nasabah baru',
+            "{$request->user()->name} menambahkan akun nasabah {$borrower->full_name}.",
+            route('cooperative.borrowers', [], false),
+            $request->user()->id,
+        );
+
         return redirect()->route('cooperative.borrowers')->with('status', "Nasabah {$borrower->borrower_code} dan akun login berhasil dibuat.");
     }
 
@@ -168,6 +178,7 @@ class CooperativeController extends Controller
         $this->authorizeStaff();
         $perPage = $this->perPage(request());
         $query = Loan::with(['borrower', 'installments'])
+            ->whereIn('status', ['active', 'paid'])
             ->whereHas('borrower', fn ($query) => $query->customerAccount())
             ->orderByDesc('created_at')
             ->orderByDesc('id');
@@ -303,6 +314,13 @@ class CooperativeController extends Controller
 
         if ($request->user()->isManager()) {
             app(PaymentService::class)->approvePayment($request->user(), $payment->id);
+            app(CooperativeNotificationService::class)->notifyRoles(
+                ['kasir'],
+                'Setoran dicatat Owner',
+                "Owner mencatat setoran Rp ".number_format((int) $payment->amount, 0, ',', '.').'.',
+                route('cooperative.payments', [], false),
+                $request->user()->id,
+            );
             $message = 'Pembayaran berhasil dicatat dan disetujui.';
         } else {
             ApprovalRequest::create(['request_type' => 'payment', 'requested_by' => $request->user()->id, 'approvable_type' => Payment::class, 'approvable_id' => $payment->id, 'payload' => ['amount' => $payment->amount, 'loan_id' => $payment->loan_id, 'payment_method' => $payment->payment_method], 'status' => 'pending']);
@@ -314,6 +332,12 @@ class CooperativeController extends Controller
                 'metadata' => ['amount' => $payment->amount, 'loan_id' => $payment->loan_id],
                 'ip_address' => $request->ip(),
             ]);
+            app(CooperativeNotificationService::class)->notifyRoles(
+                ['manager'],
+                'Setoran menunggu persetujuan',
+                "Admin mencatat setoran Rp ".number_format((int) $payment->amount, 0, ',', '.').'.',
+                route('cooperative.approvals', [], false),
+            );
             $message = 'Pembayaran dikirim ke antrean persetujuan Owner.';
         }
 
@@ -355,6 +379,12 @@ class CooperativeController extends Controller
             (int) $validated['amount'],
             (int) $targetLoan->id,
             (int) $validated['installment_id'],
+        );
+        app(CooperativeNotificationService::class)->notifyBorrower(
+            $targetLoan->borrower,
+            'Data setoran diperbarui',
+            "Owner memperbarui data setoran pinjaman {$targetLoan->loan_code}.",
+            route('dashboard', [], false),
         );
 
         return redirect()->route('cooperative.payments')->with('status', 'Nominal setoran berhasil dikoreksi.');
@@ -464,6 +494,12 @@ class CooperativeController extends Controller
             'metadata' => ['direction' => $transaction->direction, 'amount' => $transaction->amount],
             'ip_address' => $request->ip(),
         ]);
+        app(CooperativeNotificationService::class)->notifyRoles(
+            ['kasir'],
+            'Perubahan kas dicatat',
+            'Owner mencatat transaksi perubahan kas Rp '.number_format((int) $transaction->amount, 0, ',', '.').'.',
+            route('cooperative.finances', [], false),
+        );
 
         return redirect()->route('cooperative.finances')->with('status', 'Transaksi kas berhasil dicatat.');
     }
@@ -499,6 +535,13 @@ class CooperativeController extends Controller
         abort_unless($canManageAny || $canSelf, 403);
         $validated = $request->validate(['amount' => ['required', 'integer', 'min:1']]);
         $service->withdraw($request->user(), $user->id, (int) $validated['amount']);
+        app(CooperativeNotificationService::class)->notifyRoles(
+            $request->user()->isManager() ? ['kasir'] : ['manager'],
+            'Penarikan bonus dicatat',
+            "{$request->user()->name} mencatat penarikan bonus Rp ".number_format((int) $validated['amount'], 0, ',', '.').'.',
+            route('cooperative.profits', [], false),
+            $request->user()->id,
+        );
 
         return redirect()->route('cooperative.profits')->with('status', 'Penarikan bonus berhasil dicatat.');
     }
@@ -509,8 +552,66 @@ class CooperativeController extends Controller
         abort_unless($user->isManager(), 403, 'Bonus Admin tidak dapat dipindahkan ke modal.');
         $validated = $request->validate(['amount' => ['required', 'integer', 'min:1']]);
         $service->transferToCapital($request->user(), $user->id, (int) $validated['amount']);
+        app(CooperativeNotificationService::class)->notifyRoles(
+            ['kasir'],
+            'Bonus dipindahkan ke modal',
+            'Owner memindahkan bonus ke modal sebesar Rp '.number_format((int) $validated['amount'], 0, ',', '.').'.',
+            route('cooperative.profits', [], false),
+        );
 
         return redirect()->route('cooperative.profits')->with('status', 'Transfer bonus ke modal berhasil dicatat.');
+    }
+
+    public function notifications(Request $request): View
+    {
+        $perPage = $this->perPage($request);
+        $query = UserNotification::query()
+            ->where('user_id', $request->user()->id)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
+
+        return view('cooperative.notifications', [
+            'notifications' => $perPage === 'all' ? $query->get() : $query->paginate($perPage)->withQueryString(),
+            'perPage' => $perPage,
+            'unreadCount' => UserNotification::query()->where('user_id', $request->user()->id)->whereNull('read_at')->count(),
+        ]);
+    }
+
+    public function unreadNotifications(Request $request)
+    {
+        return response()->json([
+            'unread_count' => UserNotification::query()
+                ->where('user_id', $request->user()->id)
+                ->whereNull('read_at')
+                ->count(),
+        ]);
+    }
+
+    public function openNotification(Request $request, UserNotification $notification): RedirectResponse
+    {
+        abort_unless((int) $notification->user_id === (int) $request->user()->id, 404);
+        abort_unless(str_starts_with($notification->url, '/') && ! str_starts_with($notification->url, '//'), 404);
+        $notification->forceFill(['read_at' => now()])->save();
+
+        return redirect()->to($notification->url);
+    }
+
+    public function markNotificationRead(Request $request, UserNotification $notification): RedirectResponse
+    {
+        abort_unless((int) $notification->user_id === (int) $request->user()->id, 404);
+        $notification->forceFill(['read_at' => now()])->save();
+
+        return redirect()->route('cooperative.notifications');
+    }
+
+    public function markAllNotificationsRead(Request $request): RedirectResponse
+    {
+        UserNotification::query()
+            ->where('user_id', $request->user()->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return redirect()->route('cooperative.notifications');
     }
 
     public function activityLogs(Request $request): View

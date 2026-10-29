@@ -89,6 +89,11 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::post('/cooperative/profits/{user}/withdraw', [CooperativeController::class, 'withdrawProfit'])->name('cooperative.profits.withdraw');
     Route::post('/cooperative/profits/{user}/transfer', [CooperativeController::class, 'transferProfit'])->name('cooperative.profits.transfer');
     Route::get('/cooperative/activity-logs', [CooperativeController::class, 'activityLogs'])->name('cooperative.activity-logs');
+    Route::get('/cooperative/notifications', [CooperativeController::class, 'notifications'])->name('cooperative.notifications');
+    Route::get('/cooperative/notifications/unread', [CooperativeController::class, 'unreadNotifications'])->name('cooperative.notifications.unread');
+    Route::post('/cooperative/notifications/{notification}/open', [CooperativeController::class, 'openNotification'])->name('cooperative.notifications.open');
+    Route::post('/cooperative/notifications/{notification}/read', [CooperativeController::class, 'markNotificationRead'])->name('cooperative.notifications.read');
+    Route::post('/cooperative/notifications/read-all', [CooperativeController::class, 'markAllNotificationsRead'])->name('cooperative.notifications.read-all');
 });
 
 require __DIR__.'/auth.php';

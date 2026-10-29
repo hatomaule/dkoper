@@ -8,6 +8,7 @@ use App\Models\Borrower;
 use App\Models\Installment;
 use App\Models\Loan;
 use App\Models\User;
+use App\Services\CooperativeNotificationService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Illuminate\Support\Str;
@@ -89,6 +90,19 @@ class LoanService
 
             if ($actor->isManager()) {
                 $this->recordDisbursement($actor, $loan);
+                app(CooperativeNotificationService::class)->notifyBorrower(
+                    $borrower,
+                    'Pinjaman disetujui',
+                    "Pinjaman {$loan->loan_code} telah disetujui dan dicatat.",
+                    route('dashboard', [], false),
+                );
+                app(CooperativeNotificationService::class)->notifyRoles(
+                    ['kasir'],
+                    'Pinjaman baru disetujui',
+                    "Owner mencatat pinjaman {$loan->loan_code} untuk {$borrower->full_name}.",
+                    route('cooperative.loans', [], false),
+                    $actor->id,
+                );
             } else {
                 ApprovalRequest::create([
                     'request_type' => 'loan',
@@ -98,6 +112,12 @@ class LoanService
                     'payload' => ['principal_amount' => $principalAmount],
                     'status' => 'pending',
                 ]);
+                app(CooperativeNotificationService::class)->notifyRoles(
+                    ['manager'],
+                    'Pengajuan pinjaman baru',
+                    "{$borrower->full_name} mengajukan pinjaman Rp ".number_format($principalAmount, 0, ',', '.').'.',
+                    route('cooperative.approvals', [], false),
+                );
             }
 
             ActivityLog::create([
@@ -148,6 +168,18 @@ class LoanService
                 'metadata' => ['principal_amount' => $loan->principal_amount],
                 'ip_address' => request()?->ip(),
             ]);
+            app(CooperativeNotificationService::class)->notifyUser(
+                $loan->creator,
+                'Pinjaman disetujui',
+                "Pinjaman {$loan->loan_code} telah disetujui oleh Owner.",
+                route('cooperative.loans', [], false),
+            );
+            app(CooperativeNotificationService::class)->notifyBorrower(
+                $loan->borrower,
+                'Pinjaman disetujui',
+                "Pinjaman {$loan->loan_code} telah disetujui.",
+                route('dashboard', [], false),
+            );
 
             return $loan->fresh();
         });
@@ -192,6 +224,18 @@ class LoanService
                 'metadata' => ['principal_amount' => $loan->principal_amount, 'rejection_reason' => $reason],
                 'ip_address' => request()?->ip(),
             ]);
+            app(CooperativeNotificationService::class)->notifyUser(
+                $loan->creator,
+                'Pengajuan pinjaman ditolak',
+                "Pinjaman {$loan->loan_code} ditolak oleh Owner. Alasan: {$reason}",
+                route('cooperative.loans', [], false),
+            );
+            app(CooperativeNotificationService::class)->notifyBorrower(
+                $loan->borrower,
+                'Pengajuan pinjaman ditolak',
+                "Pinjaman {$loan->loan_code} ditolak. Silakan hubungi Admin atau Owner.",
+                route('dashboard', [], false),
+            );
 
             return $loan->fresh();
         });

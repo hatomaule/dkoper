@@ -287,3 +287,13 @@ Remaining follow-up:
 - Account and cooperative listings refresh every 60 seconds only when the page is visible and no form is dirty, dialog is open, or field is focused.
 - Latest complete verification: `php artisan test --no-coverage` passed (83 tests, 512 assertions). `npm run build`, `php artisan view:cache`, PHP syntax checks, and focused `git diff --check` passed. The FIDES tenant suite has 14 tests covering the account submenu, role-only edits, account/cooperative status, protected history, permanent isolated-SQLite tenant deletion, and refusal to delete the shared application database.
 - Preserve `storage/fides-tenants` and `database/fides-platform.sqlite` as runtime data; these are intentionally ignored by Git. Never run demo seeding against a real tenant or drop shared DKoper/application databases.
+
+### DKoper workflow and notification follow-up (29 October 2026)
+
+- Tightened the dashboard/header spacing and moved the cash charts to the top. The dashboard now shows monthly (12 months) and yearly (5 years) transaction amounts side by side, with explicit legends and no chart-panel background.
+- Borrower registration, loan, payment, and cash-adjustment forms now open in floating dialogs from the corresponding table toolbar. Validation failures reopen their dialog; list totals remain above the data and table row separators are more visible.
+- Borrower loan history is card-only, with installments ordered from sequence 1. Staff retain their existing table/card controls. Password controls use “Ganti Password” and the confirmation dialog requires an explicit checkbox.
+- Admin loan applications remain pending until Owner approval and do not appear in the primary loan ledger until approved. Rejected applications stay in approval/audit history but do not enter cash transactions or the main loan list. Admin-created borrower accounts do not require Owner approval.
+- Added private in-app notifications for relevant account, loan, payment, cash, and bonus events. The navigation bell shows a read-state badge and refreshes every 60 seconds; notifications can be opened and marked read only by their recipient.
+- The profile avatar and name are one menu trigger across roles. Added migration `2026_10_29_000000_create_user_notifications_table`; production/tenant databases must apply this migration before deploying notification routes. It was not manually applied to real runtime databases in this task.
+- Verification: `php artisan test --no-coverage` passed (89 tests, 563 assertions); `npm run build`, `php artisan view:cache`, and `git diff --check` passed. The borrower/dashboard tests were updated to verify the card-only borrower page and monthly/yearly charts instead of the superseded table switch and weekly chart.

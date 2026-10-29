@@ -33,8 +33,9 @@ class DashboardAccessTest extends TestCase
             ->assertSee('Dashboard')
             ->assertSee('dk-dashboard-heading', false)
             ->assertSee('Saldo dan proyeksi bonus')
-            ->assertSee('Debit dan kredit mingguan')
             ->assertSee('Nominal transaksi per bulan')
+            ->assertSee('Nominal transaksi per tahun')
+            ->assertDontSee('Debit dan kredit mingguan')
             ->assertSee('logout-title');
     }
 
