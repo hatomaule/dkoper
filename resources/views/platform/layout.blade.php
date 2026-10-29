@@ -121,7 +121,7 @@
             </form>
         </dialog>
 
-        <main class="mx-auto max-w-[1500px] space-y-6 p-4 sm:p-6 lg:p-8">
+        <main class="mx-auto max-w-[1500px] space-y-6 px-4 pb-4 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:pb-8 lg:pt-4">
             @if (session('status'))
                 <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{{ session('status') }}</div>
             @endif

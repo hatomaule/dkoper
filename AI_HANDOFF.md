@@ -333,3 +333,8 @@ Remaining follow-up:
 - Changed loan actions to compact “Koreksi” and “Hapus” buttons, removed the authority row from per-loan cards, tightened their spacing, and added a divider after installment 12.
 - Narrowed the correction dialog and stacked its fields and installment inputs vertically, including on mobile. Adjusted Dashboard chart panels to fill the available content width, keep values readable, and stack at narrow breakpoints.
 - Verification: `php artisan test --no-coverage` passed (95 tests, 625 assertions); `npm run build`, `php artisan view:cache`, PHP syntax checks, and `git diff --check` passed.
+
+### Platform page top spacing (29 October 2026)
+
+- Reduced the top padding of the shared FIDES Platform content container while retaining its existing horizontal and bottom spacing. The change applies consistently to Dashboard, cooperative management/details, and account management pages.
+- Verification: `php artisan test tests/Feature/FidesTenantLoginTest.php` passed (14 tests, 136 assertions); `php artisan view:cache` and `git diff --check` passed.
