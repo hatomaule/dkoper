@@ -25,16 +25,23 @@ class CooperativeRoleAccessTest extends TestCase
                 'must_change_password' => false,
             ]);
 
-            $this->actingAs($user)
-                ->get(route('profile.edit'))
-                ->assertOk()
+            $profile = $this->actingAs($user)->get(route('profile.edit'));
+            $profile->assertOk()
                 ->assertSee('aria-label="Buka menu akun"', false)
                 ->assertSee('class="dk-profile-copy"', false)
+                ->assertSee('id="mobile-navigation-menu"', false)
+                ->assertSee('class="dk-mobile-overlay"', false)
                 ->assertSee('>A</span>', false)
                 ->assertSeeInOrder(['<header class="dk-page-heading', 'dk-topbar-controls', '</header>'], false)
                 ->assertSee('Profil')
                 ->assertSee('Keluar')
                 ->assertDontSee('<circle cx="4" cy="10" r="1"/>', false);
+
+            if ($role === 'nasabah') {
+                $this->assertStringNotContainsString(route('cooperative.loans', absolute: false), $profile->getContent());
+            } else {
+                $this->assertStringContainsString(route('cooperative.loans', absolute: false), $profile->getContent());
+            }
         }
     }
 

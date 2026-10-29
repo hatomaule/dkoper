@@ -114,11 +114,15 @@ class FidesTenantLoginTest extends TestCase
             ->assertOk()
             ->assertDontSee('Ringkasan koperasi')
             ->assertDontSee('Angka menunjukkan jumlahnya')
+            ->assertDontSee('platform-coop-chart-bar')
+            ->assertSee('Informasi koperasi')
+            ->assertSee('class="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4"', false)
+            ->assertSee('id="platform-mobile-navigation"', false)
+            ->assertSee('aria-label="Buka menu navigasi"', false)
             ->assertSee('Akun pengguna')
             ->assertSee('Nasabah')
-            ->assertSee('platform-coop-chart-bar is-users', false)
-            ->assertSee('platform-coop-chart-bar is-borrowers', false)
-            ->assertSee('<section class="space-y-4">', false);
+            ->assertSee('Koperasi Uji')
+            ->assertSee('class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"', false);
         $this->get(route('platform.accounts'))
             ->assertOk()
             ->assertSee('Owner Uji')
