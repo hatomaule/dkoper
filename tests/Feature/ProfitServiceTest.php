@@ -53,44 +53,39 @@ class ProfitServiceTest extends TestCase
         ]);
     }
 
-    public function test_admin_can_withdraw_only_their_own_bonus(): void
+    public function test_admin_cannot_withdraw_and_sees_bonus_summary_cards_only(): void
     {
         $admin = $this->staff('kasir', 'admin');
         $owner = $this->staff('manager', 'owner');
         $this->balance($admin, 30_000);
         $this->balance($owner, 80_000);
-        app(CashLedgerService::class)->post($admin, 'cash_adjustment', 'manual', 'in', 50_000);
 
         $this->actingAs($admin)
             ->post(route('cooperative.profits.withdraw', $admin), ['amount' => 35_000])
-            ->assertRedirect(route('cooperative.profits'));
+            ->assertForbidden();
 
         $this->assertDatabaseHas('profit_balances', [
             'user_id' => $admin->id,
-            'withdrawn_amount' => 35_000,
-            'available_amount' => -5_000,
+            'withdrawn_amount' => 0,
+            'available_amount' => 30_000,
         ]);
-        $this->assertDatabaseHas('profit_transactions', [
-            'user_id' => $admin->id,
-            'created_by' => $admin->id,
-            'type' => 'withdrawal',
-            'amount' => 35_000,
-        ]);
+        $this->assertDatabaseCount('profit_transactions', 0);
         $this->actingAs($admin)
             ->get(route('cooperative.profits'))
             ->assertOk()
-            ->assertSee('Catat penarikan')
+            ->assertDontSee('Catat penarikan')
             ->assertDontSee('Transfer ke modal')
             ->assertDontSee('Dipindah ke modal')
-            ->assertDontSee('OWNER')
-            ->assertDontSee('Owner')
-            ->assertSee('class="dk-profit-balances grid gap-4"', false)
-            ->assertSee('Saldo tersedia / utang bonus')
-            ->assertSee('Rp -5.000');
+            ->assertSee('Bonus dari hasil pembayaran nasabah')
+            ->assertSee('Sudah ditarik')
+            ->assertSee('Rp 30.000')
+            ->assertDontSee('Total bonus dari pinjaman aktif')
+            ->assertSee('Utang bonus')
+            ->assertSee('Rp 0');
         $this->actingAs($owner)
             ->get(route('cooperative.profits'))
             ->assertOk()
-            ->assertSee('Rp -5.000');
+            ->assertSee('Rp 30.000');
         $this->assertSame(0, (int) DB::table('profit_balances')->where('user_id', $owner->id)->value('withdrawn_amount'));
     }
 
@@ -105,7 +100,7 @@ class ProfitServiceTest extends TestCase
             app(ProfitService::class)->withdraw($admin, $owner->id, 10_000);
             $this->fail("An Admin must not withdraw another staff member's bonus.");
         } catch (RuntimeException $exception) {
-            $this->assertSame('Penarikan bonus hanya dapat dicatat Owner atau untuk bonus sendiri.', $exception->getMessage());
+            $this->assertSame('Penarikan bonus hanya dapat dicatat Owner.', $exception->getMessage());
         }
 
         $this->assertDatabaseHas('profit_balances', [

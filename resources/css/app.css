@@ -3016,6 +3016,14 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
     font-weight: 800;
 }
 
+.dk-admin-bonus-debt-value {
+    color: #dc2626 !important;
+}
+
+.dk-admin-bonus-earned-value {
+    color: #16a34a !important;
+}
+
 .dk-period-card small {
     margin-top: 4px;
     color: var(--dk-muted);
@@ -5364,6 +5372,17 @@ html[data-theme="dark"] body.dk-owner-theme .dk-main textarea {
     flex: 0 0 auto;
 }
 
+.dk-login-theme-toggle,
+.dk-login-theme-toggle:hover,
+.dk-login-theme-toggle:focus-visible,
+html[data-theme="dark"] .dk-login-theme-toggle,
+html[data-theme="dark"] .dk-login-theme-toggle:hover,
+html[data-theme="dark"] .dk-login-theme-toggle:focus-visible {
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
 html[data-theme="dark"] body.dk-body,
 html[data-theme="dark"] body.dk-guest-body {
     background: #0b1120;
@@ -6126,37 +6145,14 @@ html[data-theme="dark"] .platform-main button:not([role="switch"]):not([data-clo
     grid-template-columns: minmax(0, 1fr);
 }
 
-@media (min-width: 900px) {
-    .dk-profit-balances-owner {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-items: stretch;
-    }
-
-    .dk-profit-balances-owner .dk-profit-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .dk-profit-balances-owner .dk-profit-actions {
-        grid-template-columns: minmax(0, 1fr);
-    }
-}
-
 .dk-profit-card {
     width: 100%;
     padding: clamp(14px, 2.5vw, 22px);
 }
 
 .dk-profit-stats {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
-}
-
-.dk-profit-card.dk-bonus-admin .dk-profit-stats {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.dk-profit-card.dk-bonus-admin .dk-profit-actions {
-    grid-template-columns: minmax(0, 320px);
 }
 
 .dk-profit-stats > div {
@@ -6176,7 +6172,7 @@ html[data-theme="dark"] .platform-main button:not([role="switch"]):not([data-clo
 }
 
 .dk-profit-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 320px);
     margin-top: 14px;
 }
 

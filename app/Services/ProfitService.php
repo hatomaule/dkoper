@@ -14,9 +14,8 @@ class ProfitService
 {
     public function withdraw(User $actor, int $staffId, int $amount): ProfitTransaction
     {
-        if (! $actor->isManager()
-            && ! ($actor->isCashier() && (int) $actor->id === $staffId)) {
-            throw new RuntimeException('Penarikan bonus hanya dapat dicatat Owner atau untuk bonus sendiri.');
+        if (! $actor->isManager()) {
+            throw new RuntimeException('Penarikan bonus hanya dapat dicatat Owner.');
         }
 
         if ($amount <= 0) {

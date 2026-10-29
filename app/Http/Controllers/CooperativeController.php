@@ -592,9 +592,8 @@ class CooperativeController extends Controller
         abort_unless($request->user()->isManager() || $request->user()->isCashier(), 403);
 
         $staffId = $request->user()->isManager() ? null : $request->user()->id;
-        $projectedBonus = Installment::query()
+        $activeLoanBonus = Installment::query()
             ->whereHas('loan', fn ($query) => $query->where('status', 'active'))
-            ->where('outstanding_amount', '>', 0)
             ->selectRaw('SUM(alan_profit_amount) AS owner_total, SUM(chalo_profit_amount) AS admin_total')
             ->first();
 
@@ -604,10 +603,12 @@ class CooperativeController extends Controller
                 ->when($staffId, fn ($query) => $query->where('user_id', $staffId))
                 ->orderBy('user_id')
                 ->get()
-                ->each(function (ProfitBalance $balance) use ($projectedBonus): void {
-                    $balance->projected_amount = (int) ($balance->user->isManager()
-                        ? ($projectedBonus->owner_total ?? 0)
-                        : ($projectedBonus->admin_total ?? 0));
+                ->sortBy(fn (ProfitBalance $balance) => $balance->user->isManager() ? 0 : 1)
+                ->values()
+                ->each(function (ProfitBalance $balance) use ($activeLoanBonus): void {
+                    $balance->active_loan_bonus_amount = (int) ($balance->user->isManager()
+                        ? ($activeLoanBonus->owner_total ?? 0)
+                        : ($activeLoanBonus->admin_total ?? 0));
                 }),
             'transactions' => $this->paginated(
                 ProfitTransaction::with(['user', 'creator'])
@@ -621,13 +622,11 @@ class CooperativeController extends Controller
 
     public function withdrawProfit(Request $request, User $user, ProfitService $service): RedirectResponse
     {
-        $canManageAny = $request->user()->isManager();
-        $canSelf = $request->user()->id === $user->id;
-        abort_unless($canManageAny || $canSelf, 403);
+        abort_unless($request->user()->isManager(), 403);
         $validated = $request->validate(['amount' => ['required', 'integer', 'min:1']]);
         $service->withdraw($request->user(), $user->id, (int) $validated['amount']);
         app(CooperativeNotificationService::class)->notifyRoles(
-            $request->user()->isManager() ? ['kasir'] : ['manager'],
+            ['kasir'],
             'Penarikan bonus dicatat',
             "{$request->user()->name} mencatat penarikan bonus Rp ".number_format((int) $validated['amount'], 0, ',', '.').'.',
             route('cooperative.profits', [], false),

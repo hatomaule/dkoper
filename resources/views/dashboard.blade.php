@@ -69,18 +69,41 @@
         </div>
 
         <div class="dk-dashboard-section">
-            <div class="dk-section-title"><div><span>BONUS</span><h3>Saldo dan proyeksi bonus</h3></div></div>
-            <div class="grid gap-3 md:grid-cols-2">
-                @foreach ([
-                    [$owner_name, $owner_profit, $owner_earned_bonus, $owner_future_bonus, 'dk-bonus-owner'],
-                    [$admin_name, $admin_profit, $admin_earned_bonus, $admin_future_bonus, 'dk-bonus-admin'],
-                ] as [$staffName, $available, $earned, $projected, $tone])
-                    <section class="dk-bonus-summary {{ $tone }}">
-                        <div class="dk-bonus-earned"><span>SALDO BONUS TERSEDIA</span><h4>{{ $staffName }}</h4><strong>{{ $rupiah($available) }}</strong><small>Setelah penarikan dan transfer ke modal</small></div>
-                        <div class="dk-bonus-total"><span>TOTAL BONUS KESELURUHAN</span><strong>{{ $rupiah((int) $earned + (int) $projected) }}</strong><small>Terealisasi {{ $rupiah($earned) }} + proyeksi pinjaman aktif {{ $rupiah($projected) }}</small></div>
-                    </section>
-                @endforeach
-            </div>
+            @if (auth()->user()->isCashier())
+                <div class="dk-section-title"><div><span>BONUS ADMIN</span><h3>Ringkasan bonus</h3></div></div>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    @foreach ([
+                        ['Bonus dari hasil pembayaran nasabah', $admin_earned_bonus],
+                        ['Sudah ditarik', $admin_withdrawn_bonus],
+                        ['Utang bonus', $admin_bonus_debt],
+                    ] as [$label, $amount])
+                        <section @class([
+                            'dk-period-card',
+                            'dk-admin-bonus-debt-card' => $label === 'Utang bonus',
+                            'dk-admin-bonus-earned-card' => $label === 'Bonus dari hasil pembayaran nasabah',
+                        ])>
+                            <span @class(['text-red-700' => $label === 'Utang bonus'])>{{ $label }}</span>
+                            <strong @class([
+                                'dk-admin-bonus-debt-value' => $label === 'Utang bonus' && $amount < 0,
+                                'dk-admin-bonus-earned-value' => $label === 'Bonus dari hasil pembayaran nasabah',
+                            ])>{{ $rupiah($amount) }}</strong>
+                        </section>
+                    @endforeach
+                </div>
+            @else
+                <div class="dk-section-title"><div><span>BONUS</span><h3>Saldo dan proyeksi bonus</h3></div></div>
+                <div class="grid gap-3 md:grid-cols-2">
+                    @foreach ([
+                        [$owner_name, $owner_profit, $owner_earned_bonus, $owner_future_bonus, 'dk-bonus-owner'],
+                        [$admin_name, $admin_profit, $admin_earned_bonus, $admin_future_bonus, 'dk-bonus-admin'],
+                    ] as [$staffName, $available, $earned, $projected, $tone])
+                        <section class="dk-bonus-summary {{ $tone }}">
+                            <div class="dk-bonus-earned"><span>SALDO BONUS TERSEDIA</span><h4>{{ $staffName }}</h4><strong>{{ $rupiah($available) }}</strong><small>Setelah penarikan dan transfer ke modal</small></div>
+                            <div class="dk-bonus-total"><span>TOTAL BONUS KESELURUHAN</span><strong>{{ $rupiah((int) $earned + (int) $projected) }}</strong><small>Terealisasi {{ $rupiah($earned) }} + proyeksi pinjaman aktif {{ $rupiah($projected) }}</small></div>
+                        </section>
+                    @endforeach
+                </div>
+            @endif
         </div>
 
     </div>

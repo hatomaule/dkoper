@@ -48,20 +48,26 @@ class DashboardAccessTest extends TestCase
         $this->assertLessThan(strpos($content, 'Saldo dan proyeksi bonus'), strpos($content, 'Laporan pemasukan'));
     }
 
-    public function test_admin_dashboard_shows_owner_and_admin_bonus_totals(): void
+    public function test_admin_dashboard_shows_only_three_admin_bonus_cards(): void
     {
         $owner = User::factory()->create(['name' => 'Alan Owner', 'username' => 'owner', 'role' => 'manager']);
         $admin = User::factory()->create(['name' => 'Chalo Admin', 'username' => 'admin', 'role' => 'kasir']);
         ProfitBalance::create(['user_id' => $owner->id, 'earned_amount' => 12_000, 'available_amount' => 10_000]);
-        ProfitBalance::create(['user_id' => $admin->id, 'earned_amount' => 8_000, 'available_amount' => 7_000]);
+        ProfitBalance::create(['user_id' => $admin->id, 'earned_amount' => 8_000, 'withdrawn_amount' => 9_000, 'available_amount' => -1_000]);
 
         $this->actingAs($admin)
             ->get('/dashboard')
             ->assertOk()
-            ->assertSee('Alan Owner')
-            ->assertSee('Chalo Admin')
-            ->assertSee('Rp 10.000')
-            ->assertSee('Rp 7.000')
+            ->assertSee('BONUS ADMIN')
+            ->assertSee('Bonus dari hasil pembayaran nasabah')
+            ->assertSee('Rp 8.000')
+            ->assertSee('Sudah ditarik')
+            ->assertSee('Rp 9.000')
+            ->assertSee('Utang bonus')
+            ->assertSee('Rp -1.000')
+            ->assertDontSee('Saldo dan proyeksi bonus')
+            ->assertDontSee('Alan Owner')
+            ->assertDontSee('TOTAL BONUS KESELURUHAN')
             ->assertDontSee('data-platform-auto-refresh')
             ->assertSee('dk-owner-theme', false)
             ->assertSee('FIDES')
@@ -69,6 +75,38 @@ class DashboardAccessTest extends TestCase
             ->assertDontSee('COOPERATIVE FINANCE')
             ->assertSee('<small>Admin</small>', false)
             ->assertDontSee('<img src="'.asset('logo.svg').'" class="dk-brand-mark"', false);
+    }
+
+    public function test_dashboard_counts_only_customer_accounts_with_loan_history(): void
+    {
+        $owner = User::factory()->create([
+            'username' => 'owner',
+            'role' => 'manager',
+            'must_change_password' => false,
+        ]);
+        User::factory()->create([
+            'name' => 'Nasabah Tanpa Pinjaman',
+            'role' => 'nasabah',
+            'must_change_password' => false,
+        ]);
+        $loanBorrower = Borrower::create([
+            'full_name' => 'Nasabah Dengan Pinjaman',
+            'borrower_code' => 'DK_DASHBOARD_LOAN',
+            'status' => 'active',
+        ]);
+        Borrower::create([
+            'full_name' => 'admin',
+            'borrower_code' => 'DK_DASHBOARD_ADMIN',
+            'status' => 'active',
+        ]);
+
+        $loan = app(LoanService::class)->createApprovedLoan($owner, $loanBorrower->id, 1_000_000);
+        $loan->delete();
+
+        $this->actingAs($owner)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('1 orang');
     }
 
     public function test_dashboard_shows_realized_and_projected_bonus_as_the_overall_total(): void

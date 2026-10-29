@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Borrower;
+use App\Models\Installment;
 use App\Models\ProfitBalance;
 use App\Services\CashLedgerService;
 use App\Services\LoanService;
@@ -300,20 +301,28 @@ class CooperativeRoleAccessTest extends TestCase
             'status' => 'active',
         ]);
         app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
-        ProfitBalance::create(['user_id' => $owner->id, 'earned_amount' => 120_000, 'available_amount' => 120_000]);
-        ProfitBalance::create(['user_id' => $admin->id, 'earned_amount' => 80_000, 'available_amount' => 80_000]);
+        $firstInstallment = Installment::query()->firstOrFail();
+        $firstInstallment->forceFill([
+            'paid_amount' => $firstInstallment->scheduled_amount,
+            'outstanding_amount' => 0,
+            'status' => 'paid',
+        ])->save();
+        ProfitBalance::create(['user_id' => $owner->id, 'earned_amount' => 1_000, 'available_amount' => 1_000]);
+        ProfitBalance::create(['user_id' => $admin->id, 'earned_amount' => 2_000, 'available_amount' => 2_000]);
 
         $content = $this->actingAs($owner)
             ->get(route('cooperative.profits'))
             ->assertOk()
-            ->assertSee('dk-profit-balances-owner')
-            ->assertSee('Bonus dari pinjaman berjalan')
+            ->assertSee('dk-profit-balances')
+            ->assertSee('Total bonus dari pinjaman aktif')
             ->assertSee('Rp 120.000')
             ->assertSee('Rp 80.000')
             ->getContent();
 
         $this->assertLessThan(strpos($content, 'dk-bonus-admin'), strpos($content, 'dk-bonus-owner'));
-        $this->assertLessThan(strpos($content, 'Sudah ditarik'), strpos($content, 'Bonus dari pinjaman berjalan'));
+        $this->assertLessThan(strpos($content, 'Sudah ditarik'), strpos($content, 'Total bonus dari pinjaman aktif'));
+        $this->assertStringNotContainsString('Ringkasan Bonus Owner dan Admin', $content);
+        $this->assertSame(2, substr_count($content, 'Total bonus dari pinjaman aktif'));
     }
 
     public function test_admin_can_open_bonus_and_activity_but_not_owner_management_pages(): void
@@ -323,13 +332,27 @@ class CooperativeRoleAccessTest extends TestCase
             'role' => 'kasir',
             'must_change_password' => false,
         ]);
+        $owner = User::factory()->create([
+            'username' => 'owner',
+            'role' => 'manager',
+            'must_change_password' => false,
+        ]);
+        ProfitBalance::create(['user_id' => $owner->id, 'earned_amount' => 12_000, 'withdrawn_amount' => 3_000, 'available_amount' => 9_000]);
+        ProfitBalance::create(['user_id' => $admin->id, 'earned_amount' => 4_000, 'withdrawn_amount' => 8_000, 'available_amount' => -4_000]);
 
         $this->actingAs($admin)
             ->get(route('cooperative.profits'))
             ->assertOk()
             ->assertSee('Bonus')
-            ->assertDontSee('dk-profit-balances-owner')
-            ->assertSee('class="dk-profit-balances grid gap-4"', false)
+            ->assertDontSee('dk-profit-balances')
+            ->assertDontSee('Ringkasan Bonus Owner dan Admin')
+            ->assertDontSee('Total bonus Owner')
+            ->assertDontSee('Total bonus Admin')
+            ->assertSee('Bonus dari hasil pembayaran nasabah')
+            ->assertSee('Sudah ditarik')
+            ->assertSee('Utang bonus')
+            ->assertDontSee('Total bonus dari pinjaman aktif')
+            ->assertDontSee('Owner')
             ->assertDontSee('Kelola password Owner dan Admin')
             ->assertSee('Ganti password saya');
 
