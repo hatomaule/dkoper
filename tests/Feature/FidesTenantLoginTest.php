@@ -121,6 +121,8 @@ class FidesTenantLoginTest extends TestCase
             ->assertSee('aria-label="Buka menu navigasi"', false)
             ->assertSee('aria-controls="platform-mobile-account-submenu"', false)
             ->assertSee('id="platform-mobile-account-submenu" x-cloak x-show="accountSubmenuOpen"', false)
+            ->assertDontSee('border-l border-slate-800')
+            ->assertDontSee('bg-slate-800/80')
             ->assertDontSee('Semua koperasi')
             ->assertSee('Akun pengguna')
             ->assertSee('Nasabah')

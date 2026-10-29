@@ -37,13 +37,13 @@
             ])>
                 <span class="w-5 text-center text-orange-400">♙</span> Manajemen akun
             </a>
-            <div class="ml-8 border-l border-slate-800 py-1 pl-3">
+            <div class="ml-8 grid justify-items-start gap-[3px] py-1">
                 @forelse ($platformCooperatives as $platformCooperative)
                     <a href="{{ route('platform.accounts', ['cooperative' => $platformCooperative->id]) }}"
                        @class([
-                           'mb-1 flex items-center justify-between gap-2 rounded-md px-3 py-2 text-xs transition',
-                           'bg-slate-800/80 text-white' => $currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts'),
-                           'text-slate-500 hover:bg-slate-800/60 hover:text-slate-200' => ! ($currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts')),
+                           'flex w-fit max-w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-xs transition-colors',
+                           'font-semibold text-white' => $currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts'),
+                           'text-slate-500 hover:text-slate-200' => ! ($currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts')),
                        ])>
                         <span class="truncate">{{ $platformCooperative->name }}</span>
                         <span @class(['h-1.5 w-1.5 shrink-0 rounded-full', 'bg-emerald-400' => $platformCooperative->status === 'active', 'bg-slate-600' => $platformCooperative->status !== 'active'])></span>
@@ -137,12 +137,12 @@
                     <span class="flex-1">Manajemen akun</span>
                     <svg viewBox="0 0 20 20" aria-hidden="true" class="h-4 w-4 shrink-0 fill-none stroke-current transition-transform duration-200" :class="accountSubmenuOpen ? 'rotate-180' : ''"><path d="m5 7.5 5 5 5-5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
-                <div id="platform-mobile-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="mb-2 ml-[22px] mt-1 grid gap-[3px] border-l border-slate-800 pl-3">
+                <div id="platform-mobile-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="mb-2 ml-[22px] mt-1 grid w-fit max-w-full justify-items-start gap-[3px]">
                     @forelse ($platformCooperatives as $platformCooperative)
                         <a data-platform-mobile-account-link href="{{ route('platform.accounts', ['cooperative' => $platformCooperative->id]) }}" @click="mobileMenuOpen = false" @class([
-                            'flex min-h-9 items-center justify-between gap-2 rounded-lg px-[11px] text-xs font-semibold transition-colors',
-                            'bg-slate-800/80 text-white' => $currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts'),
-                            'text-slate-500 hover:bg-slate-800/60 hover:text-slate-200' => ! ($currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts')),
+                            'flex min-h-9 w-fit max-w-full items-center justify-between gap-2 rounded-lg px-[11px] text-xs transition-colors',
+                            'font-semibold text-white' => $currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts'),
+                            'text-slate-500 hover:text-slate-200' => ! ($currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts')),
                         ])>
                             <span class="truncate">{{ $platformCooperative->name }}</span>
                             <span @class(['h-1.5 w-1.5 shrink-0 rounded-full', 'bg-emerald-400' => $platformCooperative->status === 'active', 'bg-slate-600' => $platformCooperative->status !== 'active'])></span>
