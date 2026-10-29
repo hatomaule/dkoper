@@ -119,6 +119,8 @@ class FidesTenantLoginTest extends TestCase
             ->assertSee('class="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4"', false)
             ->assertSee('id="platform-mobile-navigation"', false)
             ->assertSee('aria-label="Buka menu navigasi"', false)
+            ->assertSee('aria-controls="platform-desktop-account-submenu"', false)
+            ->assertSee('id="platform-desktop-account-submenu" x-cloak x-show="accountSubmenuOpen"', false)
             ->assertSee('aria-controls="platform-mobile-account-submenu"', false)
             ->assertSee('id="platform-mobile-account-submenu" x-cloak x-show="accountSubmenuOpen"', false)
             ->assertDontSee('border-l border-slate-800')
@@ -134,6 +136,7 @@ class FidesTenantLoginTest extends TestCase
             ->assertSee('Owner');
         $accountsPage = $this->get(route('platform.accounts', ['cooperative' => PlatformCooperative::query()->value('id')]));
         $accountsPage->assertOk()
+            ->assertSee('accountSubmenuOpen: true', false)
             ->assertSee('data-list-view-mode="cards"', false)
             ->assertSee('role="switch"', false)
             ->assertSee('data-open-dialog="cooperative-status-'.PlatformCooperative::query()->value('id').'"', false)
@@ -142,6 +145,8 @@ class FidesTenantLoginTest extends TestCase
             ->assertSee('data-platform-auto-refresh="60000"', false)
             ->assertSee('Manajemen akun')
             ->assertSee('Koperasi Uji')
+            ->assertSee('ml-[44px] mt-1 grid w-fit max-w-full justify-items-start gap-[3px]', false)
+            ->assertSee('h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400', false)
             ->assertSee(route('platform.accounts', ['cooperative' => PlatformCooperative::query()->value('id')]), false)
             ->assertDontSee('aria-label="Pilih koperasi"', false)
             ->assertDontSee('Selamat datang');

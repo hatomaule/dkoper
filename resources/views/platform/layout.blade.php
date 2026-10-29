@@ -7,7 +7,7 @@
     <title>FIDES · @yield('page-title', 'Platform')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body x-data="{ mobileMenuOpen: false, accountSubmenuOpen: false }" x-effect="document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''" @keydown.escape.window="mobileMenuOpen = false" class="min-h-screen bg-[#080d1b] font-sans text-slate-200 antialiased" data-platform-auto-refresh="60000">
+<body x-data="{ mobileMenuOpen: false, accountSubmenuOpen: {{ request()->routeIs('platform.accounts*') ? 'true' : 'false' }} }" x-effect="document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''" @keydown.escape.window="mobileMenuOpen = false" class="min-h-screen bg-[#080d1b] font-sans text-slate-200 antialiased" data-platform-auto-refresh="60000">
     @php($currentCooperativeId = (int) request()->query('cooperative', $platformCooperatives->first()?->id ?? 0))
     <aside class="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-800 bg-[#0e1526] md:flex">
         <a href="{{ route('platform.dashboard') }}" class="flex h-16 items-center gap-3 border-b border-slate-800 px-6">
@@ -30,23 +30,25 @@
             ])>
                 <span class="w-5 text-center text-orange-400">◈</span> Manajemen Koperasi
             </a>
-            <a href="{{ route('platform.accounts') }}" @class([
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition',
+            <button type="button" @click="accountSubmenuOpen = ! accountSubmenuOpen" :aria-expanded="accountSubmenuOpen.toString()" aria-controls="platform-desktop-account-submenu" @class([
+                'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition',
                 'bg-slate-800 text-white' => request()->routeIs('platform.accounts*'),
                 'text-slate-400 hover:bg-slate-800/70 hover:text-white' => ! request()->routeIs('platform.accounts*'),
             ])>
-                <span class="w-5 text-center text-orange-400">♙</span> Manajemen akun
-            </a>
-            <div class="ml-8 grid justify-items-start gap-[3px] py-1">
+                <span class="w-5 text-center text-orange-400">♙</span>
+                <span class="flex-1">Manajemen akun</span>
+                <svg viewBox="0 0 20 20" aria-hidden="true" class="h-4 w-4 shrink-0 fill-none stroke-current transition-transform duration-200" :class="accountSubmenuOpen ? 'rotate-180' : ''"><path d="m5 7.5 5 5 5-5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div id="platform-desktop-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="ml-8 grid justify-items-start gap-[3px] py-1">
                 @forelse ($platformCooperatives as $platformCooperative)
                     <a href="{{ route('platform.accounts', ['cooperative' => $platformCooperative->id]) }}"
                        @class([
-                           'flex w-fit max-w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-xs transition-colors',
+                           'flex w-fit max-w-full items-center justify-start gap-2 rounded-md py-2 text-xs transition-colors',
                            'font-semibold text-white' => $currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts'),
                            'text-slate-500 hover:text-slate-200' => ! ($currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts')),
                        ])>
-                        <span class="truncate">{{ $platformCooperative->name }}</span>
                         <span @class(['h-1.5 w-1.5 shrink-0 rounded-full', 'bg-emerald-400' => $platformCooperative->status === 'active', 'bg-slate-600' => $platformCooperative->status !== 'active'])></span>
+                        <span class="min-w-0 truncate">{{ $platformCooperative->name }}</span>
                     </a>
                 @empty
                     <p class="px-3 py-2 text-[11px] text-slate-600">Belum ada koperasi</p>
@@ -137,15 +139,15 @@
                     <span class="flex-1">Manajemen akun</span>
                     <svg viewBox="0 0 20 20" aria-hidden="true" class="h-4 w-4 shrink-0 fill-none stroke-current transition-transform duration-200" :class="accountSubmenuOpen ? 'rotate-180' : ''"><path d="m5 7.5 5 5 5-5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
-                <div id="platform-mobile-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="mb-2 ml-[22px] mt-1 grid w-fit max-w-full justify-items-start gap-[3px]">
+                <div id="platform-mobile-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="mb-2 ml-[44px] mt-1 grid w-fit max-w-full justify-items-start gap-[3px]">
                     @forelse ($platformCooperatives as $platformCooperative)
                         <a data-platform-mobile-account-link href="{{ route('platform.accounts', ['cooperative' => $platformCooperative->id]) }}" @click="mobileMenuOpen = false" @class([
-                            'flex min-h-9 w-fit max-w-full items-center justify-between gap-2 rounded-lg px-[11px] text-xs transition-colors',
+                            'flex min-h-9 w-fit max-w-full items-center justify-start gap-2 rounded-lg py-2 text-xs transition-colors',
                             'font-semibold text-white' => $currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts'),
                             'text-slate-500 hover:text-slate-200' => ! ($currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts')),
                         ])>
-                            <span class="truncate">{{ $platformCooperative->name }}</span>
                             <span @class(['h-1.5 w-1.5 shrink-0 rounded-full', 'bg-emerald-400' => $platformCooperative->status === 'active', 'bg-slate-600' => $platformCooperative->status !== 'active'])></span>
+                            <span class="min-w-0 truncate">{{ $platformCooperative->name }}</span>
                         </a>
                     @empty
                         <p class="px-3 py-2 text-[11px] text-slate-600">Belum ada koperasi</p>
