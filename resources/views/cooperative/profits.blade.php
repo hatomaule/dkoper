@@ -5,18 +5,20 @@
             @if (session('status'))<p class="rounded-lg bg-emerald-50 p-4 text-sm text-emerald-700">{{ session('status') }}</p>@endif
             @if ($errors->any())<p class="rounded-lg bg-red-50 p-4 text-sm text-red-700">{{ $errors->first() }}</p>@endif
 
-            <section class="grid gap-4 md:grid-cols-2">
-                @foreach ($balances as $balance)
+            <section @class(['dk-profit-balances grid gap-4', 'dk-profit-balances-owner' => auth()->user()->isManager()])>
+                @foreach ($balances->sortBy(fn ($balance) => $balance->user->isManager() ? 0 : 1) as $balance)
                     <div class="dk-form-panel dk-profit-card {{ $balance->user->isManager() ? 'dk-bonus-owner' : 'dk-bonus-admin' }}">
                         <h3 class="font-bold text-slate-900">{{ $balance->user->name }} <span class="text-xs font-normal uppercase text-slate-500">{{ $balance->user->isManager() ? 'OWNER' : 'ADMIN' }}</span></h3>
-                        <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-                            <div><dt class="text-slate-500">Bonus didapat</dt><dd class="font-semibold">Rp {{ number_format((int) $balance->earned_amount, 0, ',', '.') }}</dd></div>
+                        <dl class="dk-profit-stats mt-4 grid grid-cols-2 gap-3 text-sm">
+                            <div><dt class="text-slate-500">{{ $balance->user->isCashier() ? 'Bonus Dari hasil pembayaran nasabah' : 'Bonus didapat' }}</dt><dd class="font-semibold">Rp {{ number_format((int) $balance->earned_amount, 0, ',', '.') }}</dd></div>
                             <div><dt class="text-slate-500">Bonus dari pinjaman berjalan</dt><dd class="font-semibold">Rp {{ number_format((int) $balance->projected_amount, 0, ',', '.') }}</dd></div>
                             <div><dt class="text-slate-500">Sudah ditarik</dt><dd class="font-semibold">Rp {{ number_format((int) $balance->withdrawn_amount, 0, ',', '.') }}</dd></div>
-                            <div><dt class="text-slate-500">Dipindah ke modal</dt><dd class="font-semibold">Rp {{ number_format((int) $balance->transferred_to_modal_amount, 0, ',', '.') }}</dd></div>
+                            @if ($balance->user->isManager())
+                                <div><dt class="text-slate-500">Dipindah ke modal</dt><dd class="font-semibold">Rp {{ number_format((int) $balance->transferred_to_modal_amount, 0, ',', '.') }}</dd></div>
+                            @endif
                             <div><dt class="text-slate-500">Saldo tersedia / utang bonus</dt><dd class="font-bold {{ $balance->available_amount < 0 ? 'text-red-700' : 'text-emerald-700' }}">Rp {{ number_format((int) $balance->available_amount, 0, ',', '.') }}</dd></div>
                         </dl>
-                        <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                        <div class="dk-profit-actions mt-5 grid gap-4 sm:grid-cols-2">
                             @if (auth()->user()->isManager() || auth()->id() === $balance->user_id)
                                 <form method="POST" action="{{ route('cooperative.profits.withdraw', $balance->user) }}" class="dk-bonus-action-form">
                                     @csrf<label class="block text-xs font-bold uppercase text-slate-600">Catat penarikan</label>
@@ -40,8 +42,8 @@
                 <div class="border-b border-slate-200 px-5 py-4"><h3 class="font-bold text-slate-900">Riwayat Bonus</h3></div>
                 <div class="dk-table-toolbar">
                     <label>Filter <input type="search" placeholder="Cari transaksi..." data-table-search></label>
-                    <label>Tampilkan<select data-page-size><option value="5" @selected(request('per_page', '5') === '5')>5</option><option value="10" @selected(request('per_page') === '10')>10</option><option value="25" @selected(request('per_page') === '25')>25</option><option value="50" @selected(request('per_page') === '50')>50</option><option value="all" @selected(request('per_page') === 'all')>Semua</option></select></label>
-                    <div class="dk-view-toggle" aria-label="Mode tampilan"><button type="button" class="is-active" data-view-mode="table" aria-label="Tabel" title="Tabel">▤</button><button type="button" data-view-mode="cards" aria-label="Kartu" title="Kartu">▦</button></div>
+                    <label>Tampilkan<select data-page-size><option value="auto" @selected(request()->query('per_page') !== 'all')>Otomatis</option><option value="all" @selected(request()->query('per_page') === 'all')>Semua</option></select></label>
+                    <div class="dk-view-toggle" aria-label="Mode tampilan"><button type="button" data-view-mode="table" aria-label="Tabel" title="Tabel">▤</button><button type="button" class="is-active" data-view-mode="cards" aria-label="Kartu" title="Kartu">▦</button></div>
                 </div>
                 <div class="overflow-x-auto dk-table-view" data-table-view="table">
                     <table class="w-full text-left text-sm">

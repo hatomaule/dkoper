@@ -270,14 +270,23 @@ class CooperativeController extends Controller
         return redirect()->route('cooperative.loans')->with('status', "Pinjaman {$loan->loan_code} dihapus dari daftar; riwayat keuangan tetap tersimpan.");
     }
 
-    public function payments(): View
+    public function payments(Request $request): View
     {
-        $this->authorizeStaff();
-        $perPage = $this->perPage(request());
+        abort_unless(
+            $request->user()->isManager() || $request->user()->isCashier() || $request->user()->isBorrower(),
+            403,
+        );
+        $perPage = $this->perPage($request);
 
-        $query = Payment::with(['loan.borrower', 'installment'])->orderByDesc('created_at')->orderByDesc('id');
+        $query = Payment::with(['loan.borrower', 'installment'])
+            ->when($request->user()->isBorrower(), fn ($query) => $query->whereHas(
+                'loan.borrower',
+                fn ($borrowers) => $borrowers->where('user_id', $request->user()->id),
+            ))
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
         $payments = $perPage === 'all' ? $query->get() : $query->paginate($perPage)->withQueryString();
-        $paymentLoans = Loan::with([
+        $paymentLoans = $request->user()->isBorrower() ? collect() : Loan::with([
             'borrower',
             'installments' => fn ($query) => $query->where('outstanding_amount', '>', 0)->orderBy('sequence'),
         ])        ->where('status', 'active')
@@ -286,7 +295,7 @@ class CooperativeController extends Controller
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->get();
-        $correctionLoans = Loan::with(['borrower', 'installments' => fn ($query) => $query->orderBy('sequence')])
+        $correctionLoans = $request->user()->isBorrower() ? collect() : Loan::with(['borrower', 'installments' => fn ($query) => $query->orderBy('sequence')])
             ->whereIn('status', ['active', 'paid'])
             ->whereHas('borrower', fn ($query) => $query->customerAccount())
             ->orderByDesc('created_at')
@@ -306,7 +315,8 @@ class CooperativeController extends Controller
         $this->authorizeStaff();
         $validated = $request->validate([
             'loan_id' => ['required', Rule::exists('loans', 'id')->where('status', 'active')],
-            'installment_id' => ['required', 'integer'],
+            'payment_type' => ['nullable', 'in:installment,payoff'],
+            'installment_id' => ['nullable', 'required_unless:payment_type,payoff', 'integer'],
             'nominal_source' => ['required', 'in:system,manual'],
             'payment_method' => ['required', 'in:cash,transfer'],
             'amount' => ['required_if:nominal_source,manual', 'nullable', 'integer', 'min:1'],
@@ -321,13 +331,28 @@ class CooperativeController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages(['loan_id' => 'Pilih pinjaman aktif milik nasabah.']);
         }
 
-        $installment = Installment::query()
-            ->where('loan_id', $validated['loan_id'])
-            ->where('id', $validated['installment_id'])
-            ->where('outstanding_amount', '>', 0)
-            ->firstOrFail();
-        if ($validated['nominal_source'] === 'system') {
-            $validated['amount'] = (int) $installment->outstanding_amount;
+        $isPayoff = ($validated['payment_type'] ?? 'installment') === 'payoff';
+        $installment = null;
+        if ($isPayoff) {
+            if ($validated['nominal_source'] !== 'system') {
+                throw \Illuminate\Validation\ValidationException::withMessages(['nominal_source' => 'Pelunasan menggunakan nominal sistem.']);
+            }
+            $validated['amount'] = (int) Installment::query()
+                ->where('loan_id', $validated['loan_id'])
+                ->where('outstanding_amount', '>', 0)
+                ->sum('outstanding_amount');
+            if ($validated['amount'] < 1) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['loan_id' => 'Pinjaman ini sudah lunas.']);
+            }
+        } else {
+            $installment = Installment::query()
+                ->where('loan_id', $validated['loan_id'])
+                ->where('id', $validated['installment_id'])
+                ->where('outstanding_amount', '>', 0)
+                ->firstOrFail();
+            if ($validated['nominal_source'] === 'system') {
+                $validated['amount'] = (int) $installment->outstanding_amount;
+            }
         }
 
         if ($validated['payment_method'] === 'cash' && $request->hasFile('proof')) {
@@ -345,7 +370,7 @@ class CooperativeController extends Controller
 
         $payment = Payment::create([
             'loan_id' => $validated['loan_id'],
-            'installment_id' => $installment->id,
+            'installment_id' => $installment?->id,
             'recorded_by' => $request->user()->id,
             'amount' => $validated['amount'],
             'nominal_source' => $validated['nominal_source'],
@@ -380,6 +405,13 @@ class CooperativeController extends Controller
                 "Admin mencatat setoran Rp ".number_format((int) $payment->amount, 0, ',', '.').'.',
                 route('cooperative.approvals', [], false),
             );
+            $payment->loadMissing('loan.borrower');
+            app(CooperativeNotificationService::class)->notifyBorrower(
+                $payment->loan->borrower,
+                'Setoran dicatat',
+                "Setoran Rp ".number_format((int) $payment->amount, 0, ',', '.').' telah dicatat dan menunggu persetujuan Owner.',
+                route('cooperative.payments', [], false),
+            );
             $message = 'Pembayaran dikirim ke antrean persetujuan Owner.';
         }
 
@@ -388,7 +420,16 @@ class CooperativeController extends Controller
 
     public function paymentProof(Request $request, Payment $payment)
     {
-        $this->authorizeStaff();
+        $user = $request->user();
+        abort_unless(
+            $user->isManager()
+                || $user->isCashier()
+                || ($user->isBorrower() && $payment->loan()->whereHas(
+                    'borrower',
+                    fn ($borrowers) => $borrowers->where('user_id', $user->id),
+                )->exists()),
+            404,
+        );
         abort_unless($payment->proof_path && Storage::disk('local')->exists($payment->proof_path), 404);
 
         return response()->file(Storage::disk('local')->path($payment->proof_path), [
@@ -550,6 +591,7 @@ class CooperativeController extends Controller
     {
         abort_unless($request->user()->isManager() || $request->user()->isCashier(), 403);
 
+        $staffId = $request->user()->isManager() ? null : $request->user()->id;
         $projectedBonus = Installment::query()
             ->whereHas('loan', fn ($query) => $query->where('status', 'active'))
             ->where('outstanding_amount', '>', 0)
@@ -559,6 +601,7 @@ class CooperativeController extends Controller
         return view('cooperative.profits', [
             'balances' => ProfitBalance::with('user')
                 ->whereHas('user', fn ($query) => $query->whereIn('role', ['manager', 'kasir']))
+                ->when($staffId, fn ($query) => $query->where('user_id', $staffId))
                 ->orderBy('user_id')
                 ->get()
                 ->each(function (ProfitBalance $balance) use ($projectedBonus): void {
@@ -566,7 +609,13 @@ class CooperativeController extends Controller
                         ? ($projectedBonus->owner_total ?? 0)
                         : ($projectedBonus->admin_total ?? 0));
                 }),
-            'transactions' => $this->paginated(ProfitTransaction::with(['user', 'creator'])->orderByDesc('created_at')->orderByDesc('id'), $request),
+            'transactions' => $this->paginated(
+                ProfitTransaction::with(['user', 'creator'])
+                    ->when($staffId, fn ($query) => $query->where('user_id', $staffId))
+                    ->orderByDesc('created_at')
+                    ->orderByDesc('id'),
+                $request,
+            ),
         ]);
     }
 
@@ -667,8 +716,12 @@ class CooperativeController extends Controller
 
     private function perPage(Request $request): int|string
     {
-        $size = $request->query('per_page', '5');
-        abort_unless(in_array($size, ['5', '10', '25', '50', 'all'], true), 422);
+        $size = $request->query('per_page', '6');
+        abort_unless(
+            is_string($size)
+                && ($size === 'all' || (ctype_digit($size) && (int) $size >= 1 && (int) $size <= 100)),
+            422,
+        );
 
         return $size === 'all' ? 'all' : (int) $size;
     }

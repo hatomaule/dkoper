@@ -42,8 +42,10 @@ class PaymentService
             $oldInstallmentId = $payment->installment_id ? (int) $payment->installment_id : null;
             $newLoanId ??= $oldLoanId;
             $newInstallmentId ??= $oldInstallmentId;
+            $oldLoan = Loan::query()->with('borrower')->findOrFail($oldLoanId);
 
             $targetLoan = Loan::query()->lockForUpdate()->findOrFail($newLoanId);
+            $targetLoan->loadMissing('borrower');
             if (! in_array($targetLoan->status, ['active', 'paid'], true)) {
                 throw ValidationException::withMessages(['loan_id' => 'Setoran hanya dapat dikaitkan ke pinjaman aktif atau lunas.']);
             }
@@ -92,6 +94,7 @@ class PaymentService
                     ],
                     'ip_address' => request()?->ip(),
                 ]);
+                $this->notifyBorrowersOfPaymentCorrection($oldLoan, $targetLoan, $payment, $newAmount);
 
                 return $oldAmount;
             }
@@ -297,9 +300,23 @@ class PaymentService
                 ],
                 'ip_address' => request()?->ip(),
             ]);
+            $this->notifyBorrowersOfPaymentCorrection($oldLoan, $targetLoan, $payment, $newAmount);
 
             return $oldAmount;
         });
+    }
+
+    private function notifyBorrowersOfPaymentCorrection(Loan $oldLoan, Loan $newLoan, Payment $payment, int $amount): void
+    {
+        collect([$oldLoan->borrower, $newLoan->borrower])
+            ->filter()
+            ->unique('id')
+            ->each(fn ($borrower) => app(CooperativeNotificationService::class)->notifyBorrower(
+                $borrower,
+                'Data setoran diperbarui',
+                "Data setoran #{$payment->id} diperbarui menjadi Rp ".number_format($amount, 0, ',', '.').'.',
+                route('cooperative.payments', [], false),
+            ));
     }
 
     public function approvePayment(User $manager, int $paymentId): Payment
@@ -341,6 +358,14 @@ class PaymentService
                 ->orderBy('sequence')
                 ->lockForUpdate()
                 ->get();
+
+            if ($payment->installment_id === null
+                && $payment->nominal_source === 'system'
+                && $remaining !== (int) $installments->sum('outstanding_amount')) {
+                throw ValidationException::withMessages([
+                    'payment' => 'Sisa pinjaman berubah sejak pelunasan diajukan. Ajukan ulang pelunasan dengan nominal terbaru.',
+                ]);
+            }
 
             foreach ($installments as $installment) {
                 if ($remaining <= 0) break;

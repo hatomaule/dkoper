@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\Borrower;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -18,7 +20,11 @@ class ProfileTest extends TestCase
             ->actingAs($user)
             ->get('/profile');
 
-        $response->assertOk();
+        $response->assertOk()
+            ->assertSee('Edit informasi profil')
+            ->assertSee('profile-information-dialog')
+            ->assertSee('data-open-dialog="#profile-information-dialog"', false)
+            ->assertDontSee('Update Password');
     }
 
     public function test_profile_information_can_be_updated(): void
@@ -95,5 +101,64 @@ class ProfileTest extends TestCase
             ->assertRedirect('/profile');
 
         $this->assertNotNull($user->fresh());
+    }
+
+    public function test_borrower_can_update_phone_number_and_the_borrower_record_stays_in_sync(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'nasabah',
+            'phone' => '081234567801',
+        ]);
+        $borrower = Borrower::create([
+            'user_id' => $user->id,
+            'borrower_code' => 'DK_PROFILE_PHONE',
+            'full_name' => $user->name,
+            'phone' => $user->phone,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => '081234567899',
+        ])->assertSessionHasNoErrors()->assertRedirect(route('profile.edit'));
+
+        $this->assertSame('081234567899', $user->fresh()->phone);
+        $this->assertSame('081234567899', $borrower->fresh()->phone);
+    }
+
+    public function test_borrower_cannot_delete_account_and_profile_hides_delete_account_control(): void
+    {
+        $user = User::factory()->create(['role' => 'nasabah']);
+        $borrower = Borrower::create([
+            'user_id' => $user->id,
+            'borrower_code' => 'DK_PROFILE_DELETE',
+            'full_name' => $user->name,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)->get(route('profile.edit'))
+            ->assertOk()
+            ->assertDontSee('Delete Account')
+            ->assertDontSee('Update Password')
+            ->assertSee('Ganti password saya');
+        $this->actingAs($user)->delete(route('profile.destroy'), [
+            'password' => 'password',
+        ])->assertForbidden();
+
+        $this->assertNotNull($user->fresh());
+        $this->assertNotNull($borrower->fresh());
+    }
+
+    public function test_borrower_can_change_password_from_account_menu(): void
+    {
+        $user = User::factory()->create(['role' => 'nasabah']);
+
+        $this->actingAs($user)->post(route('profile.password'), [
+            'password' => 'NewStrongPass123!',
+            'password_confirmation' => 'NewStrongPass123!',
+        ])->assertSessionHasNoErrors()->assertRedirect(route('dashboard'));
+
+        $this->assertTrue(Hash::check('NewStrongPass123!', $user->fresh()->password));
     }
 }

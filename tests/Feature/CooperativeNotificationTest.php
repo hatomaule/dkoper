@@ -126,6 +126,30 @@ class CooperativeNotificationTest extends TestCase
         $this->assertNotNull($notification->fresh()->read_at);
     }
 
+    public function test_notification_popover_is_available_for_every_cooperative_role(): void
+    {
+        foreach (['manager', 'kasir', 'nasabah'] as $role) {
+            $user = User::factory()->create([
+                'role' => $role,
+                'must_change_password' => false,
+            ]);
+            UserNotification::create([
+                'user_id' => $user->id,
+                'title' => 'Notifikasi '.$role,
+                'body' => 'Detail notifikasi untuk '.$role.'.',
+                'url' => route('dashboard', [], false),
+            ]);
+
+            $this->actingAs($user)
+                ->get(route('profile.edit'))
+                ->assertOk()
+                ->assertSee('aria-label="Notifikasi"', false)
+                ->assertSee('class="dk-notification-popover"', false)
+                ->assertSee('Notifikasi '.$role)
+                ->assertSee('Tandai semua dibaca');
+        }
+    }
+
     public function test_data_entry_forms_open_from_table_toolbar_modals(): void
     {
         $owner = User::factory()->create(['role' => 'manager', 'username' => 'owner', 'must_change_password' => false]);

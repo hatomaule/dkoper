@@ -81,6 +81,10 @@ class ProfitServiceTest extends TestCase
             ->assertOk()
             ->assertSee('Catat penarikan')
             ->assertDontSee('Transfer ke modal')
+            ->assertDontSee('Dipindah ke modal')
+            ->assertDontSee('OWNER')
+            ->assertDontSee('Owner')
+            ->assertSee('class="dk-profit-balances grid gap-4"', false)
             ->assertSee('Saldo tersedia / utang bonus')
             ->assertSee('Rp -5.000');
         $this->actingAs($owner)

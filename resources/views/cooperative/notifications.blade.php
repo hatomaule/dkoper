@@ -8,11 +8,8 @@
                     <label>Filter <input type="search" placeholder="Cari notifikasi..." data-table-search></label>
                     <label>Tampilkan
                         <select data-page-size>
-                            <option value="5" @selected($perPage === 5)>5</option>
-                            <option value="10" @selected($perPage === 10)>10</option>
-                            <option value="25" @selected($perPage === 25)>25</option>
-                            <option value="50" @selected($perPage === 50)>50</option>
-                            <option value="all" @selected($perPage === 'all')>Semua</option>
+                            <option value="auto" @selected(request()->query('per_page') !== 'all')>Otomatis</option>
+                            <option value="all" @selected(request()->query('per_page') === 'all')>Semua</option>
                         </select>
                     </label>
                     @if ($unreadCount > 0)

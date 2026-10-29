@@ -40,18 +40,21 @@
                 @endif
             </div>
         </div>
+        @php($profileRoleLabel = Auth::user()->isCashier() ? 'Admin' : (Auth::user()->isBorrower() ? 'Nasabah' : null))
         <x-dropdown align="right" width="48">
             <x-slot name="trigger">
                 <button class="dk-user-trigger dk-profile-trigger" type="button" aria-label="Buka menu akun">
                     <span class="dk-user-avatar">{{ mb_substr(Auth::user()->name, 0, 1) }}</span>
-                    <span class="dk-profile-copy"><strong>{{ Auth::user()->name }}</strong><small>{{ Auth::user()->isManager() ? 'Owner' : (Auth::user()->isCashier() ? 'Admin' : 'Nasabah') }}</small></span>
+                    <span class="dk-profile-copy"><strong>{{ Auth::user()->name }}</strong>@if ($profileRoleLabel && mb_strtolower(trim(Auth::user()->name)) !== mb_strtolower($profileRoleLabel))<small>{{ $profileRoleLabel }}</small>@endif</span>
                     <svg class="dk-profile-chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7 5 5 5-5"/></svg>
                 </button>
             </x-slot>
             <x-slot name="content">
-                <x-dropdown-link :href="route('profile.edit')">Profil</x-dropdown-link>
+                <button type="button" class="dk-dropdown-action dk-profile-text-action" data-open-dialog="#profile-information-dialog">Profil</button>
                 @if (Auth::user()->isManager() || Auth::user()->isCashier())
                     <button type="button" class="dk-dropdown-action dk-profile-text-action" data-open-dialog="#staff-self-password-dialog">Ganti password saya</button>
+                @elseif (Auth::user()->isBorrower())
+                    <button type="button" class="dk-dropdown-action dk-profile-text-action" data-open-dialog="#borrower-self-password-dialog">Ganti password saya</button>
                 @endif
                 @if (Auth::user()->isManager() && $adminAccount)
                     <button type="button" class="dk-dropdown-action dk-profile-text-action" data-open-dialog="#admin-password-dialog">Ganti password Admin</button>
@@ -61,11 +64,31 @@
         </x-dropdown>
     </div>
 
+    <dialog class="dk-password-native-dialog dk-profile-edit-dialog" id="profile-information-dialog" @if ($errors->any() && old('_profile_form') === 'profile') data-open-on-error @endif>
+        @include('profile.partials.update-profile-information-form', ['user' => Auth::user()])
+    </dialog>
+
     @if (Auth::user()->isManager() || Auth::user()->isCashier())
         <dialog class="dk-password-native-dialog" id="staff-self-password-dialog" @if ($errors->has('password') && old('_password_form') === 'self') data-open-on-error @endif>
             <form method="POST" action="{{ route('cooperative.staff.update-password', Auth::user()) }}" class="dk-password-form">
                 @csrf
                 <input type="hidden" name="_password_form" value="self">
+                <button type="button" class="dk-modal-close" aria-label="Tutup" data-close-dialog>×</button>
+                <p class="dk-eyebrow">KEAMANAN AKUN</p>
+                <h3>Ganti password saya</h3>
+                <label>Password baru<input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+                <label>Ulangi password<input type="password" name="password_confirmation" required minlength="8" autocomplete="new-password"></label>
+                <label class="dk-confirmation-check"><input type="checkbox" required> Saya mengonfirmasi perubahan password.</label>
+                <button type="submit" class="dk-button-primary">Ganti Password</button>
+            </form>
+        </dialog>
+    @endif
+
+    @if (Auth::user()->isBorrower())
+        <dialog class="dk-password-native-dialog" id="borrower-self-password-dialog" @if ($errors->has('password') && old('_password_form') === 'borrower') data-open-on-error @endif>
+            <form method="POST" action="{{ route('profile.password') }}" class="dk-password-form">
+                @csrf
+                <input type="hidden" name="_password_form" value="borrower">
                 <button type="button" class="dk-modal-close" aria-label="Tutup" data-close-dialog>×</button>
                 <p class="dk-eyebrow">KEAMANAN AKUN</p>
                 <h3>Ganti password saya</h3>

@@ -11,6 +11,9 @@
     --dk-canvas: #f5f8f8;
     --dk-green: #147d67;
     --dk-green-dark: #0e6655;
+    --dk-list-card-start: #ffffff;
+    --dk-list-card-end: #f3f5f8;
+    --dk-list-card-border: #d5dee3;
     --dk-shadow: 0 14px 38px rgb(27 52 61 / 7%);
 }
 
@@ -1352,7 +1355,7 @@ body.dk-body {
     }
 
     .dk-main {
-        padding: 14px 15px 27px;
+        padding: 18px 15px 27px;
     }
 
     .dk-page-heading > div {
@@ -1595,6 +1598,241 @@ html[data-theme="dark"] .dk-period-card::after {
     }
 }
 
+body.dk-owner-theme .dk-topbar-controls {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+body.dk-owner-theme .dk-theme-toggle,
+body.dk-owner-theme .dk-notification-trigger {
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+}
+
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute .dk-dropdown-action {
+    width: 100%;
+    margin: 0;
+    padding: 8px 16px;
+    text-decoration: none;
+}
+
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute a:hover,
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute a:focus,
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute .dk-dropdown-action:hover,
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute .dk-dropdown-action:focus-visible {
+    text-decoration: none;
+}
+
+html[data-theme="dark"] body.dk-owner-theme {
+    --dk-ink: #e2e8f0;
+    --dk-muted: #94a3b8;
+    --dk-line: #1e293b;
+    --dk-paper: #0e1526;
+    --dk-canvas: #080d1b;
+    --dk-green: #f97316;
+    --dk-green-dark: #fb923c;
+    background: #080d1b;
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-topbar-controls {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-nav,
+html[data-theme="dark"] body.dk-owner-theme .dk-sidebar {
+    border-color: #1e293b;
+    background: #0e1526;
+    box-shadow: none;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-nav {
+    border-right: 1px solid #1e293b;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-sidebar::after {
+    border-color: #1e293b;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-brand,
+html[data-theme="dark"] body.dk-owner-theme .dk-brand-name,
+html[data-theme="dark"] body.dk-owner-theme .dk-brand-title,
+html[data-theme="dark"] body.dk-owner-theme .dk-brand-title > span {
+    color: #f97316;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-brand-title {
+    font-size: 20px;
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -.05em;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-sidebar-caption {
+    color: #64748b;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-nav-link {
+    color: #94a3b8;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-nav-link:hover,
+html[data-theme="dark"] body.dk-owner-theme .dk-nav-link.is-active {
+    background: #1e293b;
+    color: #f8fafc;
+    box-shadow: none;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-page-heading {
+    border-color: #1e293b;
+    background: rgb(11 17 32 / 95%);
+    backdrop-filter: blur(16px);
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-page-heading h1,
+html[data-theme="dark"] body.dk-owner-theme .dk-page-heading h2,
+html[data-theme="dark"] body.dk-owner-theme .dk-section-title h3,
+html[data-theme="dark"] body.dk-owner-theme .dk-main h1,
+html[data-theme="dark"] body.dk-owner-theme .dk-main h2,
+html[data-theme="dark"] body.dk-owner-theme .dk-main h3,
+html[data-theme="dark"] body.dk-owner-theme .dk-main h4 {
+    color: #f8fafc;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-page-heading p,
+html[data-theme="dark"] body.dk-owner-theme .dk-section-title > div > span,
+html[data-theme="dark"] body.dk-owner-theme .dk-page-heading .text-xs {
+    color: #94a3b8;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-topbar-controls {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-theme-toggle,
+html[data-theme="dark"] body.dk-owner-theme .dk-notification-trigger {
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #94a3b8;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-theme-toggle:hover,
+html[data-theme="dark"] body.dk-owner-theme .dk-notification-trigger:hover,
+html[data-theme="dark"] body.dk-owner-theme .dk-topbar-controls .dk-profile-trigger:hover {
+    background: #1e293b !important;
+    color: #f8fafc;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-user-avatar {
+    border-color: #7c3e13;
+    background: #2f1e15;
+    color: #fdba74;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-topbar-controls .relative > .absolute > div {
+    border-color: #1e293b;
+    background: #0e1526;
+    color: #cbd5e1;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-topbar-controls .relative > .absolute a,
+html[data-theme="dark"] body.dk-owner-theme .dk-topbar-controls .relative > .absolute .dk-dropdown-action,
+html[data-theme="dark"] body.dk-owner-theme .dk-topbar-controls .relative > .absolute .dk-profile-logout-action {
+    display: block;
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 8px 16px;
+    color: #cbd5e1;
+    text-decoration: none;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-topbar-controls .relative > .absolute a:hover,
+html[data-theme="dark"] body.dk-owner-theme .dk-topbar-controls .relative > .absolute a:focus,
+html[data-theme="dark"] body.dk-owner-theme .dk-topbar-controls .relative > .absolute .dk-dropdown-action:hover,
+html[data-theme="dark"] body.dk-owner-theme .dk-topbar-controls .relative > .absolute .dk-dropdown-action:focus-visible {
+    background: #1e293b;
+    color: #fb923c;
+    text-decoration: none;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-form-panel,
+html[data-theme="dark"] body.dk-owner-theme .dk-data-panel,
+html[data-theme="dark"] body.dk-owner-theme .dk-chart-panel,
+html[data-theme="dark"] body.dk-owner-theme .dk-period-card,
+html[data-theme="dark"] body.dk-owner-theme .dk-bonus-summary,
+html[data-theme="dark"] body.dk-owner-theme .dk-stat-card,
+html[data-theme="dark"] body.dk-owner-theme .dk-main section.rounded-lg,
+html[data-theme="dark"] body.dk-owner-theme .dk-main form.rounded-lg,
+html[data-theme="dark"] body.dk-owner-theme .dk-main div.rounded-lg.bg-white,
+html[data-theme="dark"] body.dk-owner-theme .dk-main .rounded-lg.border.bg-white {
+    border-color: #1e293b;
+    background: #0e1526;
+    color: #e2e8f0;
+    box-shadow: 0 12px 30px rgb(0 0 0 / 18%);
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-main table,
+html[data-theme="dark"] body.dk-owner-theme .dk-main table td,
+html[data-theme="dark"] body.dk-owner-theme .dk-main table th,
+html[data-theme="dark"] body.dk-owner-theme .dk-stat-value,
+html[data-theme="dark"] body.dk-owner-theme .dk-bonus-summary strong,
+html[data-theme="dark"] body.dk-owner-theme .dk-bonus-summary h4,
+html[data-theme="dark"] body.dk-owner-theme .dk-period-card strong,
+html[data-theme="dark"] body.dk-owner-theme .dk-payment-card strong,
+html[data-theme="dark"] body.dk-owner-theme .dk-payment-card b {
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-table-toolbar,
+html[data-theme="dark"] body.dk-owner-theme .dk-table-footer,
+html[data-theme="dark"] body.dk-owner-theme .dk-main table thead,
+html[data-theme="dark"] body.dk-owner-theme .dk-main table th {
+    border-color: #1e293b;
+    background: #101829;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-table-toolbar input,
+html[data-theme="dark"] body.dk-owner-theme .dk-table-toolbar select,
+html[data-theme="dark"] body.dk-owner-theme .dk-main input:not([type="checkbox"]):not([type="radio"]),
+html[data-theme="dark"] body.dk-owner-theme .dk-main select,
+html[data-theme="dark"] body.dk-owner-theme .dk-main textarea {
+    border-color: #334155;
+    background: #0b1120;
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-button-primary,
+html[data-theme="dark"] body.dk-owner-theme .dk-nav-link.is-active {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+@media (max-width: 800px) {
+    html[data-theme="dark"] body.dk-owner-theme .dk-nav {
+        border: 0;
+        border-bottom: 1px solid #1e293b;
+        background: #0e1526;
+    }
+
+    html[data-theme="dark"] body.dk-owner-theme .dk-mobile-menu {
+        border-color: #1e293b;
+        background: #0e1526;
+    }
+}
+
 .dk-data-panel.is-card-view,
 [data-list-tools].is-card-view {
     overflow: visible;
@@ -1655,7 +1893,7 @@ html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action:focus-visible
 }
 
 .dk-main {
-    padding-top: 14px;
+    padding-top: 20px;
 }
 
 .dk-main > .bg-slate-100 {
@@ -1932,42 +2170,30 @@ html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action:focus-visible
     font-weight: 800;
 }
 
-.dk-loan-history-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    border-bottom: 1px solid var(--dk-line);
-    padding: 18px;
-}
-
-.dk-loan-history-heading h3 {
-    margin-top: 4px;
-    color: var(--dk-ink);
-    font-size: 16px;
-    font-weight: 780;
-}
-
-.dk-loan-history-heading p:last-child {
-    margin-top: 4px;
-    color: var(--dk-muted);
-    font-size: 11px;
-}
-
 .dk-loan-history-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-    gap: 12px;
-    padding: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 320px));
+    justify-content: start;
+    gap: 9px;
+    padding: 10px 0 0;
 }
 
 .dk-loan-history-card {
     display: grid;
-    gap: 12px;
+    gap: 8px;
     border: 1px solid var(--dk-line);
-    border-radius: 12px;
+    border-radius: 10px;
     background: var(--dk-paper);
-    padding: 14px;
+    padding: 10px;
+    box-shadow: 0 8px 18px rgb(0 0 0 / 10%);
+}
+
+.dk-loan-history-list[data-table-view][hidden] {
+    display: none !important;
+}
+
+.dk-loan-history-list[data-table-view="cards"] {
+    background: transparent;
 }
 
 .dk-loan-history-title,
@@ -1991,7 +2217,7 @@ html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action:focus-visible
 
 .dk-loan-history-card dl {
     display: grid;
-    gap: 7px;
+    gap: 5px;
     margin: 0;
 }
 
@@ -2014,6 +2240,41 @@ html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action:focus-visible
     color: var(--dk-muted);
     font-size: 12px;
     text-align: center;
+}
+
+.dk-table-view,
+.platform-main [data-list-view="table"] {
+    width: 100%;
+    max-width: 100%;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+}
+
+@media (max-width: 640px) {
+    .dk-table-toolbar {
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .dk-table-toolbar > label {
+        min-width: 0;
+        flex: 1 1 125px;
+    }
+
+    .dk-table-toolbar input[type="search"],
+    .dk-table-toolbar select {
+        max-width: 100%;
+    }
+
+    .dk-main .dk-table-view {
+        border-radius: 10px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .dk-loan-history-list {
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 300px));
+    }
+
 }
 
 .dk-loan-card-actions {
@@ -2318,31 +2579,6 @@ html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action:focus-visible
     margin-right: auto;
 }
 
-.dk-borrower-loan-card {
-    border: 1px solid var(--dk-line);
-    border-radius: 17px;
-    background: var(--dk-paper);
-    padding: 16px;
-    box-shadow: 0 14px 34px rgb(30 49 68 / 8%);
-}
-
-.dk-borrower-loan-heading {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    border-bottom: 1px solid var(--dk-line);
-    padding-bottom: 12px;
-}
-
-.dk-borrower-installments {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 10px;
-    padding-top: 12px;
-}
-
 @media (max-width: 800px) {
     .dk-profile-copy,
     .dk-profile-chevron {
@@ -2383,10 +2619,6 @@ html[data-theme="dark"] .dk-loan-total-row td {
 
 html[data-theme="dark"] .dk-main table tbody td {
     border-color: #3a4b56;
-}
-
-html[data-theme="dark"] .dk-borrower-loan-card {
-    background: #1b2a34;
 }
 
 html[data-theme="dark"] .dk-inline-action {
@@ -2903,6 +3135,17 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
     padding: 10px 14px;
 }
 
+.dk-loans-toolbar-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.dk-loans-toolbar .dk-loans-search {
+    flex: 1 1 220px;
+}
+
 .dk-table-toolbar label {
     display: flex;
     align-items: center;
@@ -2971,8 +3214,24 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
 }
 
 [data-list-tools].is-card-view {
+    overflow: visible !important;
     border-color: transparent;
     background: transparent;
+    background-image: none;
+    box-shadow: none;
+}
+
+[data-list-tools].is-card-view > div:not([data-list-view]),
+[data-list-tools].is-card-view > header,
+[data-list-tools].is-card-view > footer {
+    border-color: transparent !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+[data-list-tools].is-card-view > [data-list-view="cards"] {
+    padding: 12px 0 0;
 }
 
 .platform-card-item {
@@ -3258,9 +3517,12 @@ html[data-theme="dark"] {
     color-scheme: dark;
     --dk-ink: #e2ebef;
     --dk-muted: #a2b0ba;
-    --dk-line: #33424e;
-    --dk-paper: #1f2e39;
-    --dk-canvas: #14212b;
+    --dk-line: #334155;
+    --dk-paper: #101829;
+    --dk-canvas: #0b1120;
+    --dk-list-card-start: #263944;
+    --dk-list-card-end: #1b2d38;
+    --dk-list-card-border: #334155;
     --dk-shadow: 0 15px 32px rgb(0 0 0 / 20%);
 }
 
@@ -3921,6 +4183,11 @@ html[data-theme="dark"] .dk-file-button {
     width: 100%;
 }
 
+.dk-password-input-wrap > input {
+    display: block;
+    width: 100%;
+}
+
 .dk-password-input-wrap > input[type="password"],
 .dk-password-input-wrap > input[type="text"] {
     box-sizing: border-box;
@@ -3968,6 +4235,66 @@ html[data-theme="dark"] .dk-file-button {
     margin: 0;
 }
 
+.dk-profile-page {
+    width: min(100% - 28px, 760px);
+    margin: 0 auto;
+    padding: 18px 0 32px;
+}
+
+.dk-profile-overview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    border: 1px solid var(--dk-line);
+    border-radius: 16px;
+    background: var(--dk-paper);
+    padding: 20px;
+    color: var(--dk-ink);
+    box-shadow: var(--dk-shadow);
+}
+
+.dk-profile-overview h3 {
+    margin: 5px 0;
+    color: var(--dk-ink);
+    font-size: 17px;
+    font-weight: 750;
+}
+
+.dk-profile-overview p:not(.dk-eyebrow) {
+    margin-top: 3px;
+    color: var(--dk-muted);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.dk-profile-delete {
+    flex-basis: 100%;
+    border-top: 1px solid var(--dk-line);
+    padding-top: 14px;
+}
+
+.dk-profile-delete h2 {
+    color: var(--dk-ink);
+}
+
+.dk-profile-delete p {
+    max-width: 620px;
+}
+
+.dk-profile-edit-dialog {
+    width: min(100% - 28px, 460px);
+    max-width: 460px;
+}
+
+.dk-profile-edit-dialog .dk-profile-form-description {
+    margin-top: -6px;
+    color: var(--dk-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
 .dk-dropdown-neutral {
     color: var(--dk-ink);
 }
@@ -3980,7 +4307,7 @@ html[data-theme="dark"] .dk-file-button {
 .dk-dashboard-page {
     display: flex;
     flex-direction: column;
-    margin-top: -12px;
+    margin-top: 0;
 }
 
 .dk-dashboard-page > .dk-dashboard-charts {
@@ -4264,15 +4591,6 @@ html[data-theme="dark"] .dk-bonus-action-form .dk-button-blue {
     color: #b7c8ee;
 }
 
-.dk-finance-summary {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 0;
-    padding: 15px 17px;
-}
-
 .dk-finance-balance {
     margin-top: 3px;
     color: var(--dk-ink);
@@ -4363,58 +4681,6 @@ html[data-theme="dark"] .dk-bonus-action-form .dk-button-blue {
     font-size: 8px;
 }
 
-.dk-borrower-installment-card dl {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    margin: 10px 0 0;
-}
-
-.dk-borrower-totals {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin: 8px 0;
-}
-
-.dk-borrower-totals dt {
-    color: var(--dk-muted);
-    font-size: 9px;
-}
-
-.dk-borrower-totals dd {
-    margin: 3px 0 0;
-    color: var(--dk-ink);
-    font-size: 11px;
-    font-weight: 750;
-    white-space: nowrap;
-}
-
-.dk-borrower-installment-card dl > div {
-    min-width: 0;
-}
-
-.dk-borrower-installment-card dt {
-    color: var(--dk-muted);
-    font-size: 9px;
-}
-
-.dk-borrower-installment-card dd {
-    margin: 3px 0 0;
-    color: var(--dk-ink);
-    font-size: 11px;
-    font-weight: 750;
-    white-space: nowrap;
-}
-
-html[data-theme="dark"] .dk-finance-summary {
-    border-color: #3a4e5a;
-    background:
-        radial-gradient(ellipse at 100% 0%, rgb(26 146 115 / 13%), transparent 55%),
-        linear-gradient(145deg, #223440, #1a2a35);
-    box-shadow: 0 16px 34px rgb(0 0 0 / 18%), inset 0 1px 0 rgb(255 255 255 / 4%);
-}
-
 html[data-theme="dark"] .dk-finance-chart-track {
     background: #354852;
 }
@@ -4433,21 +4699,13 @@ html[data-theme="dark"] .dk-finance-chart-track {
         padding: 23px;
     }
 
-    .dk-finance-summary {
-        padding: 13px;
-    }
-
     .dk-finance-chart-row {
         grid-template-columns: 27px minmax(20px, 1fr) 68px;
         gap: 4px;
     }
 
-    .dk-borrower-installment-card dl {
-        gap: 4px;
-    }
-
     .dk-dashboard-page {
-        margin-top: -7px;
+        margin-top: 0;
     }
 
     .dk-main section.rounded-lg,
@@ -4688,5 +4946,1422 @@ html[data-theme="dark"] .dk-period-card::after {
 
     .dk-table-toolbar .dk-view-toggle {
         flex: 0 0 auto;
+    }
+}
+
+body.dk-owner-theme {
+    --dk-ink: #1e293b;
+    --dk-muted: #64748b;
+    --dk-line: #d2dae4;
+    --dk-paper: #f3f5f8;
+    --dk-canvas: #e7ebf0;
+    --dk-green: #f97316;
+    --dk-green-dark: #c2410c;
+    background: #e7ebf0;
+    color: #1e293b;
+}
+
+body.dk-owner-theme .dk-nav,
+body.dk-owner-theme .dk-sidebar {
+    border-color: #1e293b;
+    background: #0e1526;
+    box-shadow: none;
+}
+
+body.dk-owner-theme .dk-nav {
+    border-right: 1px solid #1e293b;
+}
+
+body.dk-owner-theme .dk-sidebar::after {
+    border-color: #1e293b;
+}
+
+body.dk-owner-theme .dk-brand,
+body.dk-owner-theme .dk-brand-name,
+body.dk-owner-theme .dk-brand-title,
+body.dk-owner-theme .dk-brand-title > span {
+    color: #f97316;
+}
+
+body.dk-owner-theme .dk-brand-title {
+    font-size: 20px;
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -.05em;
+}
+
+body.dk-owner-theme .dk-sidebar-caption {
+    color: #64748b;
+}
+
+body.dk-owner-theme .dk-nav-link {
+    color: #94a3b8;
+}
+
+body.dk-owner-theme .dk-nav-link:hover,
+body.dk-owner-theme .dk-nav-link.is-active {
+    background: #1e293b;
+    color: #f8fafc;
+    box-shadow: none;
+}
+
+body.dk-owner-theme .dk-page-heading {
+    border-color: #1e293b;
+    background: rgb(11 17 32 / 95%);
+    backdrop-filter: blur(16px);
+}
+
+body.dk-owner-theme .dk-page-heading h1,
+body.dk-owner-theme .dk-page-heading h2 {
+    color: #f8fafc;
+}
+
+body.dk-owner-theme .dk-page-heading p,
+body.dk-owner-theme .dk-page-heading .text-xs {
+    color: #94a3b8;
+}
+
+body.dk-owner-theme .dk-topbar-controls {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+body.dk-owner-theme .dk-theme-toggle,
+body.dk-owner-theme .dk-notification-trigger {
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #94a3b8;
+}
+
+body.dk-owner-theme .dk-theme-toggle:hover,
+body.dk-owner-theme .dk-notification-trigger:hover,
+body.dk-owner-theme .dk-topbar-controls .dk-profile-trigger:hover {
+    background: #1e293b !important;
+    color: #f8fafc;
+}
+
+body.dk-owner-theme .dk-profile-copy strong {
+    color: #f8fafc;
+}
+
+body.dk-owner-theme .dk-profile-copy small,
+body.dk-owner-theme .dk-profile-chevron {
+    color: #94a3b8;
+    stroke: #94a3b8;
+}
+
+body.dk-owner-theme .dk-user-avatar {
+    border-color: #7c3e13;
+    background: #2f1e15;
+    color: #fdba74;
+}
+
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute > div {
+    border-color: #1e293b;
+    background: #0e1526;
+    color: #cbd5e1;
+}
+
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute a,
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute .dk-dropdown-action {
+    display: block;
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 8px 16px;
+    color: #cbd5e1;
+    text-decoration: none;
+}
+
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute a:hover,
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute a:focus,
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute .dk-dropdown-action:hover,
+body.dk-owner-theme .dk-topbar-controls .relative > .absolute .dk-dropdown-action:focus-visible {
+    background: #1e293b;
+    color: #fb923c;
+    text-decoration: none;
+}
+
+body.dk-owner-theme .dk-form-panel,
+body.dk-owner-theme .dk-data-panel,
+body.dk-owner-theme .dk-chart-panel,
+body.dk-owner-theme .dk-period-card,
+body.dk-owner-theme .dk-bonus-summary,
+body.dk-owner-theme .dk-stat-card,
+body.dk-owner-theme .dk-main section.rounded-lg,
+body.dk-owner-theme .dk-main form.rounded-lg,
+body.dk-owner-theme .dk-main div.rounded-lg.bg-white,
+body.dk-owner-theme .dk-main .rounded-lg.border.bg-white {
+    border-color: #d2dae4;
+    background: #f3f5f8;
+    color: #1e293b;
+    box-shadow: 0 10px 24px rgb(30 41 59 / 7%);
+}
+
+body.dk-owner-theme .dk-section-title h3,
+body.dk-owner-theme .dk-main h1,
+body.dk-owner-theme .dk-main h2,
+body.dk-owner-theme .dk-main h3,
+body.dk-owner-theme .dk-main h4,
+body.dk-owner-theme .dk-main table,
+body.dk-owner-theme .dk-main table td,
+body.dk-owner-theme .dk-main table th,
+body.dk-owner-theme .dk-stat-value,
+body.dk-owner-theme .dk-bonus-summary strong,
+body.dk-owner-theme .dk-bonus-summary h4,
+body.dk-owner-theme .dk-period-card strong,
+body.dk-owner-theme .dk-payment-card strong,
+body.dk-owner-theme .dk-payment-card b {
+    color: #1e293b;
+}
+
+body.dk-owner-theme .dk-section-title > div > span,
+body.dk-owner-theme .dk-bonus-summary span,
+body.dk-owner-theme .dk-period-card span,
+body.dk-owner-theme .dk-period-card small,
+body.dk-owner-theme .dk-bonus-summary small {
+    color: #64748b;
+}
+
+body.dk-owner-theme .dk-table-toolbar,
+body.dk-owner-theme .dk-table-footer,
+body.dk-owner-theme .dk-main table thead,
+body.dk-owner-theme .dk-main table th {
+    border-color: #d2dae4;
+    background: #e8edf3;
+}
+
+body.dk-owner-theme .dk-table-toolbar input,
+body.dk-owner-theme .dk-table-toolbar select,
+body.dk-owner-theme .dk-main input:not([type="checkbox"]):not([type="radio"]),
+body.dk-owner-theme .dk-main select,
+body.dk-owner-theme .dk-main textarea {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-form-panel,
+html[data-theme="dark"] body.dk-owner-theme .dk-data-panel,
+html[data-theme="dark"] body.dk-owner-theme .dk-chart-panel,
+html[data-theme="dark"] body.dk-owner-theme .dk-period-card,
+html[data-theme="dark"] body.dk-owner-theme .dk-bonus-summary,
+html[data-theme="dark"] body.dk-owner-theme .dk-stat-card,
+html[data-theme="dark"] body.dk-owner-theme .dk-main section.rounded-lg,
+html[data-theme="dark"] body.dk-owner-theme .dk-main form.rounded-lg,
+html[data-theme="dark"] body.dk-owner-theme .dk-main div.rounded-lg.bg-white,
+html[data-theme="dark"] body.dk-owner-theme .dk-main .rounded-lg.border.bg-white {
+    border-color: #1e293b;
+    background: #0e1526;
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-section-title h3,
+html[data-theme="dark"] body.dk-owner-theme .dk-main h1,
+html[data-theme="dark"] body.dk-owner-theme .dk-main h2,
+html[data-theme="dark"] body.dk-owner-theme .dk-main h3,
+html[data-theme="dark"] body.dk-owner-theme .dk-main h4,
+html[data-theme="dark"] body.dk-owner-theme .dk-main table,
+html[data-theme="dark"] body.dk-owner-theme .dk-main table td,
+html[data-theme="dark"] body.dk-owner-theme .dk-main table th,
+html[data-theme="dark"] body.dk-owner-theme .dk-stat-value,
+html[data-theme="dark"] body.dk-owner-theme .dk-bonus-summary strong,
+html[data-theme="dark"] body.dk-owner-theme .dk-bonus-summary h4,
+html[data-theme="dark"] body.dk-owner-theme .dk-period-card strong,
+html[data-theme="dark"] body.dk-owner-theme .dk-payment-card strong,
+html[data-theme="dark"] body.dk-owner-theme .dk-payment-card b {
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-section-title > div > span,
+html[data-theme="dark"] body.dk-owner-theme .dk-bonus-summary span,
+html[data-theme="dark"] body.dk-owner-theme .dk-period-card span,
+html[data-theme="dark"] body.dk-owner-theme .dk-period-card small,
+html[data-theme="dark"] body.dk-owner-theme .dk-bonus-summary small {
+    color: #94a3b8;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-table-toolbar,
+html[data-theme="dark"] body.dk-owner-theme .dk-table-footer,
+html[data-theme="dark"] body.dk-owner-theme .dk-main table thead,
+html[data-theme="dark"] body.dk-owner-theme .dk-main table th {
+    border-color: #1e293b;
+    background: #101829;
+}
+
+html[data-theme="dark"] body.dk-owner-theme .dk-table-toolbar input,
+html[data-theme="dark"] body.dk-owner-theme .dk-table-toolbar select,
+html[data-theme="dark"] body.dk-owner-theme .dk-main input:not([type="checkbox"]):not([type="radio"]),
+html[data-theme="dark"] body.dk-owner-theme .dk-main select,
+html[data-theme="dark"] body.dk-owner-theme .dk-main textarea {
+    border-color: #334155;
+    background: #0b1120;
+    color: #e2e8f0;
+}
+
+@media (max-width: 800px) {
+    body.dk-owner-theme .dk-nav {
+        border: 0;
+        border-bottom: 1px solid #1e293b;
+        background: #0e1526;
+    }
+
+    body.dk-owner-theme .dk-mobile-menu {
+        border-color: #1e293b;
+        background: #0e1526;
+    }
+}
+
+.dk-brand-title {
+    color: #f97316;
+    font-style: italic;
+    font-weight: 900;
+}
+
+.dk-brand-platform-tag {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    background: #2b1d1b;
+    padding: 5px 8px;
+    color: #fb923c;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.dk-main button:not([role="switch"]):not(.dk-modal-close):not(.dk-password-toggle):not(.dk-button-danger):not(.dk-logout-confirm):not(.dk-inline-danger):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button),
+.platform-main button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button),
+.dk-guest-card button:not(.dk-theme-toggle):not(.dk-password-toggle),
+.dk-button-primary,
+.dk-button-secondary,
+.dk-button-blue {
+    border-color: #f97316 !important;
+    background-color: #f97316 !important;
+    background-image: none !important;
+    box-shadow: 0 8px 18px rgb(249 115 22 / 20%) !important;
+    color: #111827 !important;
+}
+
+.dk-main button:not([role="switch"]):not(.dk-modal-close):not(.dk-password-toggle):not(.dk-button-danger):not(.dk-logout-confirm):not(.dk-inline-danger):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button):hover,
+.platform-main button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button):hover,
+.dk-guest-card button:not(.dk-theme-toggle):not(.dk-password-toggle):hover,
+.dk-button-primary:hover,
+.dk-button-secondary:hover,
+.dk-button-blue:hover {
+    border-color: #fb923c !important;
+    background-color: #fb923c !important;
+    background-image: none !important;
+    color: #111827 !important;
+}
+
+.dk-view-toggle button.is-active,
+[data-view-mode].is-active {
+    border-color: #f97316 !important;
+    background-color: #f97316 !important;
+    color: #111827 !important;
+}
+
+.platform-main [data-list-view-mode].is-active {
+    border-color: #8a5a23 !important;
+    background-color: #211c14 !important;
+    color: #fdba74 !important;
+    box-shadow: none !important;
+}
+
+.platform-main button[data-list-prev],
+.platform-main button[data-list-next] {
+    border-color: #8a5a23 !important;
+    background-color: #211c14 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: #fdba74 !important;
+}
+
+.platform-main button[data-list-prev]:hover,
+.platform-main button[data-list-next]:hover {
+    border-color: #b77932 !important;
+    background-color: #302417 !important;
+    color: #ffedd5 !important;
+}
+
+.platform-main button[data-list-prev]:disabled,
+.platform-main button[data-list-next]:disabled {
+    cursor: not-allowed;
+    opacity: .5;
+}
+
+.dk-main,
+.platform-main {
+    padding-top: 20px;
+}
+
+.dk-password-toggle,
+.dk-guest-card button.dk-password-toggle,
+.dk-password-toggle.is-visible,
+.dk-guest-card button.dk-password-toggle.is-visible {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #94a3b8 !important;
+}
+
+.dk-password-toggle:hover,
+.dk-guest-card button.dk-password-toggle:hover {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #cbd5e1 !important;
+    filter: none !important;
+    transform: translateY(-50%) !important;
+}
+
+.dk-password-toggle:focus-visible {
+    outline: 2px solid #f97316;
+    outline-offset: 2px;
+}
+
+.dk-login-brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.dk-login-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+}
+
+.dk-login-brand-name {
+    color: #f97316;
+    font-size: 24px;
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -.06em;
+}
+
+.dk-login-brand-platform {
+    border-radius: 4px;
+    background: #2b1d1b;
+    padding: 5px 8px;
+    color: #fb923c;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.dk-login-theme-toggle {
+    position: static;
+    flex: 0 0 auto;
+}
+
+html[data-theme="dark"] body.dk-body,
+html[data-theme="dark"] body.dk-guest-body {
+    background: #0b1120;
+}
+
+html[data-theme="dark"] .dk-guest-card,
+html[data-theme="dark"] .dk-logout-dialog,
+html[data-theme="dark"] .dk-form-panel,
+html[data-theme="dark"] .dk-data-panel,
+html[data-theme="dark"] .dk-chart-panel,
+html[data-theme="dark"] .dk-period-card,
+html[data-theme="dark"] .dk-bonus-summary,
+html[data-theme="dark"] .dk-main section.rounded-lg,
+html[data-theme="dark"] .dk-main form.rounded-lg,
+html[data-theme="dark"] .dk-main div.rounded-lg.bg-white,
+html[data-theme="dark"] .dk-main .rounded-lg.border.bg-white,
+html[data-theme="dark"] .dk-stat-card,
+html[data-theme="dark"] .dk-password-native-dialog {
+    border-color: #334155;
+    background: #101829;
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] .dk-guest-card input:not([type="checkbox"]),
+html[data-theme="dark"] .dk-guest-card select,
+html[data-theme="dark"] .dk-guest-card textarea,
+html[data-theme="dark"] .dk-main input:not([type="checkbox"]):not([type="radio"]),
+html[data-theme="dark"] .dk-main select,
+html[data-theme="dark"] .dk-main textarea,
+html[data-theme="dark"] .dk-table-toolbar input,
+html[data-theme="dark"] .dk-table-toolbar select,
+html[data-theme="dark"] .dk-password-native-dialog input:not([type="checkbox"]),
+html[data-theme="dark"] .dk-password-native-dialog select,
+html[data-theme="dark"] .dk-password-native-dialog textarea {
+    border-color: #334155;
+    background: #0b1120;
+    color: #e2e8f0;
+    caret-color: #fb923c;
+}
+
+html[data-theme="dark"] .dk-guest-card input[type="checkbox"],
+html[data-theme="dark"] .dk-main input[type="checkbox"],
+html[data-theme="dark"] .dk-password-native-dialog input[type="checkbox"] {
+    accent-color: #f97316;
+}
+
+html[data-theme="dark"] .dk-password-native-dialog .dk-password-form h3,
+html[data-theme="dark"] .dk-guest-card h1 {
+    color: #f8fafc;
+}
+
+html[data-theme="dark"] .dk-guest-card label,
+html[data-theme="dark"] .dk-password-native-dialog .dk-password-form label {
+    color: #94a3b8;
+}
+
+.dk-main .dk-data-panel,
+.dk-main .dk-data-panel.is-card-view,
+.dk-main [data-table-tools].is-card-view .dk-data-panel {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.dk-data-panel > .dk-table-toolbar,
+.dk-data-panel.is-card-view > .dk-table-toolbar,
+.dk-table-footer {
+    border-color: transparent;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
+}
+
+.dk-main .dk-table-view table,
+.dk-main .dk-table-view table thead,
+.dk-main .dk-table-view table tbody,
+.dk-main .dk-table-view table tfoot,
+.dk-main .dk-table-view table tr,
+.dk-main .dk-table-view table th,
+.dk-main .dk-table-view table td,
+.dk-main .dk-table-view table thead.bg-slate-50,
+.dk-main .dk-table-view table tbody tr:hover {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+.dk-main .dk-table-view table th,
+.dk-main .dk-table-view table td {
+    padding: 7px 8px;
+    font-size: 10px;
+}
+
+.dk-main .dk-table-view table th {
+    color: #94a3b8;
+}
+
+.dk-main .dk-table-view > table:not(.dk-loan-ledger) {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+}
+
+.platform-main [data-list-view="table"] > table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+}
+
+.dk-main .dk-table-view > table:not(.dk-loan-ledger) th,
+.dk-main .dk-table-view > table:not(.dk-loan-ledger) td,
+.platform-main [data-list-view="table"] > table th,
+.platform-main [data-list-view="table"] > table td {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+    .dk-main .dk-table-view > table:not(.dk-loan-ledger) th,
+    .dk-main .dk-table-view > table:not(.dk-loan-ledger) td,
+    .platform-main [data-list-view="table"] > table th,
+    .platform-main [data-list-view="table"] > table td {
+        white-space: normal;
+    }
+}
+
+.dk-loan-ledger {
+    min-width: max-content;
+}
+
+.dk-main .dk-table-view > table.dk-loan-ledger {
+    min-width: max-content;
+}
+
+.dk-loan-ledger th,
+.dk-loan-ledger td {
+    padding: 6px 6px !important;
+    font-size: 9px !important;
+}
+
+.dk-payment-cards {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    gap: 12px;
+    padding: 8px 0 12px;
+}
+
+.dk-payment-card {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-color: color-mix(in srgb, var(--dk-stat-color), var(--dk-list-card-border) 58%);
+    background:
+        radial-gradient(ellipse at 2% 2%, color-mix(in srgb, var(--dk-stat-color), transparent 88%), transparent 58%),
+        linear-gradient(145deg, var(--dk-list-card-start), var(--dk-list-card-end));
+    box-shadow: 0 14px 28px rgb(0 0 0 / 12%), inset 0 1px 0 rgb(255 255 255 / 5%);
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.dk-payment-card::after {
+    position: absolute;
+    z-index: -1;
+    right: -34px;
+    bottom: -48px;
+    width: 142px;
+    height: 110px;
+    background:
+        linear-gradient(130deg, transparent 0 39%, color-mix(in srgb, var(--dk-stat-color), transparent 84%) 40% 52%, transparent 53%),
+        linear-gradient(130deg, transparent 0 59%, color-mix(in srgb, var(--dk-stat-color), transparent 90%) 60% 70%, transparent 71%);
+    content: "";
+    pointer-events: none;
+}
+
+.dk-payment-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.dk-payment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 34px rgb(0 0 0 / 28%), inset 0 1px 0 rgb(255 255 255 / 7%);
+}
+
+.dk-payment-card:nth-child(6n + 1) { --dk-stat-color: #13876d; }
+.dk-payment-card:nth-child(6n + 2) { --dk-stat-color: #5576be; }
+.dk-payment-card:nth-child(6n + 3) { --dk-stat-color: #bd8438; }
+.dk-payment-card:nth-child(6n + 4) { --dk-stat-color: #2d8b9d; }
+.dk-payment-card:nth-child(6n + 5) { --dk-stat-color: #bf6b65; }
+.dk-payment-card:nth-child(6n + 6) { --dk-stat-color: #8c6bbb; }
+
+.dk-payment-card:nth-child(6n + 1) { --dk-stat-tint: #e3f3ed; }
+.dk-payment-card:nth-child(6n + 2) { --dk-stat-tint: #e9eef9; }
+.dk-payment-card:nth-child(6n + 3) { --dk-stat-tint: #f7f0e3; }
+.dk-payment-card:nth-child(6n + 4) { --dk-stat-tint: #e5f2f4; }
+.dk-payment-card:nth-child(6n + 5) { --dk-stat-tint: #f7eae8; }
+.dk-payment-card:nth-child(6n + 6) { --dk-stat-tint: #f0eafa; }
+
+.dk-payment-receipt {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    min-width: 0;
+    margin-top: 0;
+    color: var(--dk-ink);
+    font-size: 11px;
+}
+
+.dk-payment-receipt > strong {
+    color: var(--dk-muted);
+    font-size: 10px;
+    overflow-wrap: anywhere;
+}
+
+.dk-payment-reference {
+    color: var(--dk-muted);
+    font-size: 10px;
+    overflow-wrap: anywhere;
+}
+
+.dk-payment-table-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    min-width: 0;
+}
+
+.dk-payments-table .dk-table-actions {
+    min-width: 0;
+    white-space: normal;
+}
+
+.dk-payments-table {
+    width: 100%;
+    min-width: 0 !important;
+    table-layout: fixed;
+}
+
+.dk-payments-table th,
+.dk-payments-table td {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+    .dk-payments-table-wrap {
+        overflow-x: auto;
+    }
+
+    .dk-payments-table th:nth-child(1),
+    .dk-payments-table td:nth-child(1) { width: 14%; }
+    .dk-payments-table th:nth-child(2),
+    .dk-payments-table td:nth-child(2) { width: 18%; }
+    .dk-payments-table th:nth-child(3),
+    .dk-payments-table td:nth-child(3) { width: 16%; }
+    .dk-payments-table th:nth-child(4),
+    .dk-payments-table td:nth-child(4) { width: 16%; }
+    .dk-payments-table th:nth-child(5),
+    .dk-payments-table td:nth-child(5) { display: none; }
+    .dk-payments-table th:nth-child(6),
+    .dk-payments-table td:nth-child(6) { width: 16%; }
+    .dk-payments-table th:nth-child(7),
+    .dk-payments-table td:nth-child(7) { width: 20%; }
+
+    .dk-payments-table th,
+    .dk-payments-table td {
+        padding: 6px 3px !important;
+        font-size: 9px !important;
+    }
+
+    .dk-payments-table .dk-time-cell {
+        white-space: normal;
+    }
+
+    .dk-payments-table .dk-table-actions {
+        white-space: normal;
+    }
+
+    .dk-payments-table .dk-status {
+        padding: 3px 5px;
+        font-size: 8px;
+    }
+
+    .dk-payment-table-actions {
+        gap: 4px;
+    }
+
+    .dk-payment-table-actions .dk-inline-action {
+        font-size: 9px;
+    }
+}
+
+.dk-loan-cards {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 330px));
+    gap: 10px;
+}
+
+.dk-loan-card {
+    padding: 11px;
+}
+
+.dk-loan-card-details {
+    gap: 6px;
+}
+
+.dk-loan-card-details dt,
+.dk-loan-card-details dd {
+    font-size: 9px;
+}
+
+.dk-loan-card-details dd {
+    line-height: 1.25;
+}
+
+.dk-loan-card-details dd small {
+    font-size: 8px;
+}
+
+.dk-loan-card-details .dk-loan-card-total {
+    padding-top: 6px;
+}
+
+html[data-theme="dark"] .dk-loan-card {
+    border-color: color-mix(in srgb, var(--dk-stat-color), var(--dk-list-card-border) 58%);
+    background:
+        radial-gradient(ellipse at 2% 2%, color-mix(in srgb, var(--dk-stat-color), transparent 82%), transparent 58%),
+        linear-gradient(145deg, var(--dk-list-card-start), var(--dk-list-card-end));
+}
+
+html[data-theme="dark"] .dk-payment-card {
+    border-color: color-mix(in srgb, var(--dk-stat-color), var(--dk-list-card-border) 58%);
+    background:
+        radial-gradient(ellipse at 2% 2%, color-mix(in srgb, var(--dk-stat-color), transparent 82%), transparent 58%),
+        linear-gradient(145deg, var(--dk-list-card-start), var(--dk-list-card-end));
+    box-shadow: 0 14px 28px rgb(0 0 0 / 22%), inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+html[data-theme="dark"] .dk-loan-card-details dt {
+    color: #cbd5e1;
+}
+
+html[data-theme="dark"] .dk-loan-card-details dd {
+    color: #f1f5f9;
+}
+
+html[data-theme="dark"] .dk-loan-card-details .dk-loan-card-authority {
+    border-top-color: color-mix(in srgb, var(--dk-stat-color), #334155 58%);
+}
+
+@media (max-width: 640px) {
+    .dk-loans-page-tools {
+        padding-right: 0;
+        padding-left: 0;
+    }
+
+    .dk-loans-page-tools .dk-loans-toolbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 10px 12px;
+        overflow: visible;
+        padding: 8px 2px 14px;
+    }
+
+    .dk-loans-toolbar .dk-loans-toolbar-actions {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .dk-loans-toolbar-actions > * {
+        display: inline-flex;
+        min-height: 40px;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        padding: 8px 10px;
+        text-align: center;
+    }
+
+    .dk-loans-toolbar .dk-loans-search {
+        display: grid;
+        grid-column: 1 / -1;
+        gap: 5px;
+        font-size: 11px;
+    }
+
+    .dk-loans-toolbar .dk-loans-search input {
+        width: 100%;
+        min-width: 0;
+        min-height: 40px !important;
+        padding: 8px 11px;
+        font-size: 12px !important;
+    }
+
+    .dk-loans-toolbar .dk-loans-page-size {
+        display: grid;
+        justify-items: start;
+        gap: 5px;
+        font-size: 11px;
+    }
+
+    .dk-loans-toolbar .dk-loans-page-size select {
+        width: 100%;
+        min-width: 112px;
+        min-height: 40px !important;
+        padding: 7px 10px;
+        font-size: 12px !important;
+    }
+
+    .dk-loans-toolbar .dk-loans-view-toggle {
+        justify-self: end;
+        min-height: 40px;
+        align-items: center;
+    }
+
+    .dk-loans-toolbar .dk-loans-view-toggle button {
+        width: 38px;
+        height: 34px;
+        min-height: 34px !important;
+        font-size: 18px !important;
+    }
+
+    .dk-loans-page-tools .dk-loan-cards {
+        grid-template-columns: minmax(0, min(100%, 440px));
+        justify-content: center;
+        gap: 12px;
+        padding: 6px 0 16px;
+    }
+
+    .dk-loans-page-tools .dk-loan-card {
+        width: 100%;
+        min-width: 0;
+        padding: clamp(12px, 4vw, 16px);
+        border-radius: 15px;
+    }
+
+    .dk-loans-page-tools .dk-loan-card-details {
+        gap: 8px;
+    }
+
+    .dk-loans-page-tools .dk-loan-card-details dt,
+    .dk-loans-page-tools .dk-loan-card-details dd {
+        font-size: clamp(10px, 2.9vw, 12px);
+    }
+
+    .dk-loans-page-tools .dk-loan-card-details dd small {
+        font-size: 9px;
+    }
+
+    .dk-loans-page-tools .dk-loan-card-actions {
+        gap: 9px;
+        padding: 8px 0 0;
+    }
+
+    .dk-loans-page-tools .dk-loan-card-actions button {
+        min-height: 38px;
+        padding: 8px 14px;
+    }
+}
+
+html[data-theme="dark"] .dk-main button:not([role="switch"]):not(.dk-modal-close):not(.dk-password-toggle):not(.dk-button-danger):not(.dk-logout-confirm):not(.dk-inline-danger):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button),
+html[data-theme="dark"] .platform-main button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button),
+html[data-theme="dark"] .dk-button-primary,
+html[data-theme="dark"] .dk-button-secondary,
+html[data-theme="dark"] .dk-button-blue,
+html[data-theme="dark"] .dk-guest-card button:not(.dk-theme-toggle):not(.dk-password-toggle),
+html[data-theme="dark"] #platform-password-dialog button[class*="bg-orange-"],
+html[data-theme="dark"] .platform-main button[class*="bg-orange-"] {
+    border-color: #8a5a23 !important;
+    background-color: #211c14 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: #fdba74 !important;
+}
+
+html[data-theme="dark"] .dk-main button:not([role="switch"]):not(.dk-modal-close):not(.dk-password-toggle):not(.dk-button-danger):not(.dk-logout-confirm):not(.dk-inline-danger):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button):hover,
+html[data-theme="dark"] .platform-main button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button):hover,
+html[data-theme="dark"] .dk-button-primary:hover,
+html[data-theme="dark"] .dk-button-secondary:hover,
+html[data-theme="dark"] .dk-button-blue:hover,
+html[data-theme="dark"] .dk-guest-card button:not(.dk-theme-toggle):not(.dk-password-toggle):hover,
+html[data-theme="dark"] #platform-password-dialog button[class*="bg-orange-"]:hover,
+html[data-theme="dark"] .platform-main button[class*="bg-orange-"]:hover {
+    border-color: #b77932 !important;
+    background-color: #302417 !important;
+    color: #ffedd5 !important;
+}
+
+html[data-theme="dark"] .dk-view-toggle button.is-active {
+    border: 1px solid #8a5a23 !important;
+    background: #211c14 !important;
+    color: #fdba74 !important;
+    box-shadow: none;
+}
+
+html[data-theme="dark"] .dk-main .bg-slate-100 {
+    background: transparent !important;
+}
+
+.platform-main [data-list-view="table"] table,
+.platform-main [data-list-view="table"] table thead,
+.platform-main [data-list-view="table"] table tbody,
+.platform-main [data-list-view="table"] table tr,
+.platform-main [data-list-view="table"] table th,
+.platform-main [data-list-view="table"] table td {
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+html[data-theme="dark"] .dk-table-footer nav,
+html[data-theme="dark"] .dk-table-footer nav > div,
+html[data-theme="dark"] .dk-table-footer nav > div > div {
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.dk-loan-history-card {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-color: color-mix(in srgb, var(--dk-stat-color), var(--dk-list-card-border) 58%);
+    background:
+        radial-gradient(ellipse at 2% 2%, color-mix(in srgb, var(--dk-stat-color), transparent 88%), transparent 58%),
+        linear-gradient(145deg, var(--dk-list-card-start), var(--dk-list-card-end));
+    box-shadow: 0 14px 28px rgb(0 0 0 / 12%), inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+.dk-loan-history-card:nth-child(6n + 1) { --dk-stat-color: #13876d; }
+.dk-loan-history-card:nth-child(6n + 2) { --dk-stat-color: #5576be; }
+.dk-loan-history-card:nth-child(6n + 3) { --dk-stat-color: #bd8438; }
+.dk-loan-history-card:nth-child(6n + 4) { --dk-stat-color: #2d8b9d; }
+.dk-loan-history-card:nth-child(6n + 5) { --dk-stat-color: #bf6b65; }
+.dk-loan-history-card:nth-child(6n + 6) { --dk-stat-color: #8c6bbb; }
+
+.dk-loan-history-card::after {
+    position: absolute;
+    z-index: -1;
+    right: -34px;
+    bottom: -48px;
+    width: 142px;
+    height: 110px;
+    background:
+        linear-gradient(130deg, transparent 0 39%, color-mix(in srgb, var(--dk-stat-color), transparent 84%) 40% 52%, transparent 53%),
+        linear-gradient(130deg, transparent 0 59%, color-mix(in srgb, var(--dk-stat-color), transparent 90%) 60% 70%, transparent 71%);
+    content: "";
+}
+
+.dk-loan-history-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.platform-card-item:nth-child(6n + 1) { border-color: #285d56; background: radial-gradient(ellipse at 100% 0%, rgb(19 135 109 / 20%), transparent 60%), #101829; }
+.platform-card-item:nth-child(6n + 2) { border-color: #3a4f78; background: radial-gradient(ellipse at 100% 0%, rgb(85 118 190 / 20%), transparent 60%), #101829; }
+.platform-card-item:nth-child(6n + 3) { border-color: #705b3d; background: radial-gradient(ellipse at 100% 0%, rgb(189 132 56 / 20%), transparent 60%), #101829; }
+.platform-card-item:nth-child(6n + 4) { border-color: #2d5d68; background: radial-gradient(ellipse at 100% 0%, rgb(45 139 157 / 20%), transparent 60%), #101829; }
+.platform-card-item:nth-child(6n + 5) { border-color: #704b4a; background: radial-gradient(ellipse at 100% 0%, rgb(191 107 101 / 20%), transparent 60%), #101829; }
+.platform-card-item:nth-child(6n + 6) { border-color: #5a4a76; background: radial-gradient(ellipse at 100% 0%, rgb(140 107 187 / 20%), transparent 60%), #101829; }
+
+@media (min-width: 801px) {
+    .dk-main .dk-data-panel table {
+        width: max-content;
+        min-width: 100%;
+    }
+
+    .dk-main .dk-data-panel .dk-loan-ledger {
+        min-width: max-content;
+    }
+}
+
+@media (max-width: 540px) {
+    .dk-login-brand-row {
+        margin-bottom: 20px;
+    }
+
+    .dk-login-brand-name {
+        font-size: 22px;
+    }
+}
+
+.dk-main button:not([role="switch"]):not(.dk-modal-close):not(.dk-password-toggle):not(.dk-button-danger):not(.dk-logout-confirm):not(.dk-inline-danger):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button),
+.platform-main button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button),
+.dk-button-primary,
+.dk-button-secondary,
+.dk-button-blue,
+.dk-guest-card button:not(.dk-theme-toggle):not(.dk-password-toggle),
+.platform-main button[class*="bg-orange-"] {
+    border-color: #e7b86d !important;
+    background-color: #fff4e5 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: #854d0e !important;
+}
+
+.dk-main button:not([role="switch"]):not(.dk-modal-close):not(.dk-password-toggle):not(.dk-button-danger):not(.dk-logout-confirm):not(.dk-inline-danger):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button):hover,
+.platform-main button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button):hover,
+.dk-button-primary:hover,
+.dk-button-secondary:hover,
+.dk-button-blue:hover,
+.dk-guest-card button:not(.dk-theme-toggle):not(.dk-password-toggle):hover,
+.platform-main button[class*="bg-orange-"]:hover {
+    border-color: #d97706 !important;
+    background-color: #ffedd5 !important;
+    color: #7c2d12 !important;
+}
+
+.dk-view-toggle button.is-active,
+[data-view-mode].is-active {
+    border-color: #e7b86d !important;
+    background-color: #fff4e5 !important;
+    color: #854d0e !important;
+    box-shadow: none !important;
+}
+
+html[data-theme="dark"] .platform-main button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not([data-list-prev]):not([data-list-next]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button) {
+    border-color: #8a5a23 !important;
+    background-color: #211c14 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: #fdba74 !important;
+}
+
+html[data-theme="dark"] .platform-main button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not([data-list-prev]):not([data-list-next]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button):hover {
+    border-color: #b77932 !important;
+    background-color: #302417 !important;
+    color: #ffedd5 !important;
+}
+
+.platform-main .platform-card-item button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not([data-list-prev]):not([data-list-next]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button) {
+    border: 1px solid #334155 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: #cbd5e1 !important;
+}
+
+.platform-main .platform-card-item button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not([data-list-prev]):not([data-list-next]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not(.dk-view-toggle button):hover {
+    border-color: #334155 !important;
+    background: transparent !important;
+    color: #fff !important;
+}
+
+.platform-main button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not([data-open-dialog^="cooperative-delete-"]):not([data-open-dialog^="delete-account-"]):not(.dk-view-toggle button) {
+    border: 1px solid #334155 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: #cbd5e1 !important;
+}
+
+.platform-main button:not([role="switch"]):not([data-close-dialog]):not([data-list-view-mode]):not(.dk-password-toggle):not([class*="bg-rose-"]):not([class*="bg-red-"]):not([data-open-dialog^="cooperative-delete-"]):not([data-open-dialog^="delete-account-"]):not(.dk-view-toggle button):hover {
+    border-color: #334155 !important;
+    background: transparent !important;
+    color: #fff !important;
+}
+
+#loan-create-dialog {
+    overflow: hidden;
+    max-height: calc(100dvh - 24px);
+}
+
+#loan-create-dialog .dk-password-form {
+    gap: 10px;
+    padding: clamp(14px, 4vw, 22px);
+}
+
+#loan-create-dialog .dk-loan-modal-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+}
+
+#loan-create-dialog .dk-loan-modal-fields label {
+    min-width: 0;
+}
+
+#loan-create-dialog .dk-loan-modal-fields input,
+#loan-create-dialog .dk-loan-modal-fields select {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+}
+
+.dk-payment-toolbar-actions {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.dk-payment-create-dialog {
+    overflow: hidden;
+    max-height: calc(100dvh - 24px);
+}
+
+.dk-payment-create-dialog .dk-password-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px 12px;
+    max-height: none;
+    overflow: hidden;
+    padding: clamp(14px, 3.5vw, 22px);
+}
+
+.dk-payment-create-dialog .dk-password-form > .dk-eyebrow,
+.dk-payment-create-dialog .dk-password-form > h3,
+.dk-payment-create-dialog .dk-password-form > .dk-modal-note,
+.dk-payment-create-dialog .dk-payment-form-grid,
+.dk-payment-create-dialog .dk-transfer-proof,
+.dk-payment-create-dialog .dk-button-primary {
+    grid-column: 1 / -1;
+}
+
+.dk-payment-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 9px 12px;
+}
+
+.dk-payment-form-grid > label,
+.dk-payment-form-grid input,
+.dk-payment-form-grid select {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+}
+
+.dk-payment-form-grid .dk-payment-loan-field,
+.dk-payment-form-grid .dk-payment-wide-field {
+    grid-column: 1 / -1;
+}
+
+.dk-payment-create-dialog .dk-password-form > .dk-button-primary {
+    justify-self: start;
+    margin-top: 1px;
+}
+
+.dk-payment-create-dialog .dk-transfer-proof {
+    margin-top: 0;
+}
+
+.dk-payment-create-dialog .dk-proof-preview {
+    width: auto;
+    max-width: 100%;
+    max-height: 58px;
+    object-fit: contain;
+}
+
+.dk-payment-create-dialog .hidden {
+    display: none !important;
+}
+
+.dk-profit-balances {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 900px) {
+    .dk-profit-balances-owner {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
+    }
+
+    .dk-profit-balances-owner .dk-profit-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dk-profit-balances-owner .dk-profit-actions {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.dk-profit-card {
+    width: 100%;
+    padding: clamp(14px, 2.5vw, 22px);
+}
+
+.dk-profit-stats {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.dk-profit-card.dk-bonus-admin .dk-profit-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dk-profit-card.dk-bonus-admin .dk-profit-actions {
+    grid-template-columns: minmax(0, 320px);
+}
+
+.dk-profit-stats > div {
+    min-width: 0;
+}
+
+.dk-profit-stats dt {
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.dk-profit-stats dd {
+    margin-top: 4px;
+    font-size: 14px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.dk-profit-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 14px;
+}
+
+.dk-data-panel.is-card-view .dk-table-footer,
+[data-table-tools].is-card-view .dk-data-panel .dk-table-footer {
+    border: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+.dk-data-panel.is-card-view .dk-table-footer nav,
+.dk-data-panel.is-card-view .dk-table-footer nav > div,
+.dk-data-panel.is-card-view .dk-table-footer nav > div > div,
+[data-table-tools].is-card-view .dk-data-panel .dk-table-footer nav,
+[data-table-tools].is-card-view .dk-data-panel .dk-table-footer nav > div,
+[data-table-tools].is-card-view .dk-data-panel .dk-table-footer nav > div > div {
+    border-color: transparent !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+@media (max-width: 640px) {
+    .dk-payment-management-toolbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        overflow: visible;
+    }
+
+    .dk-payment-management-toolbar .dk-payment-toolbar-actions {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .dk-payment-management-toolbar > label:first-of-type {
+        grid-column: 1 / -1;
+        min-width: 0;
+    }
+
+    .dk-payment-management-toolbar > label:first-of-type input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .dk-payment-management-toolbar > label:nth-of-type(2) {
+        grid-column: 1;
+    }
+
+    .dk-payment-management-toolbar .dk-view-toggle {
+        grid-column: 2;
+        justify-self: end;
+    }
+
+    .dk-payment-toolbar-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .dk-payment-toolbar-actions button {
+        min-height: 40px;
+        padding: 8px 10px;
+    }
+
+    .dk-payment-create-dialog {
+        width: calc(100vw - 24px);
+        max-width: none;
+        max-height: calc(100dvh - 24px);
+    }
+
+    .dk-payment-create-dialog .dk-password-form {
+        gap: 7px 9px;
+        padding: 14px;
+    }
+
+    .dk-payment-create-dialog .dk-password-form > .dk-modal-note {
+        font-size: 10px;
+        line-height: 1.35;
+    }
+
+    .dk-payment-form-grid {
+        gap: 7px 9px;
+    }
+
+    .dk-payment-form-grid > label {
+        gap: 4px;
+        font-size: 10px;
+    }
+
+    .dk-payment-form-grid select,
+    .dk-payment-form-grid input {
+        min-height: 38px !important;
+        padding: 7px 8px !important;
+        font-size: 11px !important;
+    }
+
+    .dk-payment-create-dialog .dk-transfer-proof > p {
+        margin: 4px 0;
+        font-size: 9px;
+    }
+
+    .dk-payment-create-dialog .dk-proof-preview {
+        max-height: 42px;
+    }
+
+    .dk-profit-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 12px;
+    }
+
+    .dk-profit-stats dt {
+        font-size: 10px;
+    }
+
+    .dk-profit-stats dd {
+        font-size: 12px;
+    }
+
+    .dk-profit-actions {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+}
+
+@media (max-width: 640px) {
+    .dk-heading-tools {
+        position: static;
+    }
+
+    .dk-notification-menu {
+        position: static;
+    }
+
+    .dk-notification-popover {
+        right: 12px;
+        left: auto;
+        display: flex;
+        width: min(350px, calc(100vw - 24px));
+        max-height: min(340px, 55vh, calc(100dvh - 100% - 24px));
+        flex-direction: column;
+    }
+
+    .dk-notification-popover > header {
+        min-height: 46px;
+        flex: 0 0 auto;
+        gap: 12px;
+    }
+
+    .dk-notification-items {
+        min-height: 0;
+        max-height: none;
+        flex: 1 1 auto;
+        overscroll-behavior: contain;
+    }
+
+    .dk-notification-item {
+        min-height: 48px;
+        touch-action: manipulation;
+    }
+
+    .dk-notification-item strong,
+    .dk-notification-item small {
+        overflow-wrap: anywhere;
+    }
+
+    .dk-notification-footer {
+        flex: 0 0 auto;
+    }
+
+    .dk-notification-footer button {
+        min-height: 36px;
+        touch-action: manipulation;
+    }
+}
+
+@media (max-height: 700px) {
+    #loan-create-dialog .dk-password-form,
+    .dk-payment-create-dialog .dk-password-form {
+        gap: 7px;
+        padding: 12px;
+    }
+
+    .dk-payment-create-dialog .dk-password-form > .dk-modal-note {
+        font-size: 10px;
     }
 }

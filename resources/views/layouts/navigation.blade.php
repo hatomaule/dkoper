@@ -1,8 +1,8 @@
 <nav x-data="{ open: false }" class="dk-nav">
     <div class="dk-sidebar">
-        <a href="{{ route('dashboard') }}" class="dk-brand" aria-label="{{ config('app.name') }}, Dashboard">
-            <img src="{{ asset('logo.svg') }}" class="dk-brand-mark" alt="">
-            <span class="dk-brand-name"><span class="dk-brand-title">{{ config('app.name') }}<span>.</span></span><small>COOPERATIVE FINANCE</small></span>
+        <a href="{{ route('dashboard') }}" class="dk-brand" aria-label="FIDES Platform, Dashboard">
+            <span class="dk-brand-name"><span class="dk-brand-title">FIDES</span></span>
+            <span class="dk-brand-platform-tag">PLATFORM</span>
         </a>
 
         <div class="dk-sidebar-caption">MENU UTAMA</div>
@@ -11,6 +11,16 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
                 <span>Dashboard</span>
             </x-nav-link>
+            @if (auth()->user()->isBorrower())
+                <x-nav-link :href="route('cooperative.payments')" :active="request()->routeIs('cooperative.payments')">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h4"/></svg>
+                    <span>Pembayaran</span>
+                </x-nav-link>
+                <x-nav-link :href="route('cooperative.notifications')" :active="request()->routeIs('cooperative.notifications')">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+                    <span>Notifikasi</span>
+                </x-nav-link>
+            @endif
             @if (auth()->user()->isManager() || auth()->user()->isCashier())
                 <x-nav-link :href="route('cooperative.borrowers')" :active="request()->routeIs('cooperative.borrowers')">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20v-1.5A4.5 4.5 0 0 1 7.5 14h3a4.5 4.5 0 0 1 4.5 4.5V20M16 5.2a3.5 3.5 0 0 1 0 6.6M17 14h.5a3.5 3.5 0 0 1 3.5 3.5V20"/></svg>
@@ -55,9 +65,9 @@
     </div>
 
     <div class="dk-mobile-bar">
-        <a href="{{ route('dashboard') }}" class="dk-brand" aria-label="{{ config('app.name') }}, Dashboard">
-            <img src="{{ asset('logo.svg') }}" class="dk-brand-mark" alt="">
-            <span class="dk-brand-name"><span class="dk-brand-title">{{ config('app.name') }}<span>.</span></span><small>COOPERATIVE FINANCE</small></span>
+        <a href="{{ route('dashboard') }}" class="dk-brand" aria-label="FIDES Platform, Dashboard">
+            <span class="dk-brand-name"><span class="dk-brand-title">FIDES</span></span>
+            <span class="dk-brand-platform-tag">PLATFORM</span>
         </a>
         <button class="dk-menu-toggle" type="button" @click="open = ! open" :aria-expanded="open.toString()" :aria-label="open ? 'Tutup navigasi' : 'Buka navigasi'" aria-controls="mobile-navigation-menu">
             <svg x-show="!open" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
@@ -82,6 +92,10 @@
     >
         <div class="dk-mobile-caption">MENU</div>
         <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">Dashboard</x-responsive-nav-link>
+        @if (auth()->user()->isBorrower())
+            <x-responsive-nav-link :href="route('cooperative.payments')" :active="request()->routeIs('cooperative.payments')">Pembayaran</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('cooperative.notifications')" :active="request()->routeIs('cooperative.notifications')">Notifikasi</x-responsive-nav-link>
+        @endif
         @if (auth()->user()->isManager() || auth()->user()->isCashier())
             <x-responsive-nav-link :href="route('cooperative.borrowers')" :active="request()->routeIs('cooperative.borrowers')">Nasabah</x-responsive-nav-link>
             <x-responsive-nav-link :href="route('cooperative.loans')" :active="request()->routeIs('cooperative.loans')">Pinjaman</x-responsive-nav-link>

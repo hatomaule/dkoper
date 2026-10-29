@@ -4,10 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#0b1120">
+    @include('layouts.theme-init')
     <title>FIDES · @yield('page-title', 'Platform')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body x-data="{ mobileMenuOpen: false, accountSubmenuOpen: {{ request()->routeIs('platform.accounts*') ? 'true' : 'false' }} }" x-effect="document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''" @keydown.escape.window="mobileMenuOpen = false" class="min-h-screen bg-[#080d1b] font-sans text-slate-200 antialiased" data-platform-auto-refresh="60000">
+<body x-data="{ mobileMenuOpen: false, accountSubmenuOpen: {{ request()->routeIs('platform.accounts*') ? 'true' : 'false' }} }" x-effect="document.body.style.overflow = mobileMenuOpen ? 'hidden' : ''" @keydown.escape.window="mobileMenuOpen = false" class="min-h-screen bg-[#080d1b] font-sans text-slate-200 antialiased">
     @php($currentCooperativeId = (int) request()->query('cooperative', $platformCooperatives->first()?->id ?? 0))
     <aside class="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-800 bg-[#0e1526] md:flex">
         <a href="{{ route('platform.dashboard') }}" class="flex h-16 items-center gap-3 border-b border-slate-800 px-6">
@@ -39,13 +41,13 @@
                 <span class="flex-1">Manajemen akun</span>
                 <svg viewBox="0 0 20 20" aria-hidden="true" class="h-4 w-4 shrink-0 fill-none stroke-current transition-transform duration-200" :class="accountSubmenuOpen ? 'rotate-180' : ''"><path d="m5 7.5 5 5 5-5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <div id="platform-desktop-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="ml-8 grid justify-items-start gap-[3px] py-1">
+            <div id="platform-desktop-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="ml-4 grid gap-1 py-1">
                 @forelse ($platformCooperatives as $platformCooperative)
                     <a href="{{ route('platform.accounts', ['cooperative' => $platformCooperative->id]) }}"
                        @class([
-                           'flex w-fit max-w-full items-center justify-start gap-2 rounded-md py-2 text-xs transition-colors',
-                           'font-semibold text-white' => $currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts'),
-                           'text-slate-500 hover:text-slate-200' => ! ($currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts')),
+                           'flex w-full min-w-0 items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-medium transition',
+                           'bg-slate-800 text-white' => $currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts'),
+                           'text-slate-400 hover:bg-slate-800/70 hover:text-white' => ! ($currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts')),
                        ])>
                         <span @class(['h-1.5 w-1.5 shrink-0 rounded-full', 'bg-emerald-400' => $platformCooperative->status === 'active', 'bg-slate-600' => $platformCooperative->status !== 'active'])></span>
                         <span class="min-w-0 truncate">{{ $platformCooperative->name }}</span>
@@ -139,12 +141,12 @@
                     <span class="flex-1">Manajemen akun</span>
                     <svg viewBox="0 0 20 20" aria-hidden="true" class="h-4 w-4 shrink-0 fill-none stroke-current transition-transform duration-200" :class="accountSubmenuOpen ? 'rotate-180' : ''"><path d="m5 7.5 5 5 5-5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
-                <div id="platform-mobile-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="mb-2 ml-[44px] mt-1 grid w-fit max-w-full justify-items-start gap-[3px]">
+                <div id="platform-mobile-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="mb-2 ml-4 mt-1 grid gap-1">
                     @forelse ($platformCooperatives as $platformCooperative)
                         <a data-platform-mobile-account-link href="{{ route('platform.accounts', ['cooperative' => $platformCooperative->id]) }}" @click="mobileMenuOpen = false" @class([
-                            'flex min-h-9 w-fit max-w-full items-center justify-start gap-2 rounded-lg py-2 text-xs transition-colors',
-                            'font-semibold text-white' => $currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts'),
-                            'text-slate-500 hover:text-slate-200' => ! ($currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts')),
+                            'flex min-h-11 w-full min-w-0 items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs font-medium transition',
+                            'bg-slate-800 text-white' => $currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts'),
+                            'text-slate-400 hover:bg-slate-800/70 hover:text-white' => ! ($currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts')),
                         ])>
                             <span @class(['h-1.5 w-1.5 shrink-0 rounded-full', 'bg-emerald-400' => $platformCooperative->status === 'active', 'bg-slate-600' => $platformCooperative->status !== 'active'])></span>
                             <span class="min-w-0 truncate">{{ $platformCooperative->name }}</span>
@@ -160,15 +162,12 @@
             </form>
         </aside>
 
-        <dialog id="platform-password-dialog" @if ($errors->has('current_password') || $errors->has('password')) data-open-on-error @endif class="w-[min(26rem,calc(100%-2rem))] rounded-xl border border-slate-700 bg-[#101829] p-0 text-slate-200 shadow-2xl backdrop:bg-black/70">
+        <dialog id="platform-password-dialog" @if ($errors->has('password')) data-open-on-error @endif class="w-[min(26rem,calc(100%-2rem))] rounded-xl border border-slate-700 bg-[#101829] p-0 text-slate-200 shadow-2xl backdrop:bg-black/70">
             <form method="POST" action="{{ route('platform.profile.password') }}" class="space-y-4 p-5">
                 @csrf
                 <button type="button" data-close-dialog class="float-right rounded-md px-2 text-xl text-slate-500 hover:text-white" aria-label="Tutup">×</button>
                 <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-400">Keamanan akun</p>
                 <h2 class="text-lg font-bold text-white">Ganti password Superuser</h2>
-                <label class="block text-xs font-medium text-slate-400">Password saat ini
-                    <input type="password" name="current_password" required autocomplete="current-password" class="mt-1 block w-full rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-white outline-none focus:border-orange-400">
-                </label>
                 <label class="block text-xs font-medium text-slate-400">Password baru
                     <input type="password" name="password" required minlength="8" autocomplete="new-password" class="mt-1 block w-full rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-white outline-none focus:border-orange-400">
                 </label>
@@ -182,7 +181,7 @@
             </form>
         </dialog>
 
-        <main class="mx-auto max-w-[1500px] space-y-6 px-4 pb-4 pt-0 sm:px-6 sm:pb-6 sm:pt-0 lg:px-8 lg:pb-8 lg:pt-0">
+        <main class="platform-main mx-auto max-w-[1500px] space-y-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
             @if (session('status'))
                 <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{{ session('status') }}</div>
             @endif

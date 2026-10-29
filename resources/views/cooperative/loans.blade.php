@@ -1,26 +1,24 @@
 <x-app-layout>
     <x-slot name="header"><h2 class="text-xl font-semibold text-slate-900">Pinjaman</h2></x-slot>
     <div class="min-h-[calc(100vh-65px)] bg-slate-100 px-4 py-8">
-        <div class="mx-auto max-w-7xl space-y-5" data-table-tools>
+        <div class="dk-loans-page-tools mx-auto max-w-7xl space-y-5" data-table-tools>
             <section class="dk-data-panel min-w-0">
-                <div class="dk-table-toolbar">
-                    <button type="button" class="dk-button-primary" data-open-dialog="#loan-create-dialog">Catat Pinjaman</button>
-                    @if (auth()->user()->isManager())
-                        <a href="{{ route('cooperative.loans.history') }}" class="dk-button-secondary">Riwayat</a>
-                    @endif
-                    <label>Filter <input type="search" placeholder="Cari nasabah / pinjaman..." data-table-search></label>
-                    <label>Tampilkan
+                <div class="dk-table-toolbar dk-loans-toolbar">
+                    <div class="dk-loans-toolbar-actions">
+                        <button type="button" class="dk-button-primary" data-open-dialog="#loan-create-dialog">Catat Pinjaman</button>
+                    </div>
+                    <label class="dk-loans-search">Filter
+                        <input type="search" placeholder="Cari nasabah / pinjaman..." data-table-search>
+                    </label>
+                    <label class="dk-loans-page-size">Tampilkan
                         <select data-page-size>
-                            <option value="5" @selected($perPage === 5)>5</option>
-                            <option value="10" @selected($perPage === 10)>10</option>
-                            <option value="25" @selected($perPage === 25)>25</option>
-                            <option value="50" @selected($perPage === 50)>50</option>
-                            <option value="all" @selected($perPage === 'all')>Semua</option>
+                            <option value="auto" @selected(request()->query('per_page') !== 'all')>Otomatis</option>
+                            <option value="all" @selected(request()->query('per_page') === 'all')>Semua</option>
                         </select>
                     </label>
-                    <div class="dk-view-toggle" aria-label="Mode tampilan">
-                        <button type="button" class="is-active" data-view-mode="table" aria-label="Tabel" title="Tabel">▤</button>
-                        <button type="button" data-view-mode="cards" aria-label="Kartu" title="Kartu">▦</button>
+                    <div class="dk-view-toggle dk-loans-view-toggle" aria-label="Mode tampilan">
+                        <button type="button" data-view-mode="table" aria-label="Tabel" title="Tabel">▤</button>
+                        <button type="button" class="is-active" data-view-mode="cards" aria-label="Kartu" title="Kartu">▦</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto dk-table-view" data-table-view="table">

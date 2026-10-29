@@ -28,7 +28,7 @@ class DashboardAccessTest extends TestCase
             ->get('/dashboard')
             ->assertOk();
 
-        $this->actingAs($manager)
+        $dashboard = $this->actingAs($manager)
             ->get('/dashboard')
             ->assertSee('Dashboard')
             ->assertSee('dk-dashboard-heading', false)
@@ -37,7 +37,15 @@ class DashboardAccessTest extends TestCase
             ->assertSee('Nominal transaksi per tahun')
             ->assertDontSee('Debit dan kredit mingguan')
             ->assertSee('logout-title')
-            ->assertSee('data-platform-auto-refresh="60000"', false);
+            ->assertDontSee('data-platform-auto-refresh')
+            ->assertSee('dk-owner-theme', false)
+            ->assertSee('FIDES')
+            ->assertSee('class="dk-brand-platform-tag">PLATFORM</span>', false)
+            ->assertDontSee('<small>Owner</small>', false)
+            ->assertDontSee('<img src="'.asset('logo.svg').'" class="dk-brand-mark"', false);
+
+        $content = $dashboard->getContent();
+        $this->assertLessThan(strpos($content, 'Saldo dan proyeksi bonus'), strpos($content, 'Laporan pemasukan'));
     }
 
     public function test_admin_dashboard_shows_owner_and_admin_bonus_totals(): void
@@ -54,7 +62,13 @@ class DashboardAccessTest extends TestCase
             ->assertSee('Chalo Admin')
             ->assertSee('Rp 10.000')
             ->assertSee('Rp 7.000')
-            ->assertDontSee('data-platform-auto-refresh');
+            ->assertDontSee('data-platform-auto-refresh')
+            ->assertSee('dk-owner-theme', false)
+            ->assertSee('FIDES')
+            ->assertSee('class="dk-brand-platform-tag">PLATFORM</span>', false)
+            ->assertDontSee('COOPERATIVE FINANCE')
+            ->assertSee('<small>Admin</small>', false)
+            ->assertDontSee('<img src="'.asset('logo.svg').'" class="dk-brand-mark"', false);
     }
 
     public function test_dashboard_shows_realized_and_projected_bonus_as_the_overall_total(): void

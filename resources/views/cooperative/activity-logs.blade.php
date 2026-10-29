@@ -36,8 +36,8 @@
         <div class="dk-data-panel mx-auto max-w-7xl" data-table-tools>
             <div class="dk-table-toolbar">
                 <label>Filter <input type="search" placeholder="Cari aktivitas..." data-table-search></label>
-                <label>Tampilkan<select data-page-size><option value="5" @selected(request('per_page', '5') === '5')>5</option><option value="10" @selected(request('per_page') === '10')>10</option><option value="25" @selected(request('per_page') === '25')>25</option><option value="50" @selected(request('per_page') === '50')>50</option><option value="all" @selected(request('per_page') === 'all')>Semua</option></select></label>
-                <div class="dk-view-toggle" aria-label="Mode tampilan"><button type="button" class="is-active" data-view-mode="table" aria-label="Tabel" title="Tabel">▤</button><button type="button" data-view-mode="cards" aria-label="Kartu" title="Kartu">▦</button></div>
+                <label>Tampilkan<select data-page-size><option value="auto" @selected(request()->query('per_page') !== 'all')>Otomatis</option><option value="all" @selected(request()->query('per_page') === 'all')>Semua</option></select></label>
+                <div class="dk-view-toggle" aria-label="Mode tampilan"><button type="button" data-view-mode="table" aria-label="Tabel" title="Tabel">▤</button><button type="button" class="is-active" data-view-mode="cards" aria-label="Kartu" title="Kartu">▦</button></div>
             </div>
             <div class="overflow-x-auto dk-table-view" data-table-view="table">
                 <table class="w-full text-left text-sm">

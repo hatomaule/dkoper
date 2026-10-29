@@ -14,7 +14,13 @@ class AuthenticationTest extends TestCase
     {
         $response = $this->get('/login');
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSee('FIDES')
+            ->assertSee('PLATFORM')
+            ->assertSee('dk-login-theme-toggle')
+            ->assertDontSee('RUANG KERJA KOPERASI')
+            ->assertDontSee('Kelola keuangan dengan lebih tenang.')
+            ->assertDontSee('COOPERATIVE FINANCE PLATFORM');
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void
@@ -47,6 +53,16 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post('/logout');
+
+        $this->assertGuest();
+        $response->assertRedirect('/');
+    }
+
+    public function test_borrower_can_logout(): void
+    {
+        $user = User::factory()->create(['role' => 'nasabah']);
+
+        $response = $this->actingAs($user)->post(route('logout'));
 
         $this->assertGuest();
         $response->assertRedirect('/');

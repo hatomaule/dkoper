@@ -26,6 +26,12 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'phone' => [
+                $this->user()->isBorrower() ? 'required' : 'nullable',
+                'string',
+                'max:30',
+                Rule::unique(User::class, 'phone')->ignore($this->user()->id),
+            ],
         ];
     }
 }

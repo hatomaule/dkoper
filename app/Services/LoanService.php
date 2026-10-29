@@ -117,6 +117,12 @@ class LoanService
                     'payload' => ['principal_amount' => $principalAmount],
                     'status' => 'pending',
                 ]);
+                app(CooperativeNotificationService::class)->notifyBorrower(
+                    $borrower,
+                    'Pinjaman menunggu persetujuan',
+                    "Pinjaman {$loan->loan_code} telah dicatat dan sedang menunggu persetujuan Owner.",
+                    route('dashboard', [], false),
+                );
                 app(CooperativeNotificationService::class)->notifyRoles(
                     ['manager'],
                     'Pengajuan pinjaman baru',
@@ -392,6 +398,12 @@ class LoanService
                 ],
                 'ip_address' => request()?->ip(),
             ]);
+            app(CooperativeNotificationService::class)->notifyBorrower(
+                $borrower,
+                'Data pinjaman diperbarui',
+                "Data pinjaman {$loan->loan_code} telah diperbarui oleh Owner. Periksa kembali jadwal cicilan Anda.",
+                route('dashboard', [], false),
+            );
 
             return $loan->fresh(['installments']);
         });
@@ -442,6 +454,13 @@ class LoanService
                     ]);
             }
 
+            $loan->loadMissing('borrower');
+            app(CooperativeNotificationService::class)->notifyBorrower(
+                $loan->borrower,
+                'Pinjaman dihapus dari daftar aktif',
+                "Pinjaman {$loan->loan_code} telah dihapus dari daftar pinjaman aktif oleh Owner.",
+                route('dashboard', [], false),
+            );
             $loan->delete();
 
             return $loan;

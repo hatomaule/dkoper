@@ -51,7 +51,7 @@ class PaymentServiceTest extends TestCase
             'loan_id' => $loan->id,
             'recorded_by' => $manager->id,
             'amount' => $first->fresh()->outstanding_amount + 120_000,
-            'nominal_source' => 'system',
+            'nominal_source' => 'manual',
             'status' => 'pending',
         ]);
 

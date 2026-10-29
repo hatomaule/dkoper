@@ -117,6 +117,7 @@ class FidesTenantLoginTest extends TestCase
             ->assertDontSee('platform-coop-chart-bar')
             ->assertSee('Informasi koperasi')
             ->assertSee('class="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4"', false)
+            ->assertSee('platform-main', false)
             ->assertSee('id="platform-mobile-navigation"', false)
             ->assertSee('aria-label="Buka menu navigasi"', false)
             ->assertSee('aria-controls="platform-desktop-account-submenu"', false)
@@ -142,10 +143,10 @@ class FidesTenantLoginTest extends TestCase
             ->assertSee('data-open-dialog="cooperative-status-'.PlatformCooperative::query()->value('id').'"', false)
             ->assertSee('name="confirm_action"', false)
             ->assertSee('name="confirm_account_action"', false)
-            ->assertSee('data-platform-auto-refresh="60000"', false)
+            ->assertDontSee('data-platform-auto-refresh')
             ->assertSee('Manajemen akun')
             ->assertSee('Koperasi Uji')
-            ->assertSee('ml-[44px] mt-1 grid w-fit max-w-full justify-items-start gap-[3px]', false)
+            ->assertSee('ml-4 mt-1 grid gap-1', false)
             ->assertSee('h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400', false)
             ->assertSee(route('platform.accounts', ['cooperative' => PlatformCooperative::query()->value('id')]), false)
             ->assertDontSee('aria-label="Pilih koperasi"', false)
@@ -158,6 +159,12 @@ class FidesTenantLoginTest extends TestCase
             ->assertSee('Daftarkan koperasi')
             ->assertSee('Koperasi Uji')
             ->assertSee('data-list-page-size', false)
+            ->assertSee('value="auto" selected', false)
+            ->assertSee('value="all"', false)
+            ->assertDontSee('value="6"', false)
+            ->assertDontSee('value="10"', false)
+            ->assertDontSee('value="25"', false)
+            ->assertDontSee('value="50"', false)
             ->assertSee('data-list-view-mode="cards"', false)
             ->assertDontSee('Daftar koperasi')
             ->assertDontSee('ruang terdaftar')
@@ -554,10 +561,10 @@ class FidesTenantLoginTest extends TestCase
             ->get(route('platform.dashboard'))
             ->assertOk()
             ->assertSee('Ganti password')
-            ->assertSee('id="platform-password-dialog"', false);
+            ->assertSee('id="platform-password-dialog"', false)
+            ->assertDontSee('name="current_password"', false);
 
         $this->post(route('platform.profile.password'), [
-            'current_password' => 'platform-secure-password',
             'password' => 'new-platform-password',
             'password_confirmation' => 'new-platform-password',
         ])->assertRedirect();

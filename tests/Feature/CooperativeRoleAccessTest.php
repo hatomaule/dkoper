@@ -29,6 +29,10 @@ class CooperativeRoleAccessTest extends TestCase
             $profile->assertOk()
                 ->assertSee('aria-label="Buka menu akun"', false)
                 ->assertSee('class="dk-profile-copy"', false)
+                ->assertSee('aria-label="FIDES Platform, Dashboard"', false)
+                ->assertSee('class="dk-brand-platform-tag">PLATFORM</span>', false)
+                ->assertDontSee('COOPERATIVE FINANCE')
+                ->assertDontSee('<img src="'.asset('logo.svg').'" class="dk-brand-mark"', false)
                 ->assertSee('id="mobile-navigation-menu"', false)
                 ->assertSee('class="dk-mobile-overlay"', false)
                 ->assertSee('>A</span>', false)
@@ -45,7 +49,27 @@ class CooperativeRoleAccessTest extends TestCase
         }
     }
 
-    public function test_owner_pages_share_the_five_row_table_and_card_controls(): void
+    public function test_profile_trigger_does_not_repeat_admin_or_borrower_role_as_name(): void
+    {
+        foreach ([
+            ['role' => 'kasir', 'name' => 'Admin'],
+            ['role' => 'nasabah', 'name' => 'Nasabah'],
+        ] as $account) {
+            $user = User::factory()->create([
+                'name' => $account['name'],
+                'role' => $account['role'],
+                'must_change_password' => false,
+            ]);
+
+            $this->actingAs($user)
+                ->get(route('profile.edit'))
+                ->assertOk()
+                ->assertSee('<strong>'.$account['name'].'</strong></span>', false)
+                ->assertDontSee('<small>'.$account['name'].'</small>', false);
+        }
+    }
+
+    public function test_owner_pages_share_automatic_two_row_card_defaults_and_table_controls(): void
     {
         $owner = User::factory()->create([
             'username' => 'owner',
@@ -56,18 +80,72 @@ class CooperativeRoleAccessTest extends TestCase
         $this->actingAs($owner)
             ->get(route('cooperative.approvals'))
             ->assertOk()
-            ->assertSee('value="5" selected', false)
+            ->assertSee('value="auto" selected', false)
+            ->assertSee('class="is-active" data-view-mode="cards"', false)
             ->assertSee('data-view-mode="cards"', false)
             ->assertSee('data-table-view="cards"', false);
 
         $this->actingAs($owner)
             ->get(route('cooperative.finances'))
             ->assertOk()
-            ->assertSee('value="5" selected', false)
+            ->assertSee('value="auto" selected', false)
+            ->assertSee('class="is-active" data-view-mode="cards"', false)
             ->assertSee('data-view-mode="cards"', false)
             ->assertSee('data-table-view="cards"', false)
-            ->assertSee('SALDO KAS SAAT INI')
+            ->assertDontSee('SALDO KAS SAAT INI')
             ->assertDontSee('ARUS KAS');
+
+        $this->actingAs($owner)
+            ->get(route('cooperative.borrowers'))
+            ->assertOk()
+            ->assertSee('value="auto" selected', false)
+            ->assertSee('class="is-active" data-view-mode="cards"', false);
+
+        $this->actingAs($owner)
+            ->get(route('cooperative.borrowers', ['per_page' => 6]))
+            ->assertOk()
+            ->assertViewHas('borrowers', fn ($borrowers) => $borrowers->perPage() === 6);
+
+        foreach ([
+            'cooperative.loans',
+            'cooperative.payments',
+            'cooperative.profits',
+            'cooperative.activity-logs',
+            'cooperative.notifications',
+            'cooperative.loans.history',
+        ] as $routeName) {
+            $response = $this->actingAs($owner)
+                ->get(route($routeName))
+                ->assertOk()
+                ->assertSee('value="auto" selected', false)
+                ->assertSee('value="all"', false);
+
+            foreach (['5', '6', '10', '25', '50'] as $removedSize) {
+                $response->assertDontSee('value="'.$removedSize.'"', false);
+            }
+
+            if ($routeName !== 'cooperative.notifications') {
+                $response->assertSee('class="is-active" data-view-mode="cards"', false);
+            }
+        }
+    }
+
+    public function test_cooperative_card_pagination_accepts_responsive_page_sizes_within_safe_limits(): void
+    {
+        $owner = User::factory()->create([
+            'username' => 'owner-responsive',
+            'role' => 'manager',
+            'must_change_password' => false,
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('cooperative.borrowers', ['per_page' => 8, 'card_page_auto' => 1]))
+            ->assertOk()
+            ->assertViewHas('borrowers', fn ($borrowers) => $borrowers->perPage() === 8);
+
+        $this->actingAs($owner)
+            ->get(route('cooperative.borrowers', ['per_page' => 101]))
+            ->assertStatus(422);
     }
 
     public function test_loan_card_mode_has_no_aggregate_card_and_owner_actions_are_guarded(): void
@@ -170,7 +248,7 @@ class CooperativeRoleAccessTest extends TestCase
         $this->actingAs($owner)
             ->get(route('cooperative.loans'))
             ->assertOk()
-            ->assertSee('Riwayat')
+            ->assertDontSee('class="dk-button-secondary">Riwayat</a>', false)
             ->assertSee('Hapus Pinjaman')
             ->assertSee('name="confirm_delete"', false);
 
@@ -192,7 +270,15 @@ class CooperativeRoleAccessTest extends TestCase
             ->get(route('cooperative.loans.history'))
             ->assertOk()
             ->assertSee('Nasabah Riwayat')
-            ->assertSee($loan->loan_code);
+            ->assertSee($loan->loan_code)
+            ->assertSee('data-view-mode="table"', false)
+            ->assertSee('data-view-mode="cards"', false)
+            ->assertSee('data-table-view="table"', false)
+            ->assertSee('data-table-view="cards"', false)
+            ->assertDontSee('DATA TERSIMPAN')
+            ->assertDontSee('Pinjaman yang dihapus dari daftar')
+            ->assertDontSee('Kembali ke Pinjaman')
+            ->assertDontSee('data-platform-auto-refresh');
     }
 
     public function test_profit_cards_show_bonus_from_active_loans_before_withdrawals(): void
@@ -220,11 +306,13 @@ class CooperativeRoleAccessTest extends TestCase
         $content = $this->actingAs($owner)
             ->get(route('cooperative.profits'))
             ->assertOk()
+            ->assertSee('dk-profit-balances-owner')
             ->assertSee('Bonus dari pinjaman berjalan')
             ->assertSee('Rp 120.000')
             ->assertSee('Rp 80.000')
             ->getContent();
 
+        $this->assertLessThan(strpos($content, 'dk-bonus-admin'), strpos($content, 'dk-bonus-owner'));
         $this->assertLessThan(strpos($content, 'Sudah ditarik'), strpos($content, 'Bonus dari pinjaman berjalan'));
     }
 
@@ -240,6 +328,8 @@ class CooperativeRoleAccessTest extends TestCase
             ->get(route('cooperative.profits'))
             ->assertOk()
             ->assertSee('Bonus')
+            ->assertDontSee('dk-profit-balances-owner')
+            ->assertSee('class="dk-profit-balances grid gap-4"', false)
             ->assertDontSee('Kelola password Owner dan Admin')
             ->assertSee('Ganti password saya');
 
@@ -426,7 +516,10 @@ class CooperativeRoleAccessTest extends TestCase
             ->assertViewHas('borrower', fn ($loadedBorrower) => $loadedBorrower->loans->first()->installments->pluck('sequence')->all() === range(1, 12));
         $borrowerResponse->assertDontSee('data-view-mode="table"', false)
             ->assertDontSee('<table', false)
-            ->assertSee('dk-borrower-installments', false);
+            ->assertSee('dk-loan-card-details', false)
+            ->assertDontSee('dk-borrower-installments', false)
+            ->assertSee('Total setoran')
+            ->assertSee('Sisa piutang');
     }
 
     public function test_borrower_page_is_for_account_management_not_financial_totals(): void
@@ -563,14 +656,16 @@ class CooperativeRoleAccessTest extends TestCase
         $this->actingAs($borrowerUser)
             ->get(route('dashboard'))
             ->assertOk()
-            ->assertSee('Informasi Pinjaman Saya')
+            ->assertSee('Dashboard')
+            ->assertDontSee('DK_TEST')
             ->assertDontSee('data-view-mode="table"', false)
             ->assertDontSee('data-view-mode="cards"', false)
             ->assertDontSee('data-local-page-size', false)
             ->assertSee('Cicilan ke-', false)
             ->assertDontSee('data-table-view="table"', false)
             ->assertDontSee('<table', false)
-            ->assertSee('dk-borrower-installments', false);
+            ->assertSee('dk-loan-card-details', false)
+            ->assertDontSee('dk-borrower-installments', false);
 
         $this->actingAs($borrowerUser)->get(route('cooperative.borrowers'))->assertForbidden();
         $this->actingAs($borrowerUser)->get(route('cooperative.profits'))->assertForbidden();

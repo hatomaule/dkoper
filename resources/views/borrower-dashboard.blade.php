@@ -1,9 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-slate-900">Informasi Pinjaman Saya</h2>
-            <span class="text-xs font-semibold uppercase text-slate-500">{{ $borrower->borrower_code }}</span>
-        </div>
+        <h2 class="text-xl font-semibold text-slate-900">Dashboard</h2>
     </x-slot>
 
     <div class="min-h-[calc(100vh-65px)] bg-slate-100 py-8">
@@ -14,33 +11,43 @@
             </section>
 
             @forelse ($borrower->loans as $loan)
-                <section class="dk-borrower-loan-card">
-                    <div class="dk-borrower-loan-heading">
+                @php($installmentsBySequence = $loan->installments->keyBy('sequence'))
+                <article class="dk-payment-card dk-loan-card dk-borrower-loan-card">
+                    <dl class="dk-loan-card-details">
                         <div>
-                            <h3 class="font-bold text-slate-900">{{ $loan->loan_code }}</h3>
-                            <p class="mt-2"><span class="dk-status" data-status="{{ $loan->status }}">{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</span></p>
+                            <dt>Nama</dt>
+                            <dd>{{ $loan->loan_code }}<small>{{ match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) } }}</small></dd>
                         </div>
-                        <div class="text-sm text-slate-700">
-                            <span class="font-semibold">Total tagihan:</span>
-                            Rp {{ number_format((int) $loan->total_receivable, 0, ',', '.') }}
+                        <div>
+                            <dt>Pokok</dt>
+                            <dd>Rp {{ number_format((int) $loan->principal_amount, 0, ',', '.') }}</dd>
                         </div>
-                    </div>
-                    <div class="dk-borrower-installments">
-                        @foreach ($loan->installments as $installment)
-                            <article class="dk-payment-card dk-borrower-installment-card" data-table-row>
-                                <div>
-                                    <strong>Cicilan ke-{{ $installment->sequence }}</strong>
-                                    <span class="dk-status" data-status="{{ $installment->status }}">{{ match ($installment->status) { 'pending' => 'Belum dibayar', 'partial' => 'Sebagian', 'paid' => 'Lunas', 'overdue' => 'Terlambat', default => ucfirst($installment->status) } }}</span>
-                                </div>
-                                <dl>
-                                    <div><dt>Tagihan</dt><dd>Rp {{ number_format((int) $installment->scheduled_amount, 0, ',', '.') }}</dd></div>
-                                    <div><dt>Terbayar</dt><dd>Rp {{ number_format((int) $installment->paid_amount, 0, ',', '.') }}</dd></div>
-                                    <div><dt>Sisa</dt><dd>Rp {{ number_format((int) $installment->outstanding_amount, 0, ',', '.') }}</dd></div>
-                                </dl>
-                            </article>
-                        @endforeach
-                    </div>
-                </section>
+                        @for ($sequence = 1; $sequence <= 12; $sequence++)
+                            @php($installment = $installmentsBySequence->get($sequence))
+                            <div class="dk-loan-installment-row @if ($sequence === 12) dk-loan-last-installment @endif">
+                                <dt>Cicilan ke-{{ $sequence }}</dt>
+                                <dd>
+                                    {{ $installment && $installment->paid_amount > 0 ? 'Rp '.number_format((int) $installment->paid_amount, 0, ',', '.') : '—' }}
+                                    @if ($installment)
+                                        <small>{{ match ($installment->status) { 'pending' => 'Belum dibayar', 'partial' => 'Sebagian', 'paid' => 'Lunas', 'overdue' => 'Terlambat', default => ucfirst($installment->status) } }}</small>
+                                    @endif
+                                </dd>
+                            </div>
+                        @endfor
+                        <div class="dk-loan-card-total">
+                            <dt>Total tagihan</dt>
+                            <dd>Rp {{ number_format((int) $loan->total_receivable, 0, ',', '.') }}</dd>
+                        </div>
+                        <div class="dk-loan-card-total dk-loan-card-paid">
+                            <dt>Total setoran</dt>
+                            <dd>Rp {{ number_format((int) $loan->installments->sum('paid_amount'), 0, ',', '.') }}</dd>
+                        </div>
+                        <div class="dk-loan-card-total dk-loan-card-outstanding">
+                            <dt>Sisa piutang</dt>
+                            <dd>Rp {{ number_format((int) $loan->installments->sum('outstanding_amount'), 0, ',', '.') }}</dd>
+                        </div>
+                    </dl>
+                </article>
             @empty
                 <section class="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
                     Belum ada pinjaman yang tercatat.

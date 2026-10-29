@@ -58,7 +58,7 @@
             </label>
             <label class="text-[11px] font-semibold text-slate-400">Baris
                 <select data-list-page-size class="mt-1 block rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-white outline-none focus:border-orange-400">
-                    <option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="all">Semua</option>
+                    <option value="auto" selected>Otomatis</option><option value="all">Semua</option>
                 </select>
             </label>
             <div class="ml-auto flex items-center gap-1 rounded-lg border border-slate-700 p-1" aria-label="Mode tampilan">

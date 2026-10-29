@@ -60,6 +60,15 @@
         </div>
 
         <div class="dk-dashboard-section">
+            <div class="dk-section-title"><div><span>SETORAN DISETUJUI</span><h3>Laporan pemasukan</h3></div></div>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                @foreach ([['Hari ini', $daily_payments], ['Minggu ini', $weekly_payments], ['Bulan ini', $monthly_total_payments]] as [$label, $total])
+                    <section class="dk-period-card"><span>{{ $label }}</span><strong>{{ $rupiah($total) }}</strong><small>Transaksi pembayaran disetujui</small></section>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="dk-dashboard-section">
             <div class="dk-section-title"><div><span>BONUS</span><h3>Saldo dan proyeksi bonus</h3></div></div>
             <div class="grid gap-3 md:grid-cols-2">
                 @foreach ([
@@ -70,15 +79,6 @@
                         <div class="dk-bonus-earned"><span>SALDO BONUS TERSEDIA</span><h4>{{ $staffName }}</h4><strong>{{ $rupiah($available) }}</strong><small>Setelah penarikan dan transfer ke modal</small></div>
                         <div class="dk-bonus-total"><span>TOTAL BONUS KESELURUHAN</span><strong>{{ $rupiah((int) $earned + (int) $projected) }}</strong><small>Terealisasi {{ $rupiah($earned) }} + proyeksi pinjaman aktif {{ $rupiah($projected) }}</small></div>
                     </section>
-                @endforeach
-            </div>
-        </div>
-
-        <div class="dk-dashboard-section">
-            <div class="dk-section-title"><div><span>SETORAN DISETUJUI</span><h3>Laporan pemasukan</h3></div></div>
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                @foreach ([['Hari ini', $daily_payments], ['Minggu ini', $weekly_payments], ['Bulan ini', $monthly_total_payments]] as [$label, $total])
-                    <section class="dk-period-card"><span>{{ $label }}</span><strong>{{ $rupiah($total) }}</strong><small>Transaksi pembayaran disetujui</small></section>
                 @endforeach
             </div>
         </div>

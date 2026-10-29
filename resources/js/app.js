@@ -5,7 +5,7 @@ import Alpine from 'alpinejs';
 window.Alpine = Alpine;
 
 Alpine.data('dkTheme', () => ({
-    dark: localStorage.getItem('dk-theme') === 'dark',
+    dark: localStorage.getItem('dk-theme-v2') !== 'light',
     showLogout: false,
     init() {
         document.documentElement.dataset.theme = this.dark ? 'dark' : 'light';
@@ -13,13 +13,84 @@ Alpine.data('dkTheme', () => ({
     toggle() {
         this.dark = !this.dark;
         document.documentElement.dataset.theme = this.dark ? 'dark' : 'light';
-        localStorage.setItem('dk-theme', this.dark ? 'dark' : 'light');
+        localStorage.setItem('dk-theme-v2', this.dark ? 'dark' : 'light');
+        const themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) themeColor.content = this.dark ? '#0b1120' : '#f6f8fb';
     },
 }));
 
 Alpine.start();
 
 document.addEventListener('DOMContentLoaded', () => {
+    const withVisibleView = (panel, selector, measure) => {
+        const view = panel.querySelector(selector);
+        if (!(view instanceof HTMLElement)) {
+            return measure(null);
+        }
+
+        const wasHidden = view.hidden;
+        const hadHiddenClass = view.classList.contains('hidden');
+        view.hidden = false;
+        view.classList.remove('hidden');
+        const result = measure(view);
+        view.hidden = wasHidden;
+        view.classList.toggle('hidden', hadHiddenClass);
+
+        return result;
+    };
+
+    const cardGridColumns = (panel, selector) => {
+        return withVisibleView(panel, selector, (grid) => {
+            if (!(grid instanceof HTMLElement)) return 1;
+            return Math.max(getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length, 1);
+        });
+    };
+
+    const tablePageSize = (panel, selector = '[data-table-view="table"]') => withVisibleView(panel, selector, (view) => {
+        if (!(view instanceof HTMLElement)) return 6;
+
+        const table = view.querySelector('table');
+        const firstRow = view.querySelector('tbody tr[data-table-row]:not(.dk-loan-total-row), tbody tr[data-list-row]');
+        const rowHeight = firstRow?.getBoundingClientRect().height || 42;
+        const headingHeight = table?.tHead?.getBoundingClientRect().height || 0;
+        const fixedRowHeight = [...view.querySelectorAll('tbody tr.dk-loan-total-row')]
+            .reduce((height, row) => height + row.getBoundingClientRect().height, 0);
+        const footerHeight = panel.querySelector('.dk-table-footer, footer')?.getBoundingClientRect().height || 0;
+        const availableHeight = window.innerHeight - view.getBoundingClientRect().top - footerHeight - fixedRowHeight - 24;
+
+        return Math.min(Math.max(Math.floor((availableHeight - headingHeight) / rowHeight), 1), 100);
+    });
+    const rowPageSize = (panel) => {
+        const view = panel.querySelector('[data-table-view]:not([hidden])') || panel;
+        const firstRow = [...view.querySelectorAll('[data-table-row]')].find((row) => !row.hidden);
+        const rowHeight = firstRow?.getBoundingClientRect().height || 42;
+        const rowTop = firstRow?.getBoundingClientRect().top
+            || (panel.querySelector('.dk-table-toolbar')?.getBoundingClientRect().bottom ?? panel.getBoundingClientRect().top);
+        const footerHeight = panel.querySelector('.dk-table-footer, footer')?.getBoundingClientRect().height || 0;
+        const availableHeight = window.innerHeight - rowTop - footerHeight - 24;
+
+        return Math.min(Math.max(Math.floor(availableHeight / rowHeight), 1), 100);
+    };
+
+    const automaticPageSize = (panel, view) => view === 'table'
+        ? tablePageSize(panel)
+        : view === 'cards'
+            ? cardGridColumns(panel, '[data-table-view="cards"]') * 2
+            : rowPageSize(panel);
+    const automaticListPageSize = (panel, view) => view === 'table'
+        ? tablePageSize(panel, '[data-list-view="table"]')
+        : cardGridColumns(panel, '[data-list-view="cards"]') * 2;
+
+    const activeTableView = (panel) => panel.querySelector('[data-view-mode].is-active')?.dataset.viewMode;
+
+    const updatePaginationView = (panel, view) => {
+        panel.querySelectorAll('.dk-table-footer a[href]').forEach((link) => {
+            const url = new URL(link.href, window.location.origin);
+            url.searchParams.set('view', view);
+            link.href = url.toString();
+        });
+    };
+
     document.querySelectorAll('input[type="password"]').forEach((input) => {
         if (input.parentElement?.classList.contains('dk-password-input-wrap')) {
             return;
@@ -81,40 +152,83 @@ document.addEventListener('DOMContentLoaded', () => {
         search?.addEventListener('input', applyRowFilters);
         applyRowFilters();
 
+        const pageSize = panel.querySelector('[data-page-size]');
+        const pageSizeUrl = new URL(window.location.href);
+        let autoPageSize = pageSize?.value === 'auto';
+        const applyView = (view, updateUrl = false) => {
+            panel.classList.toggle('is-card-view', view === 'cards');
+            panel.querySelectorAll('[data-table-view]').forEach((tableView) => {
+                tableView.hidden = tableView.dataset.tableView !== view;
+                tableView.classList.toggle('hidden', tableView.hidden);
+            });
+            panel.querySelectorAll('[data-view-mode]').forEach((toggle) => {
+                toggle.classList.toggle('is-active', toggle.dataset.viewMode === view);
+            });
+            if (updateUrl) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('view', view);
+                window.history.replaceState({}, '', url);
+            }
+            updatePaginationView(panel, view);
+        };
+
         panel.querySelectorAll('[data-view-mode]').forEach((button) => {
             button.addEventListener('click', () => {
-                panel.classList.toggle('is-card-view', button.dataset.viewMode === 'cards');
-                panel.querySelectorAll('[data-table-view]').forEach((view) => {
-                    view.hidden = view.dataset.tableView !== button.dataset.viewMode;
-                    view.classList.toggle('hidden', view.hidden);
-                });
-                panel.querySelectorAll('[data-view-mode]').forEach((toggle) => {
-                    toggle.classList.toggle('is-active', toggle === button);
-                });
+                const view = button.dataset.viewMode;
+                applyView(view, true);
+                synchronizeAutomaticPageSize();
             });
         });
 
-        panel.querySelector('[data-page-size]')?.addEventListener('change', (event) => {
+        pageSize?.addEventListener('change', (event) => {
             const url = new URL(window.location.href);
-            url.searchParams.set('per_page', event.target.value);
+            if (event.target.value === 'auto') {
+                autoPageSize = true;
+                url.searchParams.set('card_page_auto', '1');
+                url.searchParams.set('per_page', String(automaticPageSize(panel, activeTableView(panel))));
+            } else if (event.target.value === 'all') {
+                autoPageSize = false;
+                url.searchParams.delete('card_page_auto');
+                url.searchParams.set('per_page', 'all');
+            }
             url.searchParams.delete('page');
             window.location.assign(url);
         });
 
-        const mobileDefault = panel.dataset.mobileDefault;
-        const initialView = mobileDefault && window.matchMedia('(max-width: 640px)').matches
-            ? mobileDefault
-            : panel.querySelector('[data-view-mode].is-active')?.dataset.viewMode;
-        if (initialView) {
-            panel.classList.toggle('is-card-view', initialView === 'cards');
-            panel.querySelectorAll('[data-table-view]').forEach((view) => {
-                view.hidden = view.dataset.tableView !== initialView;
-                view.classList.toggle('hidden', view.hidden);
-            });
-            panel.querySelectorAll('[data-view-mode]').forEach((button) => {
-                button.classList.toggle('is-active', button.dataset.viewMode === initialView);
-            });
-        }
+        const initialView = pageSizeUrl.searchParams.get('view')
+            || panel.querySelector('[data-view-mode].is-active')?.dataset.viewMode
+            || 'cards';
+        applyView(initialView);
+        const synchronizeAutomaticPageSize = () => {
+            const currentView = activeTableView(panel);
+            if (!autoPageSize || !pageSize || pageSize.value !== 'auto') {
+                return;
+            }
+            const url = new URL(window.location.href);
+            const size = automaticPageSize(panel, currentView);
+            if (Number(url.searchParams.get('per_page')) !== size) {
+                url.searchParams.set('per_page', String(size));
+                url.searchParams.set('card_page_auto', '1');
+                url.searchParams.delete('page');
+                if (currentView) {
+                    url.searchParams.set('view', currentView);
+                }
+                window.location.assign(url);
+            }
+        };
+        synchronizeAutomaticPageSize();
+        panel.addEventListener('click', (event) => {
+            const link = event.target.closest('.dk-table-footer a[href]');
+            if (!(link instanceof HTMLAnchorElement)) return;
+            const url = new URL(link.href);
+            url.searchParams.set('view', activeTableView(panel) || 'cards');
+            link.href = url.toString();
+        });
+        let automaticResizeTimeout;
+        window.addEventListener('resize', () => {
+            window.clearTimeout(automaticResizeTimeout);
+            automaticResizeTimeout = window.setTimeout(synchronizeAutomaticPageSize, 200);
+        });
     });
 
     document.querySelectorAll('[data-list-tools]').forEach((panel) => {
@@ -130,7 +244,10 @@ document.addEventListener('DOMContentLoaded', () => {
             items.set(key, item);
         });
         const pageSize = panel.querySelector('[data-list-page-size]');
+        let automaticListSize = 12;
         let currentPage = 1;
+        const currentListView = () => panel.querySelector('[data-list-view-mode].is-active')?.dataset.listViewMode || 'cards';
+        const measureAutomaticListSize = () => automaticListPageSize(panel, currentListView());
         const filterValues = () => [...panel.querySelectorAll('[data-list-filter]')]
             .reduce((values, select) => ({ ...values, [select.dataset.listFilter]: select.value }), {});
         const render = () => {
@@ -140,8 +257,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return (!needle || item.text.toLocaleLowerCase().includes(needle))
                     && Object.entries(filters).every(([key, value]) => !value || item[key] === value);
             });
-            const requestedSize = pageSize?.value || 'all';
-            const size = requestedSize === 'all' ? Math.max(filtered.length, 1) : Math.max(Number(requestedSize) || 10, 1);
+            const requestedSize = pageSize?.value || 'auto';
+            const size = requestedSize === 'all'
+                ? Math.max(filtered.length, 1)
+                : requestedSize === 'auto'
+                    ? automaticListSize
+                    : Math.max(Number(requestedSize) || automaticListSize, 1);
             const pageCount = Math.max(Math.ceil(filtered.length / size), 1);
             currentPage = Math.min(currentPage, pageCount);
             const start = (currentPage - 1) * size;
@@ -171,7 +292,15 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPage = 1;
             render();
         }));
-        pageSize?.addEventListener('change', () => { currentPage = 1; render(); });
+        pageSize?.addEventListener('change', () => {
+            currentPage = 1;
+            if (pageSize.value === 'auto' && panel.classList.contains('is-card-view')) {
+                automaticListSize = measureAutomaticListSize();
+            } else if (pageSize.value === 'auto') {
+                automaticListSize = measureAutomaticListSize();
+            }
+            render();
+        });
         panel.querySelector('[data-list-prev]')?.addEventListener('click', () => {
             currentPage = Math.max(1, currentPage - 1);
             render();
@@ -182,10 +311,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         panel.querySelectorAll('[data-list-view-mode]').forEach((button) => {
             button.addEventListener('click', () => {
+                const useCards = button.dataset.listViewMode === 'cards';
                 panel.querySelectorAll('[data-list-view]').forEach((view) => {
-                    view.hidden = view.dataset.listView !== button.dataset.listViewMode;
+                    const hidden = view.dataset.listView !== button.dataset.listViewMode;
+                    view.hidden = hidden;
+                    view.classList.toggle('hidden', hidden);
                 });
-                panel.classList.toggle('is-card-view', button.dataset.listViewMode === 'cards');
+                panel.classList.toggle('is-card-view', useCards);
+                if (pageSize?.value === 'auto') {
+                    automaticListSize = measureAutomaticListSize();
+                    currentPage = 1;
+                    render();
+                }
+                const url = new URL(window.location.href);
+                url.searchParams.set('view', button.dataset.listViewMode);
+                window.history.replaceState({}, '', url);
                 panel.querySelectorAll('[data-list-view-mode]').forEach((toggle) => {
                     const isActive = toggle === button;
                     toggle.classList.toggle('is-active', isActive);
@@ -195,12 +335,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
         });
-        const activeView = panel.querySelector('[data-list-view-mode].is-active');
+        const requestedListView = new URL(window.location.href).searchParams.get('view');
+        const activeView = panel.querySelector(`[data-list-view-mode="${requestedListView}"]`)
+            || panel.querySelector('[data-list-view-mode].is-active');
         if (activeView) {
             panel.querySelectorAll('[data-list-view]').forEach((view) => {
-                view.hidden = view.dataset.listView !== activeView.dataset.listViewMode;
+                const hidden = view.dataset.listView !== activeView.dataset.listViewMode;
+                view.hidden = hidden;
+                view.classList.toggle('hidden', hidden);
             });
             panel.classList.toggle('is-card-view', activeView.dataset.listViewMode === 'cards');
+            if (pageSize?.value === 'auto') {
+                automaticListSize = measureAutomaticListSize();
+            }
             panel.querySelectorAll('[data-list-view-mode]').forEach((button) => {
                 const isActive = button === activeView;
                 button.classList.toggle('bg-slate-700', isActive);
@@ -209,6 +356,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         render();
+        let listResizeTimeout;
+        window.addEventListener('resize', () => {
+            if (pageSize?.value !== 'auto') {
+                return;
+            }
+            window.clearTimeout(listResizeTimeout);
+            listResizeTimeout = window.setTimeout(() => {
+                automaticListSize = measureAutomaticListSize();
+                currentPage = 1;
+                render();
+            }, 200);
+        });
     });
 
     document.querySelectorAll('[data-open-dialog]').forEach((button) => {
@@ -230,49 +389,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.querySelectorAll('dialog[data-open-on-error]').forEach((dialog) => dialog.showModal());
 
-    const refreshInterval = Number(document.body.dataset.platformAutoRefresh);
-    if (refreshInterval > 0) {
-        document.querySelectorAll('form').forEach((form) => {
-            form.addEventListener('input', () => { form.dataset.unsavedChanges = 'true'; });
-            form.addEventListener('change', () => { form.dataset.unsavedChanges = 'true'; });
-            form.addEventListener('submit', () => { delete form.dataset.unsavedChanges; });
-        });
-        window.setInterval(() => {
-            const hasUnsavedChanges = [...document.forms].some((form) => form.dataset.unsavedChanges === 'true');
-            const dialogOpen = document.querySelector('dialog[open]');
-            const editing = document.activeElement?.matches('input, textarea, select');
-            if (document.visibilityState === 'visible' && !hasUnsavedChanges && !dialogOpen && !editing) {
-                window.location.reload();
-            }
-        }, refreshInterval);
-
-        const notificationCount = document.querySelector('[data-notification-count]');
-        if (notificationCount) {
-            window.setInterval(async () => {
-                if (document.visibilityState !== 'visible') return;
-
-                try {
-                    const response = await fetch(notificationCount.dataset.endpoint, {
-                        headers: { Accept: 'application/json' },
-                        credentials: 'same-origin',
-                    });
-                    if (!response.ok) throw new Error(`Notification refresh failed with HTTP ${response.status}.`);
-                    const state = await response.json();
-                    notificationCount.textContent = String(state.unread_count);
-                    notificationCount.hidden = state.unread_count === 0;
-                } catch (error) {
-                    console.error('Unable to refresh cooperative notifications.', error);
-                }
-            }, 60_000);
-        }
-    }
-
     const loanSelect = document.querySelector('[data-loan-select]');
     const installmentSelect = document.querySelector('[data-installment-select]');
     const sourceSelect = document.querySelector('[data-nominal-source]');
     const installmentPanel = document.querySelector('[data-system-installment]');
     const manualAmount = document.querySelector('[data-manual-amount]');
     const amountInput = manualAmount?.querySelector('input');
+    const paymentType = document.querySelector('[data-payment-type]');
+    const payoffSummary = document.querySelector('[data-payoff-summary]');
+    const payoffAmount = document.querySelector('[data-payoff-amount]');
+    const paymentTitle = document.querySelector('[data-payment-title]');
+    const paymentSubmit = document.querySelector('[data-payment-submit]');
     const editLoanSelect = document.querySelector('[data-edit-loan-select]');
     const editInstallmentSelect = document.querySelector('[data-edit-installment-select]');
 
@@ -309,7 +436,44 @@ document.addEventListener('DOMContentLoaded', () => {
         systemOption.disabled = !selected;
         if (!selected) sourceSelect.value = 'manual';
         updateNominalMode();
+        updatePayoffAmount();
     };
+
+    function updatePayoffAmount() {
+        const amount = Number(loanSelect?.selectedOptions[0]?.dataset.totalOutstanding || 0);
+        if (payoffAmount) {
+            payoffAmount.textContent = new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                maximumFractionDigits: 0,
+            }).format(amount);
+        }
+    }
+
+    function setPaymentMode(mode) {
+        if (!paymentType || !installmentSelect || !sourceSelect) return;
+        const isPayoff = mode === 'payoff';
+        paymentType.value = isPayoff ? 'payoff' : 'installment';
+        installmentSelect.required = !isPayoff;
+        document.querySelectorAll('[data-installment-field], [data-nominal-field]').forEach((field) => {
+            field.classList.toggle('hidden', isPayoff);
+        });
+        installmentPanel?.classList.toggle('hidden', isPayoff || sourceSelect.value === 'manual');
+        manualAmount?.classList.toggle('hidden', isPayoff || sourceSelect.value !== 'manual');
+        payoffSummary?.classList.toggle('hidden', !isPayoff);
+        if (isPayoff) {
+            sourceSelect.value = 'system';
+            if (amountInput) {
+                amountInput.disabled = true;
+                amountInput.required = false;
+            }
+        } else {
+            updateNominalMode();
+        }
+        if (paymentTitle) paymentTitle.textContent = isPayoff ? 'Lunasi pinjaman' : 'Catat setoran';
+        if (paymentSubmit) paymentSubmit.textContent = isPayoff ? 'Konfirmasi Pelunasan' : 'Catat Pembayaran';
+        updatePayoffAmount();
+    }
 
     function updateNominalMode() {
         const isManual = sourceSelect.value === 'manual';
@@ -327,6 +491,10 @@ document.addEventListener('DOMContentLoaded', () => {
         sourceSelect.addEventListener('change', updateNominalMode);
         updateInstallment();
     }
+    document.querySelectorAll('[data-payment-mode-trigger]').forEach((button) => {
+        button.addEventListener('click', () => setPaymentMode(button.dataset.paymentModeTrigger));
+    });
+    if (paymentType) setPaymentMode(paymentType.value);
 
     const methodSelect = document.querySelector('[data-payment-method]');
     const proofPanel = document.querySelector('[data-transfer-proof]');

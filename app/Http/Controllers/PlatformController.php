@@ -388,7 +388,6 @@ class PlatformController extends Controller
     public function updateProfilePassword(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'current_password' => ['required', 'current_password:platform'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
         $admin = $request->user('platform');
