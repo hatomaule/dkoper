@@ -145,6 +145,7 @@ class FidesTenantLoginTest extends TestCase
             ->assertDontSee('Selamat datang');
         $this->assertSame(3, substr_count($accountsPage->getContent(), 'role="switch"'));
         $this->assertSame(2, substr_count($accountsPage->getContent(), 'data-open-dialog="status-account-'));
+        $this->assertSame(PlatformCooperative::query()->count(), substr_count($accountsPage->getContent(), 'data-platform-mobile-account-link'));
         $this->get(route('platform.cooperatives'))
             ->assertOk()
             ->assertSee('Daftarkan koperasi')

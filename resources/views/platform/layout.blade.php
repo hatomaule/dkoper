@@ -137,10 +137,10 @@
                     <span class="flex-1">Manajemen akun</span>
                     <svg viewBox="0 0 20 20" aria-hidden="true" class="h-4 w-4 shrink-0 fill-none stroke-current transition-transform duration-200" :class="accountSubmenuOpen ? 'rotate-180' : ''"><path d="m5 7.5 5 5 5-5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
-                <div id="platform-mobile-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="mb-2 ml-8 mt-1 border-l border-slate-800 py-1 pl-3">
+                <div id="platform-mobile-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="mb-2 ml-[22px] mt-1 grid gap-[3px] border-l border-slate-800 pl-3">
                     @forelse ($platformCooperatives as $platformCooperative)
-                        <a href="{{ route('platform.accounts', ['cooperative' => $platformCooperative->id]) }}" @click="mobileMenuOpen = false" @class([
-                            'mb-1 flex min-h-9 items-center justify-between gap-2 rounded-md px-3 py-2 text-xs transition',
+                        <a data-platform-mobile-account-link href="{{ route('platform.accounts', ['cooperative' => $platformCooperative->id]) }}" @click="mobileMenuOpen = false" @class([
+                            'flex min-h-9 items-center justify-between gap-2 rounded-lg px-[11px] text-xs font-semibold transition-colors',
                             'bg-slate-800/80 text-white' => $currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts'),
                             'text-slate-500 hover:bg-slate-800/60 hover:text-slate-200' => ! ($currentCooperativeId === $platformCooperative->id && request()->routeIs('platform.accounts')),
                         ])>
