@@ -356,3 +356,10 @@ Remaining follow-up:
 
 - Fixed the shared dialog trigger to accept both a raw dialog ID and a `#`-prefixed ID. The account Create button uses a raw ID; the old handler rejected it, so the Owner/Admin creation dialog did not open.
 - Verification: focused Owner/Admin creation feature test passed (15 assertions), Vite production build and PHP syntax checks passed.
+
+### Platform functional smoke check (29 October 2026)
+
+- Browser-checked Platform Dashboard, cooperative list/detail, and account management navigation. Account and cooperative tables/cards, search/status filters, pagination state, Create, registration, reset-password, activate/deactivate, delete, profile-menu, and profile-password dialogs responded.
+- A browser check caught that the shared account role label was not initialized in the delete-confirmation dialog after account-role controls were removed. Restored the Owner/Admin label and added coverage for both role-specific confirmations.
+- No destructive forms or account-creation forms were submitted against the live local tenant during browser checks. Owner/Admin creation and role/borrower restrictions are covered by isolated feature tests.
+- Full regression verification: `php artisan test --no-coverage` passed (97 tests, 645 assertions); Vite build, Blade view cache, PHP syntax checks, and `git diff --check` passed. Local site responded with HTTP 302 to the unauthenticated route after tests.

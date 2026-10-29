@@ -183,6 +183,28 @@ class FidesTenantLoginTest extends TestCase
         app(FidesTenantManager::class)->restoreBaseConnection();
     }
 
+    public function test_account_delete_confirmation_uses_each_account_role(): void
+    {
+        $platformAdmin = PlatformAdmin::query()->create([
+            'name' => 'FIDES Admin',
+            'username' => 'fides-root',
+            'password' => Hash::make('platform-secure-password'),
+        ]);
+        User::query()->create([
+            'name' => 'Admin Uji',
+            'username' => 'admin-uji',
+            'password' => Hash::make('secure-password'),
+            'role' => 'kasir',
+            'must_change_password' => false,
+        ]);
+
+        $this->actingAs($platformAdmin, 'platform')
+            ->get(route('platform.accounts'))
+            ->assertOk()
+            ->assertSee('Hapus Owner?')
+            ->assertSee('Hapus Admin?');
+    }
+
     public function test_super_admin_can_create_owner_or_admin_accounts(): void
     {
         $platformAdmin = PlatformAdmin::query()->create([

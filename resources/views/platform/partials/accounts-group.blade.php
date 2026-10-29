@@ -178,6 +178,7 @@
         </dialog>
         @foreach ($accounts as $account)
             @php($dialogId = $cooperative->id.'-'.$account->id)
+            @php($roleLabel = $account->role === 'manager' ? 'Owner' : 'Admin')
             <dialog id="reset-account-{{ $dialogId }}" class="w-[min(28rem,calc(100%-2rem))] rounded-xl border border-slate-700 bg-[#101829] p-0 text-slate-200 shadow-2xl backdrop:bg-black/70">
                 <form method="POST" action="{{ route('platform.accounts.reset-password', [$cooperative->id, $account->id]) }}" class="space-y-4 p-5">
                     @csrf
