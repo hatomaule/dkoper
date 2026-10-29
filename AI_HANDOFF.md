@@ -351,3 +351,8 @@ Remaining follow-up:
 - Added a Create action before account search for creating Owner or Admin accounts with a required initial password and forced password change at first login.
 - Limited account management listings and account update/reset/activation/deletion endpoints to Owner/Admin roles. Borrower accounts remain in their cooperative and cannot be viewed or changed from the Super Admin account-management page.
 - Verification: `php artisan test tests/Feature/FidesTenantLoginTest.php` passed (15 tests, 151 assertions); Vite build, Blade view cache, PHP syntax checks, and `git diff --check` passed.
+
+### Platform Create dialog trigger fix (29 October 2026)
+
+- Fixed the shared dialog trigger to accept both a raw dialog ID and a `#`-prefixed ID. The account Create button uses a raw ID; the old handler rejected it, so the Owner/Admin creation dialog did not open.
+- Verification: focused Owner/Admin creation feature test passed (15 assertions), Vite production build and PHP syntax checks passed.

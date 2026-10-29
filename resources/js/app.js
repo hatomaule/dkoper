@@ -214,7 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-open-dialog]').forEach((button) => {
         button.addEventListener('click', () => {
             const target = button.dataset.openDialog;
-            const dialog = target?.startsWith('#') ? document.getElementById(target.slice(1)) : null;
+            const dialogId = target?.startsWith('#') ? target.slice(1) : target;
+            const dialog = dialogId ? document.getElementById(dialogId) : null;
             if (!(dialog instanceof HTMLDialogElement)) {
                 console.error(`Unable to open dialog for selector "${target}".`);
                 return;
