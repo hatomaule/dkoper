@@ -11,7 +11,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased dk-body">
+    <body class="font-sans antialiased dk-body" @if (auth()->user()?->isManager()) data-platform-auto-refresh="60000" @endif>
         <div class="min-h-screen bg-gray-100 dk-app">
             @include('layouts.navigation')
 

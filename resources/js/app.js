@@ -244,27 +244,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (document.visibilityState === 'visible' && !hasUnsavedChanges && !dialogOpen && !editing) {
                 window.location.reload();
             }
-
-            const notificationCount = document.querySelector('[data-notification-count]');
-            if (notificationCount) {
-                window.setInterval(async () => {
-                    if (document.visibilityState !== 'visible') return;
-
-                    try {
-                        const response = await fetch(notificationCount.dataset.endpoint, {
-                            headers: { Accept: 'application/json' },
-                            credentials: 'same-origin',
-                        });
-                        if (!response.ok) throw new Error(`Notification refresh failed with HTTP ${response.status}.`);
-                        const state = await response.json();
-                        notificationCount.textContent = String(state.unread_count);
-                        notificationCount.hidden = state.unread_count === 0;
-                    } catch (error) {
-                        console.error('Unable to refresh cooperative notifications.', error);
-                    }
-                }, 60_000);
-            }
         }, refreshInterval);
+
+        const notificationCount = document.querySelector('[data-notification-count]');
+        if (notificationCount) {
+            window.setInterval(async () => {
+                if (document.visibilityState !== 'visible') return;
+
+                try {
+                    const response = await fetch(notificationCount.dataset.endpoint, {
+                        headers: { Accept: 'application/json' },
+                        credentials: 'same-origin',
+                    });
+                    if (!response.ok) throw new Error(`Notification refresh failed with HTTP ${response.status}.`);
+                    const state = await response.json();
+                    notificationCount.textContent = String(state.unread_count);
+                    notificationCount.hidden = state.unread_count === 0;
+                } catch (error) {
+                    console.error('Unable to refresh cooperative notifications.', error);
+                }
+            }, 60_000);
+        }
     }
 
     const loanSelect = document.querySelector('[data-loan-select]');

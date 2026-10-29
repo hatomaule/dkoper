@@ -36,7 +36,8 @@ class DashboardAccessTest extends TestCase
             ->assertSee('Nominal transaksi per bulan')
             ->assertSee('Nominal transaksi per tahun')
             ->assertDontSee('Debit dan kredit mingguan')
-            ->assertSee('logout-title');
+            ->assertSee('logout-title')
+            ->assertSee('data-platform-auto-refresh="60000"', false);
     }
 
     public function test_admin_dashboard_shows_owner_and_admin_bonus_totals(): void
@@ -52,7 +53,8 @@ class DashboardAccessTest extends TestCase
             ->assertSee('Alan Owner')
             ->assertSee('Chalo Admin')
             ->assertSee('Rp 10.000')
-            ->assertSee('Rp 7.000');
+            ->assertSee('Rp 7.000')
+            ->assertDontSee('data-platform-auto-refresh');
     }
 
     public function test_dashboard_shows_realized_and_projected_bonus_as_the_overall_total(): void
