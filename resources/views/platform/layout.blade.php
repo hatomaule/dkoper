@@ -138,11 +138,6 @@
                     <svg viewBox="0 0 20 20" aria-hidden="true" class="h-4 w-4 shrink-0 fill-none stroke-current transition-transform duration-200" :class="accountSubmenuOpen ? 'rotate-180' : ''"><path d="m5 7.5 5 5 5-5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </button>
                 <div id="platform-mobile-account-submenu" x-cloak x-show="accountSubmenuOpen" x-transition.opacity class="mb-2 ml-8 mt-1 border-l border-slate-800 py-1 pl-3">
-                    <a href="{{ route('platform.accounts') }}" @click="mobileMenuOpen = false" @class([
-                        'mb-1 flex min-h-9 items-center rounded-md px-3 py-2 text-xs transition',
-                        'bg-slate-800/80 text-white' => request()->routeIs('platform.accounts') && ! request()->query('cooperative'),
-                        'text-slate-400 hover:bg-slate-800/60 hover:text-white' => ! (request()->routeIs('platform.accounts') && ! request()->query('cooperative')),
-                    ])>Semua koperasi</a>
                     @forelse ($platformCooperatives as $platformCooperative)
                         <a href="{{ route('platform.accounts', ['cooperative' => $platformCooperative->id]) }}" @click="mobileMenuOpen = false" @class([
                             'mb-1 flex min-h-9 items-center justify-between gap-2 rounded-md px-3 py-2 text-xs transition',

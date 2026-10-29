@@ -385,3 +385,4 @@ Remaining follow-up:
 
 - Changed only the Platform mobile drawer: “Manajemen akun” is now a disclosure button, and its “Semua koperasi” plus per-cooperative shortcuts are hidden until expanded. Added an accessible `aria-expanded`/`aria-controls` relationship and a rotating chevron. The desktop sidebar is unchanged.
 - Verification: focused Platform navigation test passed (55 assertions); Vite build, Blade view cache, PHP syntax check, and `git diff --check` passed.
+- Follow-up: removed the extra “Semua koperasi” mobile submenu entry at the user's request; the submenu now contains only one link per registered cooperative (two items for the current two cooperatives). Platform navigation feature test, Blade cache, and `git diff --check` passed.
