@@ -1797,15 +1797,77 @@ html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action:focus-visible
     padding: 2px;
 }
 
-.dk-loan-card > .dk-loan-installments-scroll {
-    display: block;
+.dk-loan-card {
+    align-content: start;
+    gap: 0;
+    border-color: #e8dda8;
+    background: #fff8cc;
+    padding: 10px;
+    box-shadow: 0 10px 22px rgb(87 75 29 / 10%), 0 2px 6px rgb(87 75 29 / 5%);
+}
+
+.dk-loan-card-details {
+    margin: 0;
+}
+
+.dk-loan-card-details > div {
+    display: flex;
+    min-height: 30px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid transparent;
+    padding: 5px 10px;
+}
+
+.dk-loan-card-details dt {
+    color: #334e68;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.dk-loan-card-details dd {
+    margin: 0;
+    color: #172b4d;
+    font-size: 11px;
+    font-weight: 550;
+    text-align: right;
+}
+
+.dk-loan-card-details .dk-loan-installment-row:hover {
+    border-color: #f59e0b;
+}
+
+.dk-loan-card-details .dk-loan-card-total {
+    margin-top: 2px;
+}
+
+.dk-loan-card-total dd {
+    font-variant-numeric: tabular-nums;
+}
+
+.dk-loan-card-details .dk-loan-card-paid dd {
+    color: #6b21a8;
+    font-weight: 800;
+}
+
+.dk-loan-card-details .dk-loan-card-outstanding dd {
+    color: #047857;
+    font-weight: 800;
+}
+
+.dk-loan-card-details .dk-loan-card-authority {
+    min-height: 36px;
+    margin-top: 3px;
+    border-top-color: #e8dda8;
 }
 
 .dk-loan-card-actions {
     display: flex !important;
-    justify-content: flex-start !important;
-    gap: 12px;
-    padding-top: 4px;
+    justify-content: flex-end !important;
+    gap: 7px;
+    padding: 4px 8px 2px;
 }
 
 .dk-loan-card-actions form {
@@ -2785,7 +2847,8 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
 }
 
 .dk-loan-cards {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 400px));
+    justify-content: start;
 }
 
 .dk-payment-card > div {
@@ -2885,45 +2948,6 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
     background: #f0f7f4;
 }
 
-.dk-loan-installments-scroll {
-    max-width: 100%;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scrollbar-color: var(--dk-muted) transparent;
-    scrollbar-width: thin;
-}
-
-.dk-loan-installment-grid {
-    display: grid;
-    width: max-content;
-    grid-auto-columns: 48px;
-    grid-auto-flow: column;
-    gap: 6px;
-}
-
-.dk-loan-installment-grid > div {
-    display: grid;
-    min-width: 0;
-    min-height: 46px;
-    align-content: center;
-    gap: 2px;
-    border: 1px solid var(--dk-line);
-    border-radius: 7px;
-    padding: 6px 4px;
-    text-align: center;
-}
-
-.dk-loan-installment-grid small {
-    color: var(--dk-muted);
-    font-size: 9px;
-}
-
-.dk-loan-installment-grid strong {
-    overflow-wrap: normal;
-    white-space: nowrap;
-    font-size: 10px;
-}
-
 html[data-theme="dark"] .dk-inline-danger {
     background: #492c2d;
     color: #ffb6ae;
@@ -2931,6 +2955,23 @@ html[data-theme="dark"] .dk-inline-danger {
 
 html[data-theme="dark"] .dk-loan-ledger tfoot {
     background: #203b33;
+}
+
+html[data-theme="dark"] .dk-loan-card {
+    border-color: #665c37;
+    background: #302d20;
+}
+
+html[data-theme="dark"] .dk-loan-card-details dt {
+    color: #d3c99e;
+}
+
+html[data-theme="dark"] .dk-loan-card-details dd {
+    color: #f4edcf;
+}
+
+html[data-theme="dark"] .dk-loan-card-details .dk-loan-card-authority {
+    border-top-color: #665c37;
 }
 
 .dk-system-installment {
@@ -3141,11 +3182,6 @@ html[data-theme="dark"] .dk-system-installment {
     .dk-topbar-controls .dk-notification-trigger {
         width: 30px;
         height: 30px;
-    }
-
-    .dk-loan-installment-grid {
-        grid-auto-columns: 46px;
-        gap: 5px;
     }
 
     .dk-bonus-summary {

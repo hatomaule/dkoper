@@ -314,3 +314,9 @@ Remaining follow-up:
 - Borrower advance corrections now append signed `amount_delta` entries instead of deleting the prior advance rows. The migration drops the single-advance-per-payment constraint while retaining an index; rollback is refused when correction history would be lost.
 - Added migrations `2026_10_30_000000_add_soft_deletes_to_loans` and `2026_10_30_000001_preserve_borrower_advance_history`. Both were applied to the active DKoper database and registered Cair Dana SQLite tenant; the latter also received the pending notification migration.
 - Verification: `php artisan test --no-coverage` passed (94 tests, 596 assertions), including tenant-prefixed migration coverage. Targeted loan/payment/role tests also passed. `npm run build`, `php artisan view:cache`, PHP syntax checks, and `git diff --check` passed.
+
+### Per-loan vertical card layout (29 October 2026)
+
+- Updated only the loan card view to match the supplied reference: each loan card shows borrower name, principal, installments 1–12 in vertical rows, then that loan's total receivable, allocated paid total, outstanding amount, and approving authority. No portfolio-wide totals are included in cards; the aggregate stays in table mode.
+- Card amounts are derived from that loan's `total_receivable` and its own 12 installment `paid_amount`/`outstanding_amount` values. Rows highlight on hover; card surfaces use the warm light reference palette and a dark-theme equivalent.
+- Verification: focused loan-card/Owner access feature test passed (19 assertions); `npm run build`, `php artisan view:cache`, and `git diff --check` passed.

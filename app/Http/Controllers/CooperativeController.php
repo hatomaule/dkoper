@@ -177,7 +177,7 @@ class CooperativeController extends Controller
     {
         $this->authorizeStaff();
         $perPage = $this->perPage(request());
-        $query = Loan::with(['borrower', 'installments'])
+        $query = Loan::with(['borrower', 'installments', 'approver'])
             ->withCount('payments')
             ->whereIn('status', ['active', 'paid'])
             ->whereHas('borrower', fn ($query) => $query->customerAccount())

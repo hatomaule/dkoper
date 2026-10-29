@@ -81,6 +81,20 @@ class CooperativeRoleAccessTest extends TestCase
             'status' => 'active',
         ]);
         $loan = app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
+        $payment = \App\Models\Payment::create([
+            'loan_id' => $loan->id,
+            'recorded_by' => $owner->id,
+            'amount' => 100_000,
+            'nominal_source' => 'manual',
+            'status' => 'pending',
+        ]);
+        app(\App\Services\PaymentService::class)->approvePayment($owner, $payment->id);
+        $secondBorrower = Borrower::create([
+            'borrower_code' => 'DK_OWNER_ACTION_2',
+            'full_name' => 'Nasabah Kedua',
+            'status' => 'active',
+        ]);
+        app(LoanService::class)->createApprovedLoan($owner, $secondBorrower->id, 500_000);
 
         $content = $this->actingAs($owner)
             ->get(route('cooperative.loans'))
@@ -90,6 +104,20 @@ class CooperativeRoleAccessTest extends TestCase
         $cardContent = substr($content, strpos($content, 'data-table-view="cards"'));
         $this->assertStringNotContainsString('TOTAL SELURUH DATA', $cardContent);
         $this->assertStringContainsString('data-open-dialog="#loan-correction-'.$loan->id.'"', $cardContent);
+        preg_match_all('/<article class="dk-payment-card dk-loan-card" data-table-row>(.*?)<\\/article>/s', $cardContent, $cards);
+        $this->assertCount(2, $cards[1]);
+        $firstLoanCard = collect($cards[1])->first(fn ($card) => str_contains($card, 'Nasabah Aksi Owner'));
+        $this->assertNotNull($firstLoanCard);
+        $this->assertStringContainsString('Cicilan 1', $firstLoanCard);
+        $this->assertStringContainsString('Cicilan 12', $firstLoanCard);
+        $this->assertStringContainsString('Rp 1.200.000', $firstLoanCard);
+        $this->assertStringContainsString('Rp 100.000', $firstLoanCard);
+        $this->assertStringContainsString('Rp 1.100.000', $firstLoanCard);
+        $this->assertStringContainsString('Otoritas', $firstLoanCard);
+        $secondLoanCard = collect($cards[1])->first(fn ($card) => str_contains($card, 'Nasabah Kedua'));
+        $this->assertNotNull($secondLoanCard);
+        $this->assertStringContainsString('Rp 600.000', $secondLoanCard);
+        $this->assertStringContainsString('Rp 0', $secondLoanCard);
 
         $this->actingAs($owner)
             ->patch(route('cooperative.loans.correct', $loan), [

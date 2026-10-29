@@ -73,21 +73,34 @@
                 <div class="dk-payment-cards dk-loan-cards dk-table-view" data-table-view="cards" hidden>
                     @foreach ($loans as $loan)
                         @php($installmentsBySequence = $loan->installments->keyBy('sequence'))
-                        @php($loanStatus = match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) })
                         <article class="dk-payment-card dk-loan-card" data-table-row>
-                            <div>
-                                <strong>{{ $loan->borrower->full_name }}</strong>
-                                <span class="dk-status" data-status="{{ $loan->status }}">{{ $loanStatus }}</span>
-                            </div>
-                            <small>{{ $loan->loan_code }} · Jumlah pinjaman Rp {{ number_format((int) $loan->principal_amount, 0, ',', '.') }}</small>
-                            <div class="dk-loan-installments-scroll" role="region" aria-label="Urutan setoran pinjaman {{ $loan->loan_code }}">
-                                <div class="dk-loan-installment-grid">
-                                    @for ($sequence = 1; $sequence <= 12; $sequence++)
-                                        @php($installment = $installmentsBySequence->get($sequence))
-                                        <div><small>{{ $sequence }}</small><strong>{{ $installment && $installment->paid_amount > 0 ? number_format((int) $installment->paid_amount, 0, ',', '.') : '—' }}</strong></div>
-                                    @endfor
+                            <dl class="dk-loan-card-details">
+                                <div><dt>Nama</dt><dd>{{ $loan->borrower->full_name }}</dd></div>
+                                <div><dt>Pokok</dt><dd>Rp {{ number_format((int) $loan->principal_amount, 0, ',', '.') }}</dd></div>
+                                @for ($sequence = 1; $sequence <= 12; $sequence++)
+                                    @php($installment = $installmentsBySequence->get($sequence))
+                                    <div class="dk-loan-installment-row">
+                                        <dt>Cicilan {{ $sequence }}</dt>
+                                        <dd>{{ $installment && $installment->paid_amount > 0 ? 'Rp '.number_format((int) $installment->paid_amount, 0, ',', '.') : '—' }}</dd>
+                                    </div>
+                                @endfor
+                                <div class="dk-loan-card-total">
+                                    <dt>Total Tagihan</dt>
+                                    <dd>Rp {{ number_format((int) $loan->total_receivable, 0, ',', '.') }}</dd>
                                 </div>
-                            </div>
+                                <div class="dk-loan-card-total dk-loan-card-paid">
+                                    <dt>Total Setoran</dt>
+                                    <dd>Rp {{ number_format((int) $loan->installments->sum('paid_amount'), 0, ',', '.') }}</dd>
+                                </div>
+                                <div class="dk-loan-card-total dk-loan-card-outstanding">
+                                    <dt>Sisa Piutang</dt>
+                                    <dd>Rp {{ number_format((int) $loan->installments->sum('outstanding_amount'), 0, ',', '.') }}</dd>
+                                </div>
+                                <div class="dk-loan-card-authority">
+                                    <dt>Otoritas</dt>
+                                    <dd>{{ $loan->approver?->name ?? 'Menunggu persetujuan Owner' }}</dd>
+                                </div>
+                            </dl>
                             @if (auth()->user()->isManager())
                                 <div class="dk-loan-card-actions">
                                     <button type="button" class="dk-inline-action" data-open-dialog="#loan-correction-{{ $loan->id }}">Koreksi pinjaman</button>
