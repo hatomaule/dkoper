@@ -72,9 +72,10 @@ Route::middleware(['auth', 'password.changed'])->group(function () {
     Route::delete('/cooperative/borrowers/{borrower}', [CooperativeController::class, 'destroyBorrower'])->name('cooperative.borrowers.destroy');
     Route::post('/cooperative/staff/{user}/password', [CooperativeController::class, 'updateStaffPassword'])->name('cooperative.staff.update-password');
     Route::get('/cooperative/loans', [CooperativeController::class, 'loans'])->name('cooperative.loans');
+    Route::get('/cooperative/loans/history', [CooperativeController::class, 'loanHistory'])->name('cooperative.loans.history');
     Route::post('/cooperative/loans', [CooperativeController::class, 'storeLoan'])->name('cooperative.loans.store');
     Route::patch('/cooperative/loans/{loan}', [CooperativeController::class, 'correctLoan'])->name('cooperative.loans.correct');
-    Route::delete('/cooperative/loans/{loan}', [CooperativeController::class, 'archiveLoan'])->name('cooperative.loans.archive');
+    Route::delete('/cooperative/loans/{loan}', [CooperativeController::class, 'deleteLoan'])->name('cooperative.loans.destroy');
     Route::get('/cooperative/payments', [CooperativeController::class, 'payments'])->name('cooperative.payments');
     Route::post('/cooperative/payments', [CooperativeController::class, 'storePayment'])->name('cooperative.payments.store');
     Route::patch('/cooperative/payments/{payment}', [CooperativeController::class, 'updatePayment'])->name('cooperative.payments.update');

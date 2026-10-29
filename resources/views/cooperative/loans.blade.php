@@ -5,6 +5,9 @@
             <section class="dk-data-panel min-w-0">
                 <div class="dk-table-toolbar">
                     <button type="button" class="dk-button-primary" data-open-dialog="#loan-create-dialog">Catat Pinjaman</button>
+                    @if (auth()->user()->isManager())
+                        <a href="{{ route('cooperative.loans.history') }}" class="dk-button-secondary">Riwayat</a>
+                    @endif
                     <label>Filter <input type="search" placeholder="Cari nasabah / pinjaman..." data-table-search></label>
                     <label>Tampilkan
                         <select data-page-size>
@@ -53,13 +56,9 @@
                                     @endfor
                                     @if (auth()->user()->isManager())
                                         <td class="whitespace-nowrap">
-                                            <button type="button" class="dk-inline-action" data-open-dialog="#loan-correction-{{ $loan->id }}">Koreksi</button>
+                                            <button type="button" class="dk-button-secondary" data-open-dialog="#loan-correction-{{ $loan->id }}">Koreksi</button>
                                             @if ($loan->status === 'paid' || ((int) $loan->payments_count === 0 && $loan->created_at?->greaterThanOrEqualTo(now()->subDay())))
-                                                <form method="POST" action="{{ route('cooperative.loans.archive', $loan) }}" class="inline" onsubmit="return confirm('Arsipkan pinjaman {{ $loan->loan_code }}? Riwayat keuangan tetap disimpan.');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button class="dk-inline-action dk-inline-danger">Arsipkan</button>
-                                                </form>
+                                                <button type="button" class="dk-button-danger" data-open-dialog="#loan-delete-{{ $loan->id }}">Hapus</button>
                                             @endif
                                         </td>
                                     @endif
@@ -74,12 +73,13 @@
                     @foreach ($loans as $loan)
                         @php($installmentsBySequence = $loan->installments->keyBy('sequence'))
                         <article class="dk-payment-card dk-loan-card" data-table-row>
+                            @php($loanStatus = match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) })
                             <dl class="dk-loan-card-details">
-                                <div><dt>Nama</dt><dd>{{ $loan->borrower->full_name }}</dd></div>
+                                <div><dt>Nama</dt><dd>{{ $loan->borrower->full_name }}<small>{{ $loan->loan_code }} · {{ $loanStatus }}</small></dd></div>
                                 <div><dt>Pokok</dt><dd>Rp {{ number_format((int) $loan->principal_amount, 0, ',', '.') }}</dd></div>
                                 @for ($sequence = 1; $sequence <= 12; $sequence++)
                                     @php($installment = $installmentsBySequence->get($sequence))
-                                    <div class="dk-loan-installment-row">
+                                    <div class="dk-loan-installment-row @if ($sequence === 12) dk-loan-last-installment @endif">
                                         <dt>Cicilan {{ $sequence }}</dt>
                                         <dd>{{ $installment && $installment->paid_amount > 0 ? 'Rp '.number_format((int) $installment->paid_amount, 0, ',', '.') : '—' }}</dd>
                                     </div>
@@ -96,20 +96,12 @@
                                     <dt>Sisa Piutang</dt>
                                     <dd>Rp {{ number_format((int) $loan->installments->sum('outstanding_amount'), 0, ',', '.') }}</dd>
                                 </div>
-                                <div class="dk-loan-card-authority">
-                                    <dt>Otoritas</dt>
-                                    <dd>{{ $loan->approver?->name ?? 'Menunggu persetujuan Owner' }}</dd>
-                                </div>
                             </dl>
                             @if (auth()->user()->isManager())
                                 <div class="dk-loan-card-actions">
-                                    <button type="button" class="dk-inline-action" data-open-dialog="#loan-correction-{{ $loan->id }}">Koreksi pinjaman</button>
+                                    <button type="button" class="dk-button-secondary" data-open-dialog="#loan-correction-{{ $loan->id }}">Koreksi</button>
                                     @if ($loan->status === 'paid' || ((int) $loan->payments_count === 0 && $loan->created_at?->greaterThanOrEqualTo(now()->subDay())))
-                                        <form method="POST" action="{{ route('cooperative.loans.archive', $loan) }}" onsubmit="return confirm('Arsipkan pinjaman {{ $loan->loan_code }}? Riwayat keuangan tetap disimpan.');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button class="dk-inline-action dk-inline-danger">Arsipkan</button>
-                                        </form>
+                                        <button type="button" class="dk-button-danger" data-open-dialog="#loan-delete-{{ $loan->id }}">Hapus</button>
                                     @endif
                                 </div>
                             @endif
@@ -167,6 +159,25 @@
                             <button class="dk-button-primary">Simpan Koreksi</button>
                         </form>
                     </dialog>
+                    @if ($loan->status === 'paid' || ((int) $loan->payments_count === 0 && $loan->created_at?->greaterThanOrEqualTo(now()->subDay())))
+                        <dialog class="dk-loan-delete-dialog" id="loan-delete-{{ $loan->id }}">
+                            <form method="POST" action="{{ route('cooperative.loans.destroy', $loan) }}">
+                                @csrf
+                                @method('DELETE')
+                                <span class="dk-logout-icon" aria-hidden="true">!</span>
+                                <h2>Hapus pinjaman {{ $loan->loan_code }}?</h2>
+                                <p>Pinjaman akan hilang dari daftar utama dan masuk ke menu Riwayat. Pembayaran, log aktivitas, dan laporan keuangan tetap tersimpan.</p>
+                                <label class="dk-confirmation-check">
+                                    <input type="checkbox" name="confirm_delete" value="yes" required>
+                                    Saya memahami pinjaman ini hanya dihapus dari daftar, bukan dari riwayat keuangan.
+                                </label>
+                                <div class="dk-logout-actions">
+                                    <button type="button" class="dk-logout-cancel" data-close-dialog>Batal</button>
+                                    <button type="submit" class="dk-logout-confirm">Hapus Pinjaman</button>
+                                </div>
+                            </form>
+                        </dialog>
+                    @endif
                 @endif
             @endforeach
         </div>

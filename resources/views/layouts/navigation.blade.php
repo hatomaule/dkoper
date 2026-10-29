@@ -30,6 +30,10 @@
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 20 7v5.2c0 4.4-3.1 7.1-8 8.8-4.9-1.7-8-4.4-8-8.8V7z"/><path d="m8.5 12 2.2 2.2 4.8-4.8"/></svg>
                         <span>Persetujuan</span>
                     </x-nav-link>
+                    <x-nav-link :href="route('cooperative.loans.history')" :active="request()->routeIs('cooperative.loans.history')">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7.5h15v12h-15zM8 7.5V5h8v2.5M8 11h8M8 14.5h5"/><path d="M5 4 3.5 5.5"/></svg>
+                        <span>Riwayat</span>
+                    </x-nav-link>
                     <x-nav-link :href="route('cooperative.finances')" :active="request()->routeIs('cooperative.finances')">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5h16M6.5 16V10M12 16V5M17.5 16v-4"/></svg>
                         <span>Keuangan</span>
@@ -85,6 +89,7 @@
             @if (auth()->user()->isManager())
                 <div class="dk-mobile-caption dk-mobile-caption-spaced">PENGELOLAAN</div>
                 <x-responsive-nav-link :href="route('cooperative.approvals')" :active="request()->routeIs('cooperative.approvals')">Persetujuan</x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('cooperative.loans.history')" :active="request()->routeIs('cooperative.loans.history')">Riwayat</x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('cooperative.finances')" :active="request()->routeIs('cooperative.finances')">Keuangan</x-responsive-nav-link>
             @endif
             @if (auth()->user()->isManager() || auth()->user()->isCashier())

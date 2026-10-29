@@ -209,12 +209,12 @@ class LoanServiceTest extends TestCase
         $this->assertSame(1, Loan::withTrashed()->whereKey($loan->id)->count());
     }
 
-    public function test_archiving_paid_loan_keeps_payments_cash_ledger_and_activity_history(): void
+    public function test_deleting_paid_loan_keeps_payments_cash_ledger_and_activity_history(): void
     {
         $owner = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
         $borrower = Borrower::create([
-            'full_name' => 'Nasabah Arsip',
-            'borrower_code' => 'DK_ARCHIVE',
+            'full_name' => 'Nasabah Terhapus',
+            'borrower_code' => 'DK_DELETED',
             'status' => 'active',
         ]);
         $loan = app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
@@ -228,17 +228,17 @@ class LoanServiceTest extends TestCase
         app(\App\Services\PaymentService::class)->approvePayment($owner, $payment->id);
         $cashRowsBeforeArchive = CashTransaction::where('loan_id', $loan->id)->count();
 
-        app(LoanService::class)->archiveLoan($owner, $loan->id);
+        app(LoanService::class)->deleteLoan($owner, $loan->id);
 
         $this->assertSoftDeleted('loans', ['id' => $loan->id]);
         $this->assertDatabaseHas('payments', ['id' => $payment->id, 'loan_id' => $loan->id]);
         $this->assertSame($cashRowsBeforeArchive, CashTransaction::where('loan_id', $loan->id)->count());
-        $this->assertDatabaseHas('activity_logs', ['action' => 'loan.archived', 'entity_id' => $loan->id]);
+        $this->assertDatabaseHas('activity_logs', ['action' => 'loan.deleted', 'entity_id' => $loan->id]);
         $this->assertSame($loan->loan_code, $payment->fresh()->loan->loan_code);
         $this->assertTrue($borrower->fresh()->loans->contains('id', $loan->id));
     }
 
-    public function test_unpaid_loan_with_payment_history_cannot_be_archived(): void
+    public function test_unpaid_loan_with_payment_history_cannot_be_deleted(): void
     {
         $owner = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
         $borrower = Borrower::create([
@@ -256,10 +256,10 @@ class LoanServiceTest extends TestCase
         ]);
 
         $this->expectException(\Illuminate\Validation\ValidationException::class);
-        app(LoanService::class)->archiveLoan($owner, $loan->id);
+        app(LoanService::class)->deleteLoan($owner, $loan->id);
     }
 
-    public function test_unpaid_loan_older_than_twenty_four_hours_cannot_be_archived_without_payments(): void
+    public function test_unpaid_loan_older_than_twenty_four_hours_cannot_be_deleted_without_payments(): void
     {
         $owner = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
         $borrower = Borrower::create([
@@ -271,6 +271,6 @@ class LoanServiceTest extends TestCase
         $loan->forceFill(['created_at' => now()->subDays(2)])->save();
 
         $this->expectException(\Illuminate\Validation\ValidationException::class);
-        app(LoanService::class)->archiveLoan($owner, $loan->id);
+        app(LoanService::class)->deleteLoan($owner, $loan->id);
     }
 }

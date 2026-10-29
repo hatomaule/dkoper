@@ -113,11 +113,15 @@ class CooperativeRoleAccessTest extends TestCase
         $this->assertStringContainsString('Rp 1.200.000', $firstLoanCard);
         $this->assertStringContainsString('Rp 100.000', $firstLoanCard);
         $this->assertStringContainsString('Rp 1.100.000', $firstLoanCard);
-        $this->assertStringContainsString('Otoritas', $firstLoanCard);
+        $this->assertStringNotContainsString('Otoritas', $firstLoanCard);
+        $this->assertStringContainsString('Koreksi', $firstLoanCard);
+        $this->assertStringNotContainsString('Hapus', $firstLoanCard);
+        $this->assertStringContainsString('dk-loan-last-installment', $firstLoanCard);
         $secondLoanCard = collect($cards[1])->first(fn ($card) => str_contains($card, 'Nasabah Kedua'));
         $this->assertNotNull($secondLoanCard);
         $this->assertStringContainsString('Rp 600.000', $secondLoanCard);
         $this->assertStringContainsString('Rp 0', $secondLoanCard);
+        $this->assertStringContainsString('Hapus', $secondLoanCard);
 
         $this->actingAs($owner)
             ->patch(route('cooperative.loans.correct', $loan), [
@@ -134,7 +138,54 @@ class CooperativeRoleAccessTest extends TestCase
             'interest_amount' => 100_000,
             'installments' => array_fill(0, 12, 83_333),
         ])->assertForbidden();
-        $this->actingAs($admin)->delete(route('cooperative.loans.archive', $loan))->assertForbidden();
+        $this->actingAs($admin)->delete(route('cooperative.loans.destroy', $loan))->assertForbidden();
+    }
+
+    public function test_loan_history_is_owner_only_and_deletion_requires_confirmation(): void
+    {
+        $owner = User::factory()->create([
+            'username' => 'owner',
+            'role' => 'manager',
+            'must_change_password' => false,
+        ]);
+        $admin = User::factory()->create([
+            'username' => 'admin',
+            'role' => 'kasir',
+            'must_change_password' => false,
+        ]);
+        $borrower = Borrower::create([
+            'borrower_code' => 'DK_HISTORY',
+            'full_name' => 'Nasabah Riwayat',
+            'status' => 'active',
+        ]);
+        $loan = app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
+
+        $this->actingAs($owner)
+            ->get(route('cooperative.loans'))
+            ->assertOk()
+            ->assertSee('Riwayat')
+            ->assertSee('Hapus Pinjaman')
+            ->assertSee('name="confirm_delete"', false);
+
+        $this->actingAs($owner)
+            ->delete(route('cooperative.loans.destroy', $loan))
+            ->assertSessionHasErrors('confirm_delete');
+        $this->assertDatabaseHas('loans', ['id' => $loan->id, 'deleted_at' => null]);
+
+        $this->actingAs($admin)
+            ->get(route('cooperative.loans.history'))
+            ->assertForbidden();
+
+        $this->actingAs($owner)
+            ->delete(route('cooperative.loans.destroy', $loan), ['confirm_delete' => 'yes'])
+            ->assertRedirect(route('cooperative.loans'));
+        $this->assertSoftDeleted('loans', ['id' => $loan->id]);
+
+        $this->actingAs($owner)
+            ->get(route('cooperative.loans.history'))
+            ->assertOk()
+            ->assertSee('Nasabah Riwayat')
+            ->assertSee($loan->loan_code);
     }
 
     public function test_profit_cards_show_bonus_from_active_loans_before_withdrawals(): void

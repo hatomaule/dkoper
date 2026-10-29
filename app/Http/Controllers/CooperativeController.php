@@ -208,6 +208,20 @@ class CooperativeController extends Controller
         ]);
     }
 
+    public function loanHistory(Request $request): View
+    {
+        abort_unless($request->user()->isManager(), 403);
+        $query = Loan::onlyTrashed()
+            ->with(['borrower', 'installments', 'approver'])
+            ->whereHas('borrower', fn ($query) => $query->customerAccount())
+            ->orderByDesc('deleted_at')
+            ->orderByDesc('id');
+
+        return view('cooperative.loan-history', [
+            'loans' => $this->paginated($query, $request),
+        ]);
+    }
+
     public function storeLoan(Request $request, LoanService $service): RedirectResponse
     {
         $this->authorizeStaff();
@@ -245,12 +259,15 @@ class CooperativeController extends Controller
         return redirect()->route('cooperative.loans')->with('status', "Pinjaman {$loan->loan_code} berhasil dikoreksi. Riwayat dan ledger tetap tersimpan.");
     }
 
-    public function archiveLoan(Request $request, Loan $loan, LoanService $service): RedirectResponse
+    public function deleteLoan(Request $request, Loan $loan, LoanService $service): RedirectResponse
     {
         abort_unless($request->user()->isManager(), 403);
-        $service->archiveLoan($request->user(), $loan->id);
+        $request->validate([
+            'confirm_delete' => ['required', 'accepted'],
+        ]);
+        $service->deleteLoan($request->user(), $loan->id);
 
-        return redirect()->route('cooperative.loans')->with('status', "Pinjaman {$loan->loan_code} diarsipkan; riwayat finansial tetap tersimpan.");
+        return redirect()->route('cooperative.loans')->with('status', "Pinjaman {$loan->loan_code} dihapus dari daftar; riwayat keuangan tetap tersimpan.");
     }
 
     public function payments(): View

@@ -397,10 +397,10 @@ class LoanService
         });
     }
 
-    public function archiveLoan(User $owner, int $loanId): Loan
+    public function deleteLoan(User $owner, int $loanId): Loan
     {
         if (! $owner->isManager()) {
-            throw new RuntimeException('Hanya Owner yang dapat mengarsipkan pinjaman.');
+            throw new RuntimeException('Hanya Owner yang dapat menghapus pinjaman.');
         }
 
         return DB::transaction(function () use ($owner, $loanId) {
@@ -411,13 +411,13 @@ class LoanService
                 && ($loan->status === 'pending' || $loan->created_at?->greaterThanOrEqualTo(now()->subDay()));
             if ($loan->status !== 'paid' && ! $isNewUnpaidLoan) {
                 throw ValidationException::withMessages([
-                    'loan' => 'Pinjaman hanya dapat diarsipkan jika lunas atau baru dicatat (maksimal 24 jam) dan belum memiliki setoran.',
+                    'loan' => 'Pinjaman hanya dapat dihapus jika lunas atau baru dicatat (maksimal 24 jam) dan belum memiliki setoran.',
                 ]);
             }
 
             ActivityLog::create([
                 'user_id' => $owner->id,
-                'action' => 'loan.archived',
+                'action' => 'loan.deleted',
                 'entity_type' => Loan::class,
                 'entity_id' => $loan->id,
                 'metadata' => [

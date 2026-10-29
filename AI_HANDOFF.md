@@ -325,3 +325,11 @@ Remaining follow-up:
 
 - Standardized password reveal controls across cooperative, login, and FIDES platform forms by placing each eye icon inside a wrapper aligned to its own input instead of centering against the full label. Existing input top spacing is preserved.
 - Verification: authentication, profile, and password-management tests passed (11 tests, 41 assertions); Vite build passed. Browser check on the login form confirmed the eye center aligns with the input center (0px vertical offset) and show/hide restores the correct input type and accessible label.
+
+### Loan deletion and layout refinement (30 October 2026)
+
+- Renamed loan archival to deletion in the Owner UI, route, service, and activity log (`loan.deleted`). Deletion remains a soft delete; it does not remove payments, installments, cash/profit records, or activity history. A required confirmation checkbox is enforced in both the dialog and request validation.
+- Added an Owner-only “Riwayat” page and desktop/mobile navigation links for soft-deleted loans, with retained financial totals and deletion timestamps. Admin access is denied.
+- Changed loan actions to compact “Koreksi” and “Hapus” buttons, removed the authority row from per-loan cards, tightened their spacing, and added a divider after installment 12.
+- Narrowed the correction dialog and stacked its fields and installment inputs vertically, including on mobile. Adjusted Dashboard chart panels to fill the available content width, keep values readable, and stack at narrow breakpoints.
+- Verification: `php artisan test --no-coverage` passed (95 tests, 625 assertions); `npm run build`, `php artisan view:cache`, PHP syntax checks, and `git diff --check` passed.
