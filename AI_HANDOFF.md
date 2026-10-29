@@ -344,3 +344,10 @@ Remaining follow-up:
 - Removed the large filled panel and individual filled tiles behind the cooperative summary chart.
 - Replaced the two unlabeled horizontal tracks with paired vertical bars. Each bar has an explicit “Akun pengguna” or “Nasabah” label, a color key, and its numeric total; the chart description explains relative bar height. Scale is based on the nine visible cooperatives.
 - Verification: focused platform dashboard test passed (39 assertions); Vite production build, Blade view cache, and `git diff --check` passed.
+
+### Platform Owner/Admin account management (29 October 2026)
+
+- Removed role-changing controls from account cards and tables; existing account roles are immutable through the account update action.
+- Added a Create action before account search for creating Owner or Admin accounts with a required initial password and forced password change at first login.
+- Limited account management listings and account update/reset/activation/deletion endpoints to Owner/Admin roles. Borrower accounts remain in their cooperative and cannot be viewed or changed from the Super Admin account-management page.
+- Verification: `php artisan test tests/Feature/FidesTenantLoginTest.php` passed (15 tests, 151 assertions); Vite build, Blade view cache, PHP syntax checks, and `git diff --check` passed.

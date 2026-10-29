@@ -114,6 +114,39 @@ class PlatformController extends Controller
             ]);
     }
 
+    public function storeStaffAccount(Request $request, int $cooperativeId): RedirectResponse
+    {
+            $cooperative = PlatformCooperative::query()
+                ->whereKey($cooperativeId)
+                ->where('status', 'active')
+                ->firstOrFail();
+            $tenantManager = app(FidesTenantManager::class);
+            $tenantManager->activate($cooperative);
+
+            try {
+                $validated = $request->validate([
+                    'name' => ['required', 'string', 'max:255'],
+                    'username' => ['required', 'string', 'max:50', 'alpha_dash:ascii', Rule::unique('users', 'username')],
+                    'role' => ['required', Rule::in(['manager', 'kasir'])],
+                    'password' => ['required', 'confirmed', Password::defaults()],
+                ]);
+
+                $account = DB::transaction(fn (): User => User::query()->create([
+                    'name' => $validated['name'],
+                    'username' => $validated['username'],
+                    'password' => $validated['password'],
+                    'role' => $validated['role'],
+                    'must_change_password' => true,
+                ]));
+            } finally {
+                $tenantManager->restoreBaseConnection();
+            }
+
+            $roleLabel = $account->role === 'manager' ? 'Owner' : 'Admin';
+
+            return back()->with('status', "Akun {$roleLabel} {$account->username} berhasil dibuat. Pengguna wajib mengganti password saat masuk.");
+    }
+
     public function updateAccount(Request $request, int $cooperativeId, int $userId): RedirectResponse
     {
         $cooperative = PlatformCooperative::query()
@@ -126,7 +159,7 @@ class PlatformController extends Controller
         try {
             $user = DB::table('users')
                 ->where('id', $userId)
-                ->whereIn('role', ['manager', 'kasir', 'nasabah'])
+                ->whereIn('role', ['manager', 'kasir'])
                 ->first();
 
             abort_if(! $user, 404);
@@ -141,12 +174,8 @@ class PlatformController extends Controller
                     'alpha_dash:ascii',
                     Rule::unique('users', 'username')->ignore($userId),
                 ],
-                'role' => ['required', Rule::in(in_array($user->role, ['manager', 'kasir'], true) ? ['manager', 'kasir'] : [$user->role])],
                 'password' => ['nullable', 'confirmed', Password::defaults()],
             ]);
-            if ($user->role === 'manager' && $validated['role'] !== 'manager') {
-                $this->guardLastOwner(User::query()->findOrFail($userId), false);
-            }
 
             $account = User::query()->findOrFail($userId);
             if (array_key_exists('name', $validated)) {
@@ -155,8 +184,6 @@ class PlatformController extends Controller
             if (array_key_exists('username', $validated)) {
                 $account->username = filled($validated['username']) ? $validated['username'] : null;
             }
-            $account->role = $validated['role'];
-
             if ($validated['password'] ?? null) {
                 $account->password = $validated['password'];
                 $account->must_change_password = true;
@@ -164,9 +191,6 @@ class PlatformController extends Controller
 
             DB::transaction(function () use ($account): void {
                 $account->save();
-                if ($account->role === 'nasabah' && $account->borrower) {
-                    $account->borrower->update(['full_name' => $account->name]);
-                }
             });
         } finally {
             $tenantManager->restoreBaseConnection();
@@ -189,7 +213,7 @@ class PlatformController extends Controller
         $tenantManager->activate($cooperative);
 
         try {
-            $account = User::query()->findOrFail($userId);
+            $account = User::query()->whereIn('role', ['manager', 'kasir'])->findOrFail($userId);
             $account->password = Hash::make($validated['password']);
             $account->must_change_password = true;
             $account->save();
@@ -214,17 +238,16 @@ class PlatformController extends Controller
         $tenantManager->activate($cooperative);
 
         try {
-            $account = User::query()->findOrFail($userId);
+            $account = User::query()->whereIn('role', ['manager', 'kasir'])->findOrFail($userId);
             $isActive = (bool) $validated['is_active'];
             $this->guardLastOwner($account, $isActive);
-            $borrowerCode = DB::table('borrowers')->where('user_id', $account->id)->value('borrower_code');
 
             PlatformAccountLink::query()->updateOrCreate(
                 ['cooperative_id' => $cooperative->id, 'tenant_user_id' => $account->id],
                 [
                     'username' => $account->username,
                     'phone' => $account->phone,
-                    'borrower_code' => $borrowerCode,
+                    'borrower_code' => null,
                     'is_active' => $isActive,
                 ],
             );
@@ -248,7 +271,7 @@ class PlatformController extends Controller
         $tenantManager->activate($cooperative);
 
         try {
-            $account = User::query()->findOrFail($userId);
+            $account = User::query()->whereIn('role', ['manager', 'kasir'])->findOrFail($userId);
             $this->guardLastOwner($account, false);
 
             if ($this->accountHasHistory($account)) {
@@ -258,9 +281,6 @@ class PlatformController extends Controller
             }
 
             DB::transaction(function () use ($account): void {
-                if ($account->borrower) {
-                    $account->borrower->delete();
-                }
                 $account->delete();
             });
         } finally {
@@ -446,7 +466,7 @@ class PlatformController extends Controller
                 if ($cooperative->status === 'active') {
                     $tenantManager->activate($cooperative);
 
-                    $accounts = DB::table('users')
+                    $allAccounts = DB::table('users')
                         ->leftJoin('borrowers', 'borrowers.user_id', '=', 'users.id')
                         ->orderByRaw("CASE ".DB::connection()->getTablePrefix()."users.role WHEN 'manager' THEN 0 WHEN 'kasir' THEN 1 ELSE 2 END")
                         ->orderBy('users.username')
@@ -460,6 +480,7 @@ class PlatformController extends Controller
                             'users.must_change_password',
                             'borrowers.borrower_code',
                         ]);
+                    $accounts = $allAccounts->whereIn('role', ['manager', 'kasir'])->values();
                     $activeAccounts = PlatformAccountLink::query()
                         ->where('cooperative_id', $cooperative->id)
                         ->pluck('is_active', 'tenant_user_id');
@@ -467,9 +488,9 @@ class PlatformController extends Controller
                         $account->is_active = (bool) ($activeAccounts[$account->id] ?? true);
                     });
                     $stats = [
-                        'users' => (int) DB::table('users')->count(),
+                        'users' => $allAccounts->count(),
                         'borrowers' => (int) DB::table('borrowers')->count(),
-                        'staff' => $accounts->whereIn('role', ['manager', 'kasir'])->count(),
+                        'staff' => $accounts->count(),
                     ];
                 }
 

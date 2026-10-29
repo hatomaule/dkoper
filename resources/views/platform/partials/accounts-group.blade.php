@@ -2,7 +2,7 @@
     <header class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 px-5 py-4">
         <div>
             <p class="font-bold text-white">{{ $cooperative->name }}</p>
-            <p class="mt-1 text-xs text-slate-500">/{{ $cooperative->slug }} · {{ number_format($stats['users'], 0, ',', '.') }} akun · {{ number_format($stats['borrowers'], 0, ',', '.') }} nasabah</p>
+            <p class="mt-1 text-xs text-slate-500">/{{ $cooperative->slug }} · {{ number_format($stats['staff'], 0, ',', '.') }} akun Owner/Admin</p>
         </div>
         <span @class([
             'rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide',
@@ -15,17 +15,11 @@
 
     @if ($cooperative->status !== 'active')
         <p class="px-5 py-5 text-sm text-slate-500">Pengelolaan akun tersedia setelah ruang koperasi aktif.</p>
-    @elseif ($accounts->isEmpty())
-        <p class="px-5 py-5 text-sm text-slate-500">Belum ada akun di koperasi ini.</p>
     @else
         <div class="flex flex-wrap items-end gap-3 border-b border-slate-800 px-5 py-4">
+            <button type="button" data-open-dialog="create-staff-account-{{ $cooperative->id }}" class="rounded-md bg-orange-500 px-4 py-2 text-xs font-bold text-slate-950 transition hover:bg-orange-400">Create</button>
             <label class="min-w-[220px] flex-1 text-[11px] font-semibold text-slate-400">Cari akun
                 <input type="search" data-list-search placeholder="Nama, username, koperasi..." class="mt-1 block w-full rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-white outline-none focus:border-orange-400">
-            </label>
-            <label class="text-[11px] font-semibold text-slate-400">Peran
-                <select data-list-filter="role" class="mt-1 block rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-white outline-none focus:border-orange-400">
-                    <option value="">Semua peran</option><option value="manager">Owner</option><option value="kasir">Admin</option><option value="nasabah">Nasabah</option>
-                </select>
             </label>
             <label class="text-[11px] font-semibold text-slate-400">Status
                 <select data-list-filter="status" class="mt-1 block rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-white outline-none focus:border-orange-400">
@@ -53,20 +47,13 @@
                 </thead>
                 <tbody class="divide-y divide-slate-800">
                     @foreach ($accounts as $account)
-                        @php($roleLabel = $account->role === 'manager' ? 'Owner' : ($account->role === 'kasir' ? 'Admin' : 'Nasabah'))
+                        @php($roleLabel = $account->role === 'manager' ? 'Owner' : 'Admin')
                         <tr data-list-row data-list-key="account-{{ $account->id }}" data-role="{{ $account->role }}" data-status="{{ $account->is_active ? 'active' : 'inactive' }}" class="align-top">
                             <td class="px-5 py-4">
                                 <form id="account-table-form-{{ $account->id }}" method="POST" action="{{ route('platform.accounts.update', [$cooperative->id, $account->id]) }}" class="grid min-w-[210px] gap-2">
                                     @csrf @method('PATCH')
                                     <label class="sr-only" for="account-table-name-{{ $account->id }}">Nama akun</label>
                                     <input id="account-table-name-{{ $account->id }}" name="name" value="{{ $account->name }}" required maxlength="255" class="w-full rounded-md border border-slate-700 bg-[#0b1120] px-2.5 py-2 text-sm font-semibold text-white outline-none focus:border-orange-400">
-                                    @if (in_array($account->role, ['manager', 'kasir'], true))
-                                        <select name="role" aria-label="Peran akun" class="w-full rounded-md border border-slate-700 bg-[#0b1120] px-2.5 py-1.5 text-xs text-slate-300 outline-none focus:border-orange-400">
-                                            <option value="manager" @selected($account->role === 'manager')>Owner</option><option value="kasir" @selected($account->role === 'kasir')>Admin</option>
-                                        </select>
-                                    @else
-                                        <input type="hidden" name="role" value="{{ $account->role }}">
-                                    @endif
                                 </form>
                             </td>
                             <td class="px-4 py-4">
@@ -102,7 +89,7 @@
         </div>
         <div data-list-view="cards" class="grid justify-start gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             @foreach ($accounts as $account)
-                @php($roleLabel = $account->role === 'manager' ? 'Owner' : ($account->role === 'kasir' ? 'Admin' : 'Nasabah'))
+                @php($roleLabel = $account->role === 'manager' ? 'Owner' : 'Admin')
                 <article data-list-row data-list-key="account-{{ $account->id }}" data-role="{{ $account->role }}" data-status="{{ $account->is_active ? 'active' : 'inactive' }}" class="platform-card-item min-w-0 max-w-[320px] p-4">
                     <header class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
@@ -129,26 +116,12 @@
                             <p class="mt-1 truncate text-sm text-slate-200">{{ $account->username ?: '—' }}</p>
                         </div>
                     </div>
-                    @if (in_array($account->role, ['manager', 'kasir'], true))
-                    <form id="account-card-form-{{ $account->id }}" method="POST" action="{{ route('platform.accounts.update', [$cooperative->id, $account->id]) }}" class="mt-3">
-                        @csrf @method('PATCH')
-                        <label class="text-[10px] font-semibold text-slate-500">Peran
-                            <select name="role" class="mt-1 block w-full rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-slate-200 outline-none focus:border-orange-400">
-                                <option value="manager" @selected($account->role === 'manager')>Owner</option><option value="kasir" @selected($account->role === 'kasir')>Admin</option>
-                            </select>
-                        </label>
-                    </form>
-                    @else
-                        <div class="mt-3">
-                            <span class="text-[10px] font-semibold text-slate-500">Peran</span>
-                            <p class="mt-1 text-sm text-slate-200">{{ $roleLabel }}</p>
-                        </div>
-                    @endif
+                    <div class="mt-3">
+                        <span class="text-[10px] font-semibold text-slate-500">Peran</span>
+                        <p class="mt-1 text-sm text-slate-200">{{ $roleLabel }}</p>
+                    </div>
                     <p class="mt-3 truncate text-[11px] text-slate-500">{{ $account->borrower_code ?: ($account->phone ?: '—') }}</p>
                     <div class="mt-4 flex flex-wrap gap-2 border-t border-slate-800 pt-3">
-                        @if (in_array($account->role, ['manager', 'kasir'], true))
-                            <button type="submit" form="account-card-form-{{ $account->id }}" class="rounded-md bg-orange-500 px-3 py-2 text-[11px] font-bold text-slate-950 hover:bg-orange-400">Simpan peran</button>
-                        @endif
                         <button type="button" data-open-dialog="reset-account-{{ $cooperative->id }}-{{ $account->id }}" class="rounded-md border border-slate-700 px-2.5 py-2 text-[11px] font-semibold text-slate-300 hover:text-white">Reset sandi</button>
                         <button type="button" data-open-dialog="status-account-{{ $cooperative->id }}-{{ $account->id }}" class="rounded-md border border-slate-700 px-2.5 py-2 text-[11px] font-semibold text-slate-300 hover:text-white">{{ $account->is_active ? 'Nonaktifkan' : 'Aktifkan' }}</button>
                         <button type="button" data-open-dialog="delete-account-{{ $cooperative->id }}-{{ $account->id }}" class="rounded-md border border-rose-500/40 px-2.5 py-2 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/10">Hapus</button>
@@ -165,9 +138,46 @@
                 <button type="button" data-list-next class="rounded-md border border-slate-700 px-3 py-1.5 hover:text-white">Berikutnya</button>
             </div>
         </footer>
+        <dialog id="create-staff-account-{{ $cooperative->id }}" @if ($errors->any() && old('_form') === 'create-staff-account-'.$cooperative->id) data-open-on-error @endif class="w-[min(30rem,calc(100%-2rem))] rounded-xl border border-slate-700 bg-[#101829] p-0 text-slate-200 shadow-2xl backdrop:bg-black/70">
+            <form method="POST" action="{{ route('platform.accounts.store', $cooperative->id) }}" class="grid gap-4 p-5">
+                @csrf
+                <input type="hidden" name="_form" value="create-staff-account-{{ $cooperative->id }}">
+                <button type="button" data-close-dialog class="float-right rounded-md px-2 text-xl text-slate-500 hover:text-white" aria-label="Tutup">×</button>
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-400">Akun koperasi</p>
+                    <h3 class="mt-1 text-lg font-bold text-white">Buat akun Owner/Admin</h3>
+                    <p class="mt-1 text-xs text-slate-400">Akun nasabah dikelola dari sistem koperasi, bukan dari FIDES Platform.</p>
+                </div>
+                <label class="block text-xs font-semibold text-slate-300">Nama
+                    <input name="name" value="{{ old('_form') === 'create-staff-account-'.$cooperative->id ? old('name') : '' }}" required maxlength="255" class="mt-1.5 block w-full rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-white outline-none focus:border-orange-400">
+                    @error('name')<span class="mt-1 block text-xs text-rose-300">{{ $message }}</span>@enderror
+                </label>
+                <label class="block text-xs font-semibold text-slate-300">Username
+                    <input name="username" value="{{ old('_form') === 'create-staff-account-'.$cooperative->id ? old('username') : '' }}" required maxlength="50" pattern="[A-Za-z0-9_-]+" class="mt-1.5 block w-full rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-white outline-none focus:border-orange-400">
+                    @error('username')<span class="mt-1 block text-xs text-rose-300">{{ $message }}</span>@enderror
+                </label>
+                <label class="block text-xs font-semibold text-slate-300">Jenis akun
+                    <select name="role" required class="mt-1.5 block w-full rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-white outline-none focus:border-orange-400">
+                        <option value="manager" @selected(old('role', 'manager') === 'manager')>Owner</option>
+                        <option value="kasir" @selected(old('role') === 'kasir')>Admin</option>
+                    </select>
+                </label>
+                <label class="block text-xs font-semibold text-slate-300">Password awal
+                    <input type="password" name="password" required minlength="8" autocomplete="new-password" class="mt-1.5 block w-full rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-white outline-none focus:border-orange-400">
+                    @error('password')<span class="mt-1 block text-xs text-rose-300">{{ $message }}</span>@enderror
+                </label>
+                <label class="block text-xs font-semibold text-slate-300">Ulangi password
+                    <input type="password" name="password_confirmation" required minlength="8" autocomplete="new-password" class="mt-1.5 block w-full rounded-md border border-slate-700 bg-[#0b1120] px-3 py-2 text-sm text-white outline-none focus:border-orange-400">
+                </label>
+                <p class="text-[11px] text-slate-500">Pengguna wajib mengganti password saat pertama kali masuk.</p>
+                <div class="flex justify-end gap-2">
+                    <button type="button" data-close-dialog class="rounded-md border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-300">Batal</button>
+                    <button type="submit" class="rounded-md bg-orange-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-orange-400">Buat akun</button>
+                </div>
+            </form>
+        </dialog>
         @foreach ($accounts as $account)
             @php($dialogId = $cooperative->id.'-'.$account->id)
-            @php($roleLabel = $account->role === 'manager' ? 'Owner' : ($account->role === 'kasir' ? 'Admin' : 'Nasabah'))
             <dialog id="reset-account-{{ $dialogId }}" class="w-[min(28rem,calc(100%-2rem))] rounded-xl border border-slate-700 bg-[#101829] p-0 text-slate-200 shadow-2xl backdrop:bg-black/70">
                 <form method="POST" action="{{ route('platform.accounts.reset-password', [$cooperative->id, $account->id]) }}" class="space-y-4 p-5">
                     @csrf

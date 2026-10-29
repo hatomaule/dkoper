@@ -152,7 +152,7 @@ class FidesTenantLoginTest extends TestCase
         $this->assertSame(config('database.connections.mysql.database'), DB::connection()->getDatabaseName());
     }
 
-    public function test_super_admin_can_change_only_account_role_without_editing_identity(): void
+    public function test_super_admin_cannot_change_an_account_role(): void
     {
         $platformAdmin = PlatformAdmin::query()->create([
             'name' => 'FIDES Admin',
@@ -179,7 +179,49 @@ class FidesTenantLoginTest extends TestCase
         $updated = User::query()->findOrFail($owner->id);
         $this->assertSame('Owner Uji', $updated->name);
         $this->assertSame('owner-uji', $updated->username);
-        $this->assertSame('kasir', $updated->role);
+        $this->assertSame('manager', $updated->role);
+        app(FidesTenantManager::class)->restoreBaseConnection();
+    }
+
+    public function test_super_admin_can_create_owner_or_admin_accounts(): void
+    {
+        $platformAdmin = PlatformAdmin::query()->create([
+            'name' => 'FIDES Admin',
+            'username' => 'fides-root',
+            'password' => Hash::make('platform-secure-password'),
+        ]);
+        $cooperative = PlatformCooperative::query()->where('slug', 'koperasi-uji')->firstOrFail();
+
+        $this->actingAs($platformAdmin, 'platform')
+            ->get(route('platform.accounts'))
+            ->assertOk()
+            ->assertSee('Create')
+            ->assertSee('data-open-dialog="create-staff-account-'.$cooperative->id.'"', false)
+            ->assertSee('Buat akun Owner/Admin')
+            ->assertDontSee('Nasabah Uji')
+            ->assertDontSee('Simpan peran')
+            ->assertDontSee('aria-label="Peran akun"', false);
+
+        $this->post(route('platform.accounts.store', $cooperative->id), [
+            'name' => 'Admin Baru',
+            'username' => 'admin-baru',
+            'role' => 'kasir',
+            'password' => 'initial-admin-password',
+            'password_confirmation' => 'initial-admin-password',
+        ])->assertRedirect()
+            ->assertSessionHas('status');
+
+        app(FidesTenantManager::class)->activate($cooperative);
+        $admin = User::query()->where('username', 'admin-baru')->firstOrFail();
+        $this->assertSame('kasir', $admin->role);
+        $this->assertTrue($admin->must_change_password);
+        $this->assertTrue(Hash::check('initial-admin-password', $admin->password));
+        $this->assertDatabaseHas('platform_account_links', [
+            'cooperative_id' => $cooperative->id,
+            'tenant_user_id' => $admin->id,
+            'username' => 'admin-baru',
+            'is_active' => true,
+        ], 'platform');
         app(FidesTenantManager::class)->restoreBaseConnection();
     }
 
@@ -353,7 +395,7 @@ class FidesTenantLoginTest extends TestCase
         ], 'platform');
     }
 
-    public function test_account_management_lists_borrowers_and_can_disable_their_login(): void
+    public function test_super_admin_cannot_view_or_manage_borrower_accounts(): void
     {
         $platformAdmin = PlatformAdmin::query()->create([
             'name' => 'FIDES Admin',
@@ -381,26 +423,22 @@ class FidesTenantLoginTest extends TestCase
         $this->actingAs($platformAdmin, 'platform')
             ->get(route('platform.accounts'))
             ->assertOk()
-            ->assertSee('Nasabah Uji')
-            ->assertSee('BR-0001');
+            ->assertDontSee('Nasabah Uji')
+            ->assertDontSee('BR-0001');
 
         $this->patch(route('platform.accounts.status', [$cooperative->id, $borrowerUser->id]), [
             'is_active' => 0,
             'confirm_account_action' => 'yes',
-        ])->assertRedirect();
+        ])->assertNotFound();
 
+        $this->delete(route('platform.accounts.destroy', [$cooperative->id, $borrowerUser->id]), [
+            'confirm_account_action' => 'yes',
+        ])->assertNotFound();
         $this->assertDatabaseHas('platform_account_links', [
             'cooperative_id' => $cooperative->id,
             'tenant_user_id' => $borrowerUser->id,
-            'is_active' => false,
+            'is_active' => true,
         ], 'platform');
-        $this->assertCount(0, app(FidesAccountDirectory::class)->candidates('nasabah-uji'));
-
-        $this->patch(route('platform.accounts.status', [$cooperative->id, $borrowerUser->id]), [
-            'is_active' => 1,
-            'confirm_account_action' => 'yes',
-        ])->assertRedirect();
-        $this->assertCount(1, app(FidesAccountDirectory::class)->candidates('nasabah-uji'));
     }
 
     public function test_account_deletion_preserves_users_with_financial_history(): void
@@ -410,22 +448,14 @@ class FidesTenantLoginTest extends TestCase
             'username' => 'fides-root',
             'password' => Hash::make('platform-secure-password'),
         ]);
-        $owner = User::query()->where('username', 'owner-uji')->firstOrFail();
         $cooperative = PlatformCooperative::query()->where('slug', 'koperasi-uji')->firstOrFail();
 
         $safeUser = User::query()->create([
-            'name' => 'Nasabah Hapus',
-            'email' => 'nasabah-hapus@example.test',
-            'username' => 'nasabah-hapus',
-            'password' => Hash::make('borrower-password'),
-            'role' => 'nasabah',
+            'name' => 'Admin Hapus',
+            'username' => 'admin-hapus',
+            'password' => Hash::make('admin-password'),
+            'role' => 'kasir',
             'must_change_password' => false,
-        ]);
-        $safeBorrower = Borrower::query()->create([
-            'user_id' => $safeUser->id,
-            'borrower_code' => 'BR-DELETE',
-            'full_name' => $safeUser->name,
-            'status' => 'active',
         ]);
 
         $this->actingAs($platformAdmin, 'platform')
@@ -440,23 +470,20 @@ class FidesTenantLoginTest extends TestCase
 
         app(FidesTenantManager::class)->activate($cooperative);
         $this->assertDatabaseMissing('users', ['id' => $safeUser->id], 'fides_tenant');
-        $this->assertDatabaseMissing('borrowers', ['id' => $safeBorrower->id], 'fides_tenant');
 
         $protectedUser = User::query()->create([
-            'name' => 'Nasabah Berpinjaman',
-            'email' => 'nasabah-pinjaman@example.test',
-            'username' => 'nasabah-pinjaman',
-            'password' => Hash::make('borrower-password'),
-            'role' => 'nasabah',
+            'name' => 'Admin Beraktivitas',
+            'username' => 'admin-beraktivitas',
+            'password' => Hash::make('admin-password'),
+            'role' => 'kasir',
             'must_change_password' => false,
         ]);
-        $protectedBorrower = Borrower::query()->create([
-            'user_id' => $protectedUser->id,
+        $borrower = Borrower::query()->create([
             'borrower_code' => 'BR-PROTECTED',
-            'full_name' => $protectedUser->name,
+            'full_name' => 'Nasabah untuk uji',
             'status' => 'active',
         ]);
-        app(\App\Services\LoanService::class)->createApprovedLoan($owner, $protectedBorrower->id, 500_000);
+        app(\App\Services\LoanService::class)->createLoan($protectedUser, $borrower->id, 500_000);
         app(FidesTenantManager::class)->restoreBaseConnection();
 
         $this->delete(route('platform.accounts.destroy', [$cooperative->id, $protectedUser->id]), [

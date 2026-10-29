@@ -34,6 +34,7 @@ Route::middleware('auth:platform')->prefix('platform')->name('platform.')->group
     Route::post('/cooperatives', [PlatformController::class, 'store'])->name('cooperatives.store');
     Route::patch('/cooperatives/{cooperative}/status', [PlatformController::class, 'updateCooperativeStatus'])->name('cooperatives.status');
     Route::delete('/cooperatives/{cooperative}', [PlatformController::class, 'destroyCooperative'])->name('cooperatives.destroy');
+    Route::post('/cooperatives/{cooperativeId}/accounts', [PlatformController::class, 'storeStaffAccount'])->name('accounts.store');
     Route::patch('/cooperatives/{cooperativeId}/accounts/{userId}', [PlatformController::class, 'updateAccount'])->name('accounts.update');
     Route::post('/cooperatives/{cooperativeId}/accounts/{userId}/reset-password', [PlatformController::class, 'resetAccountPassword'])->name('accounts.reset-password');
     Route::patch('/cooperatives/{cooperativeId}/accounts/{userId}/status', [PlatformController::class, 'updateAccountStatus'])->name('accounts.status');
