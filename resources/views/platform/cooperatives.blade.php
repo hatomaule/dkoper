@@ -43,21 +43,7 @@
     </dialog>
 
     <section class="overflow-hidden rounded-xl border border-slate-800 bg-[#101829] is-card-view" data-list-tools>
-        <header class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-5 py-4">
-            <div>
-                <h3 class="font-bold text-white">Daftar koperasi</h3>
-                <p class="mt-1 text-xs text-slate-500">{{ $cooperatives->count() }} ruang terdaftar · pengguna dan nasabah dihitung per tenant</p>
-            </div>
-            <div class="flex items-center gap-1 rounded-lg border border-slate-700 p-1" aria-label="Mode tampilan">
-                <button type="button" data-list-view-mode="table" aria-label="Tampilan tabel" title="Tampilan tabel" class="rounded-md p-2 text-slate-300 hover:bg-slate-700">
-                    <svg aria-hidden="true" viewBox="0 0 20 20" class="h-4 w-4 fill-none stroke-current" stroke-width="1.6"><path d="M3 4.5h14M3 9.5h14M3 14.5h14M3 3h14v14H3z"/></svg>
-                </button>
-                <button type="button" data-list-view-mode="cards" aria-label="Tampilan kartu" title="Tampilan kartu" class="is-active rounded-md bg-slate-700 p-2 text-white">
-                    <svg aria-hidden="true" viewBox="0 0 20 20" class="h-4 w-4 fill-none stroke-current" stroke-width="1.6"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg>
-                </button>
-            </div>
-        </header>
-        <div class="flex flex-wrap items-end gap-3 border-b border-slate-800 px-5 py-4">
+        <div class="flex flex-wrap items-end gap-3 border-b border-slate-800 px-5 py-3">
             <button type="button" data-open-dialog="register-cooperative" class="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-orange-950/20 transition hover:bg-orange-400">
                 <svg aria-hidden="true" viewBox="0 0 20 20" class="h-4 w-4 fill-none stroke-current" stroke-width="2"><path d="M10 3v14M3 10h14"/></svg>
                 Daftar Koperasi
@@ -75,6 +61,14 @@
                     <option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="all">Semua</option>
                 </select>
             </label>
+            <div class="ml-auto flex items-center gap-1 rounded-lg border border-slate-700 p-1" aria-label="Mode tampilan">
+                <button type="button" data-list-view-mode="table" aria-label="Tampilan tabel" title="Tampilan tabel" class="rounded-md p-2 text-slate-300 hover:bg-slate-700">
+                    <svg aria-hidden="true" viewBox="0 0 20 20" class="h-4 w-4 fill-none stroke-current" stroke-width="1.6"><path d="M3 4.5h14M3 9.5h14M3 14.5h14M3 3h14v14H3z"/></svg>
+                </button>
+                <button type="button" data-list-view-mode="cards" aria-label="Tampilan kartu" title="Tampilan kartu" class="is-active rounded-md bg-slate-700 p-2 text-white">
+                    <svg aria-hidden="true" viewBox="0 0 20 20" class="h-4 w-4 fill-none stroke-current" stroke-width="1.6"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg>
+                </button>
+            </div>
         </div>
 
         <div data-list-view="table" hidden class="overflow-x-auto">

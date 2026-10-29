@@ -16,12 +16,6 @@
 
     @php($maxCooperativeUsers = max(1, (int) $cooperatives->take(9)->max(fn ($overview) => max($overview['stats']['users'], $overview['stats']['borrowers']))))
     <section class="space-y-4">
-        <div class="flex flex-wrap items-start justify-between gap-4">
-            <div>
-                <h2 class="font-bold text-white">Ringkasan koperasi</h2>
-                <p class="mt-1 text-xs text-slate-400">Angka menunjukkan jumlahnya; tinggi batang dibandingkan dengan nilai tertinggi pada grafik.</p>
-            </div>
-        </div>
         <div class="grid gap-x-6 gap-y-5 md:grid-cols-2 xl:grid-cols-3">
             @forelse ($cooperatives->take(9) as $overview)
                 @php($cooperative = $overview['cooperative'])

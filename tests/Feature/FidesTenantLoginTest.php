@@ -112,7 +112,8 @@ class FidesTenantLoginTest extends TestCase
         $this->assertAuthenticated('platform');
         $this->get(route('platform.dashboard'))
             ->assertOk()
-            ->assertSee('Ringkasan koperasi')
+            ->assertDontSee('Ringkasan koperasi')
+            ->assertDontSee('Angka menunjukkan jumlahnya')
             ->assertSee('Akun pengguna')
             ->assertSee('Nasabah')
             ->assertSee('platform-coop-chart-bar is-users', false)
@@ -125,18 +126,26 @@ class FidesTenantLoginTest extends TestCase
         $accountsPage = $this->get(route('platform.accounts', ['cooperative' => PlatformCooperative::query()->value('id')]));
         $accountsPage->assertOk()
             ->assertSee('data-list-view-mode="cards"', false)
+            ->assertSee('role="switch"', false)
+            ->assertSee('data-open-dialog="cooperative-status-'.PlatformCooperative::query()->value('id').'"', false)
+            ->assertSee('name="confirm_action"', false)
+            ->assertSee('name="confirm_account_action"', false)
             ->assertSee('data-platform-auto-refresh="60000"', false)
             ->assertSee('Manajemen akun')
             ->assertSee('Koperasi Uji')
             ->assertSee(route('platform.accounts', ['cooperative' => PlatformCooperative::query()->value('id')]), false)
             ->assertDontSee('aria-label="Pilih koperasi"', false)
             ->assertDontSee('Selamat datang');
+        $this->assertSame(3, substr_count($accountsPage->getContent(), 'role="switch"'));
+        $this->assertSame(2, substr_count($accountsPage->getContent(), 'data-open-dialog="status-account-'));
         $this->get(route('platform.cooperatives'))
             ->assertOk()
             ->assertSee('Daftarkan koperasi')
             ->assertSee('Koperasi Uji')
             ->assertSee('data-list-page-size', false)
             ->assertSee('data-list-view-mode="cards"', false)
+            ->assertDontSee('Daftar koperasi')
+            ->assertDontSee('ruang terdaftar')
             ->assertSee('data-open-dialog="register-cooperative"', false)
             ->assertSee('data-open-dialog="cooperative-delete-', false)
             ->assertSee('confirm_permanent_deletion', false)

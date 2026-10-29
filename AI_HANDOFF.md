@@ -363,3 +363,11 @@ Remaining follow-up:
 - A browser check caught that the shared account role label was not initialized in the delete-confirmation dialog after account-role controls were removed. Restored the Owner/Admin label and added coverage for both role-specific confirmations.
 - No destructive forms or account-creation forms were submitted against the live local tenant during browser checks. Owner/Admin creation and role/borrower restrictions are covered by isolated feature tests.
 - Full regression verification: `php artisan test --no-coverage` passed (97 tests, 645 assertions); Vite build, Blade view cache, PHP syntax checks, and `git diff --check` passed. Local site responded with HTTP 302 to the unauthenticated route after tests.
+
+### Platform spacing and account status switches (29 October 2026)
+
+- Removed the “Daftar koperasi” section heading/count description and the dashboard chart heading/explanatory text. The shared Platform content container now starts flush beneath the top navigation, keeping the cooperative list and dashboard chart closer to the top.
+- Moved the card/table view controls into the same toolbar row after the page-size selector on cooperative and account management pages.
+- Replaced account Active/Inactive badges and separate status action buttons with accessible switch controls in both card and table views. Each switch opens the existing confirmation dialog with its required checkbox; the cooperative status in the account-management header uses the same protected dialog.
+- Changed profile-popup “Ganti password” and “Keluar” actions to plain text links/buttons without button borders or filled backgrounds.
+- Verification: `php artisan test --no-coverage tests/Feature/FidesTenantLoginTest.php` passed (16 tests, 163 assertions); `npm run build`, `php artisan view:cache`, PHP syntax checks, and `git diff --check` passed. Browser checks confirmed both account and cooperative switches open checkbox-confirmation dialogs, the table/card selectors share the toolbar row, the requested headings are absent, and the profile actions render as plain text. Confirmation dialogs were closed without submitting any status changes.

@@ -1,17 +1,40 @@
 <section id="cooperative-{{ $cooperative->id }}" class="scroll-mt-24 overflow-hidden rounded-xl border border-slate-800 bg-[#101829]" data-list-tools>
-    <header class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 px-5 py-4">
+    <header class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 px-5 py-3">
         <div>
             <p class="font-bold text-white">{{ $cooperative->name }}</p>
             <p class="mt-1 text-xs text-slate-500">/{{ $cooperative->slug }} · {{ number_format($stats['staff'], 0, ',', '.') }} akun Owner/Admin</p>
         </div>
-        <span @class([
-            'rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide',
-            'bg-emerald-500/10 text-emerald-300' => $cooperative->status === 'active',
-            'bg-amber-500/10 text-amber-300' => $cooperative->status === 'provisioning',
-            'bg-rose-500/10 text-rose-300' => $cooperative->status === 'provisioning_failed',
-            'bg-slate-700 text-slate-300' => ! in_array($cooperative->status, ['active', 'provisioning', 'provisioning_failed'], true),
-        ])>{{ str_replace('_', ' ', $cooperative->status) }}</span>
+        @if (in_array($cooperative->status, ['active', 'inactive'], true))
+            <div class="flex items-center gap-2">
+                <button type="button" role="switch" aria-checked="{{ $cooperative->status === 'active' ? 'true' : 'false' }}" aria-label="{{ $cooperative->status === 'active' ? 'Nonaktifkan' : 'Aktifkan' }} koperasi {{ $cooperative->name }}" data-open-dialog="cooperative-status-{{ $cooperative->id }}" class="platform-status-switch {{ $cooperative->status === 'active' ? 'is-on' : '' }}">
+                    <span aria-hidden="true"></span>
+                </button>
+                <span class="text-xs font-semibold {{ $cooperative->status === 'active' ? 'text-emerald-300' : 'text-slate-400' }}">{{ $cooperative->status === 'active' ? 'Aktif' : 'Nonaktif' }}</span>
+            </div>
+        @else
+            <span @class([
+                'rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide',
+                'bg-amber-500/10 text-amber-300' => $cooperative->status === 'provisioning',
+                'bg-rose-500/10 text-rose-300' => $cooperative->status === 'provisioning_failed',
+                'bg-slate-700 text-slate-300' => ! in_array($cooperative->status, ['provisioning', 'provisioning_failed'], true),
+            ])>{{ str_replace('_', ' ', $cooperative->status) }}</span>
+        @endif
     </header>
+
+    @if (in_array($cooperative->status, ['active', 'inactive'], true))
+        <dialog id="cooperative-status-{{ $cooperative->id }}" class="w-[min(28rem,calc(100%-2rem))] rounded-xl border border-slate-700 bg-[#101829] p-0 text-slate-200 shadow-2xl backdrop:bg-black/70">
+            <form method="POST" action="{{ route('platform.cooperatives.status', $cooperative) }}" class="space-y-4 p-5">
+                @csrf @method('PATCH')
+                <input type="hidden" name="status" value="{{ $cooperative->status === 'active' ? 'inactive' : 'active' }}">
+                <button type="button" data-close-dialog class="float-right rounded-md px-2 text-xl text-slate-500 hover:text-white" aria-label="Tutup">×</button>
+                <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-400">Status koperasi</p>
+                <h3 class="text-lg font-bold text-white">{{ $cooperative->status === 'active' ? 'Nonaktifkan koperasi?' : 'Aktifkan koperasi?' }}</h3>
+                <p class="text-sm text-slate-400">{{ $cooperative->status === 'active' ? 'Semua akun pada ruang ini tidak dapat masuk sampai koperasi diaktifkan kembali. Data tidak dihapus.' : 'Akun koperasi ini akan dapat digunakan kembali.' }}</p>
+                <label class="flex gap-2 text-xs text-slate-400"><input type="checkbox" name="confirm_action" value="yes" required> Saya memahami perubahan akses pada koperasi ini.</label>
+                <div class="flex justify-end gap-2"><button type="button" data-close-dialog class="rounded-md border border-slate-700 px-3 py-2 text-xs">Batal</button><button type="submit" class="rounded-md {{ $cooperative->status === 'active' ? 'bg-rose-500 text-white' : 'bg-orange-500 text-slate-950' }} px-3 py-2 text-xs font-bold">{{ $cooperative->status === 'active' ? 'Ya, nonaktifkan' : 'Ya, aktifkan' }}</button></div>
+            </form>
+        </dialog>
+    @endif
 
     @if ($cooperative->status !== 'active')
         <p class="px-5 py-5 text-sm text-slate-500">Pengelolaan akun tersedia setelah ruang koperasi aktif.</p>
@@ -31,7 +54,7 @@
                     <option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="all">Semua</option>
                 </select>
             </label>
-            <div class="flex items-center gap-1 rounded-lg border border-slate-700 p-1" aria-label="Mode tampilan">
+            <div class="ml-auto flex items-center gap-1 rounded-lg border border-slate-700 p-1" aria-label="Mode tampilan">
                 <button type="button" data-list-view-mode="table" aria-label="Tampilan tabel" title="Tampilan tabel" class="rounded-md p-2 text-slate-300 hover:bg-slate-700">
                     <svg aria-hidden="true" viewBox="0 0 20 20" class="h-4 w-4 fill-none stroke-current" stroke-width="1.6"><path d="M3 4.5h14M3 9.5h14M3 14.5h14M3 3h14v14H3z"/></svg>
                 </button>
@@ -63,7 +86,12 @@
                             </td>
                             <td class="px-4 py-4"><span class="rounded-full bg-slate-700/70 px-2.5 py-1 text-[10px] font-bold text-slate-300">{{ $roleLabel }}</span></td>
                             <td class="px-4 py-4">
-                                <span @class(['rounded-full px-2.5 py-1 text-[10px] font-bold', 'bg-emerald-500/10 text-emerald-300' => $account->is_active, 'bg-slate-700 text-slate-300' => ! $account->is_active])>{{ $account->is_active ? 'Aktif' : 'Nonaktif' }}</span>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" role="switch" aria-checked="{{ $account->is_active ? 'true' : 'false' }}" aria-label="{{ $account->is_active ? 'Nonaktifkan' : 'Aktifkan' }} akun {{ $account->name }}" data-open-dialog="status-account-{{ $cooperative->id }}-{{ $account->id }}" class="platform-status-switch {{ $account->is_active ? 'is-on' : '' }}">
+                                        <span aria-hidden="true"></span>
+                                    </button>
+                                    <span class="text-[11px] font-semibold {{ $account->is_active ? 'text-emerald-300' : 'text-slate-400' }}">{{ $account->is_active ? 'Aktif' : 'Nonaktif' }}</span>
+                                </div>
                                 <p class="mt-2 text-[10px] text-slate-500">
                                     @if ($account->must_change_password)
                                         Wajib ganti password
@@ -78,7 +106,6 @@
                                 <div class="flex flex-wrap gap-2">
                                     <button type="submit" form="account-table-form-{{ $account->id }}" class="rounded-md bg-orange-500/10 px-2.5 py-2 text-[11px] font-bold text-orange-300 hover:bg-orange-500/20">Simpan</button>
                                     <button type="button" data-open-dialog="reset-account-{{ $cooperative->id }}-{{ $account->id }}" class="rounded-md border border-slate-700 px-2.5 py-2 text-[11px] font-semibold text-slate-300 hover:border-orange-400/60 hover:text-white">Reset sandi</button>
-                                    <button type="button" data-open-dialog="status-account-{{ $cooperative->id }}-{{ $account->id }}" class="rounded-md border border-slate-700 px-2.5 py-2 text-[11px] font-semibold text-slate-300 hover:border-slate-500 hover:text-white">{{ $account->is_active ? 'Nonaktifkan' : 'Aktifkan' }}</button>
                                     <button type="button" data-open-dialog="delete-account-{{ $cooperative->id }}-{{ $account->id }}" class="rounded-md border border-rose-500/40 px-2.5 py-2 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/10">Hapus</button>
                                 </div>
                             </td>
@@ -94,7 +121,12 @@
                     <header class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <span class="rounded-full bg-slate-700/70 px-2.5 py-1 text-[10px] font-bold text-slate-300">{{ $roleLabel }}</span>
-                            <span @class(['ml-1 rounded-full px-2.5 py-1 text-[10px] font-bold', 'bg-emerald-500/10 text-emerald-300' => $account->is_active, 'bg-slate-700 text-slate-300' => ! $account->is_active])>{{ $account->is_active ? 'Aktif' : 'Nonaktif' }}</span>
+                            <span class="ml-1 inline-flex items-center gap-1.5">
+                                <button type="button" role="switch" aria-checked="{{ $account->is_active ? 'true' : 'false' }}" aria-label="{{ $account->is_active ? 'Nonaktifkan' : 'Aktifkan' }} akun {{ $account->name }}" data-open-dialog="status-account-{{ $cooperative->id }}-{{ $account->id }}" class="platform-status-switch platform-status-switch-sm {{ $account->is_active ? 'is-on' : '' }}">
+                                    <span aria-hidden="true"></span>
+                                </button>
+                                <span class="text-[10px] font-bold {{ $account->is_active ? 'text-emerald-300' : 'text-slate-400' }}">{{ $account->is_active ? 'Aktif' : 'Nonaktif' }}</span>
+                            </span>
                         </div>
                         <span class="shrink-0 text-[10px] text-slate-500">
                             @if ($account->must_change_password)
@@ -123,7 +155,6 @@
                     <p class="mt-3 truncate text-[11px] text-slate-500">{{ $account->borrower_code ?: ($account->phone ?: '—') }}</p>
                     <div class="mt-4 flex flex-wrap gap-2 border-t border-slate-800 pt-3">
                         <button type="button" data-open-dialog="reset-account-{{ $cooperative->id }}-{{ $account->id }}" class="rounded-md border border-slate-700 px-2.5 py-2 text-[11px] font-semibold text-slate-300 hover:text-white">Reset sandi</button>
-                        <button type="button" data-open-dialog="status-account-{{ $cooperative->id }}-{{ $account->id }}" class="rounded-md border border-slate-700 px-2.5 py-2 text-[11px] font-semibold text-slate-300 hover:text-white">{{ $account->is_active ? 'Nonaktifkan' : 'Aktifkan' }}</button>
                         <button type="button" data-open-dialog="delete-account-{{ $cooperative->id }}-{{ $account->id }}" class="rounded-md border border-rose-500/40 px-2.5 py-2 text-[11px] font-semibold text-rose-300 hover:bg-rose-500/10">Hapus</button>
                     </div>
                 </article>

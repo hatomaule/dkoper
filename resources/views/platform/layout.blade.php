@@ -76,10 +76,10 @@
                                 <p class="font-semibold text-white">{{ auth('platform')->user()->name }}</p>
                                 <p class="mt-0.5 text-xs text-slate-500">Superuser FIDES</p>
                             </div>
-                            <button type="button" data-open-dialog="platform-password-dialog" @click="open = false" class="mt-3 w-full rounded-md border border-slate-700 px-3 py-2 text-left text-xs font-semibold text-slate-300 transition hover:border-orange-500/60 hover:text-white">Ganti password</button>
+                            <button type="button" data-open-dialog="platform-password-dialog" @click="open = false" class="mt-3 block w-full text-left text-xs font-semibold text-slate-300 transition hover:text-orange-300">Ganti password</button>
                             <form method="POST" action="{{ route('platform.logout') }}" class="mt-3 border-t border-slate-800 pt-3">
                                 @csrf
-                                <button class="w-full rounded-md border border-slate-700 px-3 py-2 text-left text-xs font-semibold text-slate-300 transition hover:border-orange-500/60 hover:text-white">Keluar</button>
+                                <button class="block w-full text-left text-xs font-semibold text-slate-300 transition hover:text-orange-300">Keluar</button>
                             </form>
                         </div>
                     </div>
@@ -121,7 +121,7 @@
             </form>
         </dialog>
 
-        <main class="mx-auto max-w-[1500px] space-y-6 px-4 pb-4 pt-3 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:pb-8 lg:pt-4">
+        <main class="mx-auto max-w-[1500px] space-y-6 px-4 pb-4 pt-0 sm:px-6 sm:pb-6 sm:pt-0 lg:px-8 lg:pb-8 lg:pt-0">
             @if (session('status'))
                 <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{{ session('status') }}</div>
             @endif
