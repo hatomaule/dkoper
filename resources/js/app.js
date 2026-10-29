@@ -21,16 +21,16 @@ Alpine.start();
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('input[type="password"]').forEach((input) => {
-        if (input.parentElement?.querySelector('.dk-password-toggle')) {
+        if (input.parentElement?.classList.contains('dk-password-input-wrap')) {
             return;
         }
 
-        const wrap = input.parentElement;
-        if (!wrap || wrap.querySelector('button.dk-password-toggle')) {
-            return;
-        }
-
-        wrap.style.position = 'relative';
+        const wrap = document.createElement('span');
+        wrap.className = 'dk-password-input-wrap';
+        wrap.style.marginTop = getComputedStyle(input).marginTop;
+        input.style.marginTop = '0';
+        input.parentNode.insertBefore(wrap, input);
+        wrap.appendChild(input);
 
         const button = document.createElement('button');
         button.type = 'button';

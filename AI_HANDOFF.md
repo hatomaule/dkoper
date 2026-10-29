@@ -320,3 +320,8 @@ Remaining follow-up:
 - Updated only the loan card view to match the supplied reference: each loan card shows borrower name, principal, installments 1–12 in vertical rows, then that loan's total receivable, allocated paid total, outstanding amount, and approving authority. No portfolio-wide totals are included in cards; the aggregate stays in table mode.
 - Card amounts are derived from that loan's `total_receivable` and its own 12 installment `paid_amount`/`outstanding_amount` values. Rows highlight on hover; card surfaces use the warm light reference palette and a dark-theme equivalent.
 - Verification: focused loan-card/Owner access feature test passed (19 assertions); `npm run build`, `php artisan view:cache`, and `git diff --check` passed.
+
+### Password visibility icon alignment (29 October 2026)
+
+- Standardized password reveal controls across cooperative, login, and FIDES platform forms by placing each eye icon inside a wrapper aligned to its own input instead of centering against the full label. Existing input top spacing is preserved.
+- Verification: authentication, profile, and password-management tests passed (11 tests, 41 assertions); Vite build passed. Browser check on the login form confirmed the eye center aligns with the input center (0px vertical offset) and show/hide restores the correct input type and accessible label.

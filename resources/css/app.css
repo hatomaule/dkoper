@@ -3682,6 +3682,18 @@ html[data-theme="dark"] .dk-file-button {
     font-size: 12px;
 }
 
+.dk-password-input-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.dk-password-input-wrap > input[type="password"],
+.dk-password-input-wrap > input[type="text"] {
+    box-sizing: border-box;
+    padding-right: 42px;
+}
+
 .dk-password-toggle {
     position: absolute;
     top: 50%;
