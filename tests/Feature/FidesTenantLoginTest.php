@@ -113,8 +113,11 @@ class FidesTenantLoginTest extends TestCase
         $this->get(route('platform.dashboard'))
             ->assertOk()
             ->assertSee('Ringkasan koperasi')
-            ->assertSee('Akun')
-            ->assertSee('Nasabah');
+            ->assertSee('Akun pengguna')
+            ->assertSee('Nasabah')
+            ->assertSee('platform-coop-chart-bar is-users', false)
+            ->assertSee('platform-coop-chart-bar is-borrowers', false)
+            ->assertSee('<section class="space-y-4">', false);
         $this->get(route('platform.accounts'))
             ->assertOk()
             ->assertSee('Owner Uji')

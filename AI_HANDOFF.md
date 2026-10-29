@@ -338,3 +338,9 @@ Remaining follow-up:
 
 - Reduced the top padding of the shared FIDES Platform content container while retaining its existing horizontal and bottom spacing. The change applies consistently to Dashboard, cooperative management/details, and account management pages.
 - Verification: `php artisan test tests/Feature/FidesTenantLoginTest.php` passed (14 tests, 136 assertions); `php artisan view:cache` and `git diff --check` passed.
+
+### Platform dashboard chart clarity (29 October 2026)
+
+- Removed the large filled panel and individual filled tiles behind the cooperative summary chart.
+- Replaced the two unlabeled horizontal tracks with paired vertical bars. Each bar has an explicit “Akun pengguna” or “Nasabah” label, a color key, and its numeric total; the chart description explains relative bar height. Scale is based on the nine visible cooperatives.
+- Verification: focused platform dashboard test passed (39 assertions); Vite production build, Blade view cache, and `git diff --check` passed.
