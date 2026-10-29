@@ -9,6 +9,20 @@
 
 ## About Laravel
 
+### Local device testing
+
+`./start-local.sh` listens on port `8000` on the computer's network
+interfaces. From a phone on the same Wi-Fi, open
+`http://<computer-wi-fi-ip>:8000`. Find the Wi-Fi IPv4 address with
+`ipconfig` on Windows. Do not use `localhost` on the phone: it points to the
+phone itself. Keep this development server limited to a trusted local
+network. If Windows Firewall blocks the connection, run PowerShell as
+Administrator and allow this port only from the local subnet:
+
+```powershell
+New-NetFirewallRule -DisplayName "DKoper local device testing" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8000 -RemoteAddress LocalSubnet -Profile Public
+```
+
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
 - [Simple, fast routing engine](https://laravel.com/docs/routing).
