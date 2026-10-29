@@ -156,6 +156,7 @@ class PaymentServiceTest extends TestCase
             'loan_id' => $loan->id,
             'payment_id' => $payment->id,
             'amount' => 5_000,
+            'amount_delta' => null,
             'balance_after' => 5_000,
         ]);
     }

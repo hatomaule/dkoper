@@ -178,6 +178,7 @@ class CooperativeController extends Controller
         $this->authorizeStaff();
         $perPage = $this->perPage(request());
         $query = Loan::with(['borrower', 'installments'])
+            ->withCount('payments')
             ->whereIn('status', ['active', 'paid'])
             ->whereHas('borrower', fn ($query) => $query->customerAccount())
             ->orderByDesc('created_at')
@@ -226,6 +227,30 @@ class CooperativeController extends Controller
             : "Pinjaman {$loan->loan_code} dikirim ke antrean persetujuan Owner.";
 
         return redirect()->route('cooperative.loans')->with('status', $message);
+    }
+
+    public function correctLoan(Request $request, Loan $loan, LoanService $service): RedirectResponse
+    {
+        abort_unless($request->user()->isManager(), 403);
+        $validated = $request->validate([
+            'principal_amount' => ['required', 'integer', 'min:1000'],
+            'administration_fee' => ['required', 'integer', 'min:0'],
+            'interest_amount' => ['required', 'integer', 'min:0'],
+            'installments' => ['required', 'array', 'size:12'],
+            'installments.*' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $service->correctLoan($request->user(), $loan->id, $validated);
+
+        return redirect()->route('cooperative.loans')->with('status', "Pinjaman {$loan->loan_code} berhasil dikoreksi. Riwayat dan ledger tetap tersimpan.");
+    }
+
+    public function archiveLoan(Request $request, Loan $loan, LoanService $service): RedirectResponse
+    {
+        abort_unless($request->user()->isManager(), 403);
+        $service->archiveLoan($request->user(), $loan->id);
+
+        return redirect()->route('cooperative.loans')->with('status', "Pinjaman {$loan->loan_code} diarsipkan; riwayat finansial tetap tersimpan.");
     }
 
     public function payments(): View

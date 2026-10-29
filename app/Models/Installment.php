@@ -15,6 +15,6 @@ class Installment extends Model
         return ['paid_at' => 'datetime'];
     }
 
-    public function loan(): BelongsTo { return $this->belongsTo(Loan::class); }
+    public function loan(): BelongsTo { return $this->belongsTo(Loan::class)->withTrashed(); }
     public function payments(): HasMany { return $this->hasMany(Payment::class); }
 }

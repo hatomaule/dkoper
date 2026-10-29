@@ -24,7 +24,7 @@ class Borrower extends Model
 
     public function loans(): HasMany
     {
-        return $this->hasMany(Loan::class);
+        return $this->hasMany(Loan::class)->withTrashed();
     }
 
     public function advanceTransactions(): HasMany

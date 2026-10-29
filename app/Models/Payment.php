@@ -14,7 +14,7 @@ class Payment extends Model
         return ['approved_at' => 'datetime'];
     }
 
-    public function loan(): BelongsTo { return $this->belongsTo(Loan::class); }
+    public function loan(): BelongsTo { return $this->belongsTo(Loan::class)->withTrashed(); }
     public function installment(): BelongsTo { return $this->belongsTo(Installment::class); }
     public function recorder(): BelongsTo { return $this->belongsTo(User::class, 'recorded_by'); }
     public function approver(): BelongsTo { return $this->belongsTo(User::class, 'approved_by'); }

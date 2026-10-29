@@ -1622,6 +1622,25 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
     backdrop-filter: none;
 }
 
+[data-table-tools].is-card-view .dk-data-panel,
+[data-table-tools].is-card-view .dk-data-panel .dk-table-toolbar {
+    overflow: visible;
+    border-color: transparent;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+html[data-theme="dark"] [data-table-tools].is-card-view .dk-data-panel,
+html[data-theme="dark"] [data-table-tools].is-card-view .dk-data-panel .dk-table-toolbar {
+    border-color: transparent;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
 html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action {
     color: #d3dee4;
 }
@@ -1761,6 +1780,36 @@ html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action:focus-visible
     display: grid;
     grid-template-columns: minmax(0, 1.4fr) minmax(160px, 1fr);
     gap: 12px;
+}
+
+.dk-loan-correction-dialog {
+    width: min(100% - 28px, 680px);
+    max-width: 680px;
+    max-height: min(90vh, 820px);
+}
+
+.dk-loan-correction-schedule {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    max-height: 270px;
+    overflow-y: auto;
+    padding: 2px;
+}
+
+.dk-loan-card > .dk-loan-installments-scroll {
+    display: block;
+}
+
+.dk-loan-card-actions {
+    display: flex !important;
+    justify-content: flex-start !important;
+    gap: 12px;
+    padding-top: 4px;
+}
+
+.dk-loan-card-actions form {
+    display: inline-flex;
 }
 
 .dk-confirmation-check {
@@ -2096,6 +2145,10 @@ html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action:focus-visible
 @media (max-width: 540px) {
     .dk-loan-modal-fields {
         grid-template-columns: 1fr;
+    }
+
+    .dk-loan-correction-schedule {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .dk-notification-row {
@@ -2832,11 +2885,20 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
     background: #f0f7f4;
 }
 
+.dk-loan-installments-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-color: var(--dk-muted) transparent;
+    scrollbar-width: thin;
+}
+
 .dk-loan-installment-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 7px;
-    margin-top: 8px;
+    width: max-content;
+    grid-auto-columns: 48px;
+    grid-auto-flow: column;
+    gap: 6px;
 }
 
 .dk-loan-installment-grid > div {
@@ -3082,6 +3144,7 @@ html[data-theme="dark"] .dk-system-installment {
     }
 
     .dk-loan-installment-grid {
+        grid-auto-columns: 46px;
         gap: 5px;
     }
 

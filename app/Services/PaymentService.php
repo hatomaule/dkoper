@@ -178,7 +178,22 @@ class PaymentService
                 'nominal_source' => 'manual',
             ])->save();
 
-            BorrowerAdvanceTransaction::query()->whereIn('loan_id', $loanIds)->delete();
+            $previousAdvances = BorrowerAdvanceTransaction::query()
+                ->whereIn('loan_id', $loanIds)
+                ->lockForUpdate()
+                ->get();
+            foreach ($previousAdvances as $advance) {
+                BorrowerAdvanceTransaction::create([
+                    'borrower_id' => $advance->borrower_id,
+                    'loan_id' => $advance->loan_id,
+                    'payment_id' => $advance->payment_id,
+                    'created_by' => $manager->id,
+                    'amount' => 0,
+                    'amount_delta' => -(int) ($advance->amount_delta ?? $advance->amount),
+                    'balance_after' => 0,
+                    'description' => 'Pembalikan uang muka karena koreksi setoran',
+                ]);
+            }
 
             foreach ($approvedPayments as $approvedPayment) {
                 if ((int) $approvedPayment->id === $paymentId) {
@@ -222,10 +237,9 @@ class PaymentService
                         'payment_id' => $approvedPayment->id,
                         'created_by' => $approvedPayment->approved_by ?? $manager->id,
                         'amount' => $remaining,
+                        'amount_delta' => null,
                         'balance_after' => 0,
-                    ])->forceFill([
-                        'created_at' => $approvedPayment->approved_at ?? $approvedPayment->created_at,
-                    ])->save();
+                    ]);
                 }
             }
 
@@ -238,7 +252,7 @@ class PaymentService
                 ->groupBy('borrower_id') as $borrowerTransactions) {
                 $advanceBalance = 0;
                 foreach ($borrowerTransactions as $advanceTransaction) {
-                    $advanceBalance += (int) $advanceTransaction->amount;
+                    $advanceBalance += (int) ($advanceTransaction->amount_delta ?? $advanceTransaction->amount);
                     $advanceTransaction->forceFill(['balance_after' => $advanceBalance])->save();
                 }
             }

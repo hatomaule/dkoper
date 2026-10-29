@@ -11,6 +11,6 @@ class ProfitTransaction extends Model
 
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function creator(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
-    public function loan(): BelongsTo { return $this->belongsTo(Loan::class); }
+    public function loan(): BelongsTo { return $this->belongsTo(Loan::class)->withTrashed(); }
     public function installment(): BelongsTo { return $this->belongsTo(Installment::class); }
 }

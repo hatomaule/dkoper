@@ -23,7 +23,7 @@
                 <div class="overflow-x-auto dk-table-view" data-table-view="table">
                     <table class="w-full text-left text-sm dk-loan-ledger">
                         <thead>
-                            <tr><th rowspan="2">No</th><th rowspan="2">Nama</th><th rowspan="2">Jumlah</th><th colspan="12" class="text-center">Setoran</th></tr>
+                            <tr><th rowspan="2">No</th><th rowspan="2">Nama</th><th rowspan="2">Jumlah</th><th colspan="12" class="text-center">Setoran</th>@if (auth()->user()->isManager())<th rowspan="2">Aksi</th>@endif</tr>
                             <tr>@for ($sequence = 1; $sequence <= 12; $sequence++)<th class="text-center">{{ $sequence }}</th>@endfor</tr>
                         </thead>
                         <tbody>
@@ -33,6 +33,7 @@
                                 @for ($sequence = 1; $sequence <= 12; $sequence++)
                                     <td class="whitespace-nowrap text-center">Rp {{ number_format((int) ($loanTotals['installments'][$sequence] ?? 0), 0, ',', '.') }}</td>
                                 @endfor
+                                @if (auth()->user()->isManager())<td></td>@endif
                             </tr>
                             @forelse ($loans as $loan)
                                 @php($installmentsBySequence = $loan->installments->keyBy('sequence'))
@@ -50,38 +51,55 @@
                                             {{ $installment && $installment->paid_amount > 0 ? 'Rp '.number_format((int) $installment->paid_amount, 0, ',', '.') : '—' }}
                                         </td>
                                     @endfor
+                                    @if (auth()->user()->isManager())
+                                        <td class="whitespace-nowrap">
+                                            <button type="button" class="dk-inline-action" data-open-dialog="#loan-correction-{{ $loan->id }}">Koreksi</button>
+                                            @if ($loan->status === 'paid' || ((int) $loan->payments_count === 0 && $loan->created_at?->greaterThanOrEqualTo(now()->subDay())))
+                                                <form method="POST" action="{{ route('cooperative.loans.archive', $loan) }}" class="inline" onsubmit="return confirm('Arsipkan pinjaman {{ $loan->loan_code }}? Riwayat keuangan tetap disimpan.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button class="dk-inline-action dk-inline-danger">Arsipkan</button>
+                                                </form>
+                                            @endif
+                                        </td>
+                                    @endif
                                 </tr>
                             @empty
-                                <tr><td colspan="15" class="py-8 text-center text-slate-500">Belum ada pinjaman.</td></tr>
+                                <tr><td colspan="{{ auth()->user()->isManager() ? 16 : 15 }}" class="py-8 text-center text-slate-500">Belum ada pinjaman.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
                 <div class="dk-payment-cards dk-loan-cards dk-table-view" data-table-view="cards" hidden>
-                    <article class="dk-payment-card dk-loan-total-card" data-table-row>
-                        <strong>TOTAL SELURUH DATA</strong>
-                        <b>Jumlah pinjaman: Rp {{ number_format((int) $loanTotals['principal'], 0, ',', '.') }}</b>
-                        <div class="dk-loan-installment-grid">
-                            @for ($sequence = 1; $sequence <= 12; $sequence++)
-                                <div><small>{{ $sequence }}</small><strong>{{ number_format((int) ($loanTotals['installments'][$sequence] ?? 0), 0, ',', '.') }}</strong></div>
-                            @endfor
-                        </div>
-                    </article>
                     @foreach ($loans as $loan)
                         @php($installmentsBySequence = $loan->installments->keyBy('sequence'))
                         @php($loanStatus = match ($loan->status) { 'pending' => 'Menunggu', 'active' => 'Aktif', 'paid' => 'Lunas', 'rejected' => 'Ditolak', default => ucfirst($loan->status) })
-                        <article class="dk-payment-card" data-table-row>
+                        <article class="dk-payment-card dk-loan-card" data-table-row>
                             <div>
                                 <strong>{{ $loan->borrower->full_name }}</strong>
                                 <span class="dk-status" data-status="{{ $loan->status }}">{{ $loanStatus }}</span>
                             </div>
                             <small>{{ $loan->loan_code }} · Jumlah pinjaman Rp {{ number_format((int) $loan->principal_amount, 0, ',', '.') }}</small>
-                            <div class="dk-loan-installment-grid">
-                                @for ($sequence = 1; $sequence <= 12; $sequence++)
-                                    @php($installment = $installmentsBySequence->get($sequence))
-                                    <div><small>{{ $sequence }}</small><strong>{{ $installment && $installment->paid_amount > 0 ? number_format((int) $installment->paid_amount, 0, ',', '.') : '—' }}</strong></div>
-                                @endfor
+                            <div class="dk-loan-installments-scroll" role="region" aria-label="Urutan setoran pinjaman {{ $loan->loan_code }}">
+                                <div class="dk-loan-installment-grid">
+                                    @for ($sequence = 1; $sequence <= 12; $sequence++)
+                                        @php($installment = $installmentsBySequence->get($sequence))
+                                        <div><small>{{ $sequence }}</small><strong>{{ $installment && $installment->paid_amount > 0 ? number_format((int) $installment->paid_amount, 0, ',', '.') : '—' }}</strong></div>
+                                    @endfor
+                                </div>
                             </div>
+                            @if (auth()->user()->isManager())
+                                <div class="dk-loan-card-actions">
+                                    <button type="button" class="dk-inline-action" data-open-dialog="#loan-correction-{{ $loan->id }}">Koreksi pinjaman</button>
+                                    @if ($loan->status === 'paid' || ((int) $loan->payments_count === 0 && $loan->created_at?->greaterThanOrEqualTo(now()->subDay())))
+                                        <form method="POST" action="{{ route('cooperative.loans.archive', $loan) }}" onsubmit="return confirm('Arsipkan pinjaman {{ $loan->loan_code }}? Riwayat keuangan tetap disimpan.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button class="dk-inline-action dk-inline-danger">Arsipkan</button>
+                                        </form>
+                                    @endif
+                                </div>
+                            @endif
                         </article>
                     @endforeach
                 </div>
@@ -111,6 +129,33 @@
                     <button class="dk-button-primary">Catat Pinjaman</button>
                 </form>
             </dialog>
+            @foreach ($loans as $loan)
+                @if (auth()->user()->isManager())
+                    <dialog class="dk-password-native-dialog dk-loan-correction-dialog" id="loan-correction-{{ $loan->id }}" @if ($errors->any() && old('_form') === 'loan-correction-'.$loan->id) data-open-on-error @endif>
+                        <form method="POST" action="{{ route('cooperative.loans.correct', $loan) }}" class="dk-password-form dk-loan-form">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="_form" value="loan-correction-{{ $loan->id }}">
+                            <button type="button" class="dk-modal-close" aria-label="Tutup" data-close-dialog>×</button>
+                            <p class="dk-eyebrow">KOREKSI PINJAMAN · {{ $loan->loan_code }}</p>
+                            <h3>{{ $loan->borrower->full_name }}</h3>
+                            <p class="dk-modal-note">Nama nasabah tetap. Koreksi nilai keuangan atau 12 setoran akan merekonstruksi cicilan, bonus, dan uang muka tanpa menghapus riwayat.</p>
+                            <div class="dk-loan-modal-fields">
+                                <label>Pokok pinjaman (Rp)<input name="principal_amount" type="number" min="1000" required value="{{ old('principal_amount', $loan->principal_amount) }}"></label>
+                                <label>Biaya administrasi (Rp)<input name="administration_fee" type="number" min="0" required value="{{ old('administration_fee', $loan->administration_fee) }}"></label>
+                                <label>Bunga (Rp)<input name="interest_amount" type="number" min="0" required value="{{ old('interest_amount', $loan->interest_amount) }}"></label>
+                            </div>
+                            <div class="dk-loan-correction-schedule">
+                                @foreach ($loan->installments->sortBy('sequence')->values() as $index => $installment)
+                                    <label>Setoran {{ $installment->sequence }} (Rp)<input name="installments[{{ $index }}]" type="number" min="1" required value="{{ old('installments.'.$index, $installment->scheduled_amount) }}"></label>
+                                @endforeach
+                            </div>
+                            <p class="dk-modal-note">Jumlah 12 setoran harus sama dengan pokok + bunga.</p>
+                            <button class="dk-button-primary">Simpan Koreksi</button>
+                        </form>
+                    </dialog>
+                @endif
+            @endforeach
         </div>
     </div>
 </x-app-layout>

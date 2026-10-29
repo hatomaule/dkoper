@@ -58,7 +58,55 @@ class CooperativeRoleAccessTest extends TestCase
             ->assertOk()
             ->assertSee('value="5" selected', false)
             ->assertSee('data-view-mode="cards"', false)
-            ->assertSee('data-table-view="cards"', false);
+            ->assertSee('data-table-view="cards"', false)
+            ->assertSee('SALDO KAS SAAT INI')
+            ->assertDontSee('ARUS KAS');
+    }
+
+    public function test_loan_card_mode_has_no_aggregate_card_and_owner_actions_are_guarded(): void
+    {
+        $owner = User::factory()->create([
+            'username' => 'owner',
+            'role' => 'manager',
+            'must_change_password' => false,
+        ]);
+        $admin = User::factory()->create([
+            'username' => 'admin',
+            'role' => 'kasir',
+            'must_change_password' => false,
+        ]);
+        $borrower = Borrower::create([
+            'borrower_code' => 'DK_OWNER_ACTION',
+            'full_name' => 'Nasabah Aksi Owner',
+            'status' => 'active',
+        ]);
+        $loan = app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
+
+        $content = $this->actingAs($owner)
+            ->get(route('cooperative.loans'))
+            ->assertOk()
+            ->assertSee('data-open-dialog="#loan-correction-'.$loan->id.'"', false)
+            ->getContent();
+        $cardContent = substr($content, strpos($content, 'data-table-view="cards"'));
+        $this->assertStringNotContainsString('TOTAL SELURUH DATA', $cardContent);
+        $this->assertStringContainsString('data-open-dialog="#loan-correction-'.$loan->id.'"', $cardContent);
+
+        $this->actingAs($owner)
+            ->patch(route('cooperative.loans.correct', $loan), [
+                'principal_amount' => 1_000_000,
+                'administration_fee' => 70_000,
+                'interest_amount' => 200_000,
+                'installments' => array_fill(0, 12, 100_000),
+            ])
+            ->assertRedirect(route('cooperative.loans'));
+
+        $this->actingAs($admin)->patch(route('cooperative.loans.correct', $loan), [
+            'principal_amount' => 900_000,
+            'administration_fee' => 63_000,
+            'interest_amount' => 100_000,
+            'installments' => array_fill(0, 12, 83_333),
+        ])->assertForbidden();
+        $this->actingAs($admin)->delete(route('cooperative.loans.archive', $loan))->assertForbidden();
     }
 
     public function test_profit_cards_show_bonus_from_active_loans_before_withdrawals(): void
@@ -232,7 +280,7 @@ class CooperativeRoleAccessTest extends TestCase
             ->assertSee('Ganti password saya');
     }
 
-    public function test_finance_chart_shows_twelve_months_and_uses_business_timezone(): void
+    public function test_finance_page_hides_chart_but_keeps_transaction_history(): void
     {
         $owner = User::factory()->create([
             'username' => 'owner',
@@ -247,10 +295,11 @@ class CooperativeRoleAccessTest extends TestCase
 
         $response = $this->actingAs($owner)->get(route('cooperative.finances'))->assertOk();
 
-        $this->assertSame(12, substr_count($response->getContent(), 'class="dk-finance-chart-row"'));
-        $response->assertSee('Nov')
-            ->assertSee('Masuk Rp 1.234.567')
-            ->assertSee('Keluar Rp 2.000.000');
+        $response->assertDontSee('class="dk-finance-chart-row"', false)
+            ->assertDontSee('ARUS KAS')
+            ->assertSee('Penyesuaian kas')
+            ->assertSee('Rp 1.234.567')
+            ->assertSee('Rp 2.000.000');
     }
 
     public function test_newest_loan_is_listed_first_and_paid_loan_stays_in_borrower_history(): void

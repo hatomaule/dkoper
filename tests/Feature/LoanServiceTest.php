@@ -6,6 +6,8 @@ use App\Models\Borrower;
 use App\Models\CashTransaction;
 use App\Models\ApprovalRequest;
 use App\Models\Loan;
+use App\Models\Payment;
+use App\Models\ProfitBalance;
 use App\Models\User;
 use App\Services\LoanService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -157,5 +159,118 @@ class LoanServiceTest extends TestCase
             ->assertSessionHasErrors('reason');
 
         $this->assertSame('pending', $loan->fresh()->status);
+    }
+
+    public function test_owner_can_correct_paid_loan_and_rebuild_financial_history_without_deleting_it(): void
+    {
+        $owner = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
+        $admin = User::factory()->create(['username' => 'admin', 'role' => 'kasir']);
+        $borrower = Borrower::create([
+            'full_name' => 'Nasabah Rekonstruksi',
+            'borrower_code' => 'DK_REBUILD',
+            'status' => 'active',
+        ]);
+        $loan = app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
+        $payment = Payment::create([
+            'loan_id' => $loan->id,
+            'recorded_by' => $admin->id,
+            'amount' => 1_200_000,
+            'nominal_source' => 'manual',
+            'status' => 'pending',
+        ]);
+        app(\App\Services\PaymentService::class)->approvePayment($owner, $payment->id);
+        $installmentAmounts = array_fill(0, 12, 83_333);
+        $installmentAmounts[11] = 83_337;
+
+        app(LoanService::class)->correctLoan($owner, $loan->id, [
+            'principal_amount' => 900_000,
+            'administration_fee' => 63_000,
+            'interest_amount' => 100_000,
+            'installments' => $installmentAmounts,
+        ]);
+
+        $this->assertSame('paid', $loan->fresh()->status);
+        $this->assertSame(1_000_000, (int) $loan->fresh()->total_receivable);
+        $this->assertSame(1_000_000, (int) $loan->installments()->sum('paid_amount'));
+        $this->assertSame(0, (int) $loan->installments()->sum('outstanding_amount'));
+        $this->assertSame(60_000, (int) ProfitBalance::where('user_id', $owner->id)->value('earned_amount'));
+        $this->assertSame(40_000, (int) ProfitBalance::where('user_id', $admin->id)->value('earned_amount'));
+        $this->assertSame(200_000, (int) \App\Models\BorrowerAdvanceTransaction::where('payment_id', $payment->id)->sum('amount'));
+        $this->assertDatabaseHas('cash_transactions', [
+            'loan_id' => $loan->id,
+            'type' => 'loan_correction',
+            'direction' => 'in',
+            'amount' => 93_000,
+        ]);
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'loan.corrected',
+            'entity_id' => $loan->id,
+        ]);
+        $this->assertSame(1, Loan::withTrashed()->whereKey($loan->id)->count());
+    }
+
+    public function test_archiving_paid_loan_keeps_payments_cash_ledger_and_activity_history(): void
+    {
+        $owner = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
+        $borrower = Borrower::create([
+            'full_name' => 'Nasabah Arsip',
+            'borrower_code' => 'DK_ARCHIVE',
+            'status' => 'active',
+        ]);
+        $loan = app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
+        $payment = Payment::create([
+            'loan_id' => $loan->id,
+            'recorded_by' => $owner->id,
+            'amount' => 1_200_000,
+            'nominal_source' => 'manual',
+            'status' => 'pending',
+        ]);
+        app(\App\Services\PaymentService::class)->approvePayment($owner, $payment->id);
+        $cashRowsBeforeArchive = CashTransaction::where('loan_id', $loan->id)->count();
+
+        app(LoanService::class)->archiveLoan($owner, $loan->id);
+
+        $this->assertSoftDeleted('loans', ['id' => $loan->id]);
+        $this->assertDatabaseHas('payments', ['id' => $payment->id, 'loan_id' => $loan->id]);
+        $this->assertSame($cashRowsBeforeArchive, CashTransaction::where('loan_id', $loan->id)->count());
+        $this->assertDatabaseHas('activity_logs', ['action' => 'loan.archived', 'entity_id' => $loan->id]);
+        $this->assertSame($loan->loan_code, $payment->fresh()->loan->loan_code);
+        $this->assertTrue($borrower->fresh()->loans->contains('id', $loan->id));
+    }
+
+    public function test_unpaid_loan_with_payment_history_cannot_be_archived(): void
+    {
+        $owner = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
+        $borrower = Borrower::create([
+            'full_name' => 'Nasabah Belum Lunas',
+            'borrower_code' => 'DK_NOT_PAID',
+            'status' => 'active',
+        ]);
+        $loan = app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
+        Payment::create([
+            'loan_id' => $loan->id,
+            'recorded_by' => $owner->id,
+            'amount' => 10_000,
+            'nominal_source' => 'manual',
+            'status' => 'pending',
+        ]);
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        app(LoanService::class)->archiveLoan($owner, $loan->id);
+    }
+
+    public function test_unpaid_loan_older_than_twenty_four_hours_cannot_be_archived_without_payments(): void
+    {
+        $owner = User::factory()->create(['username' => 'owner', 'role' => 'manager']);
+        $borrower = Borrower::create([
+            'full_name' => 'Nasabah Aktif Lama',
+            'borrower_code' => 'DK_OLD_ACTIVE',
+            'status' => 'active',
+        ]);
+        $loan = app(LoanService::class)->createApprovedLoan($owner, $borrower->id, 1_000_000);
+        $loan->forceFill(['created_at' => now()->subDays(2)])->save();
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        app(LoanService::class)->archiveLoan($owner, $loan->id);
     }
 }
