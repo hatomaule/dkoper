@@ -18,8 +18,9 @@
             <div class="dk-workspace">
                 @isset($header)
                     <header class="dk-page-heading {{ request()->routeIs('dashboard') ? 'dk-dashboard-heading' : '' }}">
-                        <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                        <div class="dk-heading-inner mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                             <div class="dk-heading-layout">{{ $header }}</div>
+                            @include('layouts.topbar-controls')
                         </div>
                     </header>
                 @endisset

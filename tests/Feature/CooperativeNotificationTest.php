@@ -133,7 +133,9 @@ class CooperativeNotificationTest extends TestCase
         $this->actingAs($owner)->get(route('cooperative.borrowers'))
             ->assertOk()->assertSee('data-open-dialog="#borrower-create-dialog"', false);
         $this->actingAs($owner)->get(route('cooperative.loans'))
-            ->assertOk()->assertSee('data-open-dialog="#loan-create-dialog"', false);
+            ->assertOk()
+            ->assertSee('data-open-dialog="#loan-create-dialog"', false)
+            ->assertSee('dk-loan-cards dk-table-view', false);
         $this->actingAs($owner)->get(route('cooperative.payments'))
             ->assertOk()->assertSee('data-open-dialog="#payment-create-dialog"', false);
         $this->actingAs($owner)->get(route('cooperative.finances'))

@@ -1595,6 +1595,42 @@ html[data-theme="dark"] .dk-period-card::after {
     }
 }
 
+.dk-data-panel.is-card-view,
+[data-list-tools].is-card-view {
+    overflow: visible;
+    border-color: transparent;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.dk-data-panel.is-card-view .dk-table-toolbar {
+    border-color: transparent;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
+}
+
+html[data-theme="dark"] .dk-data-panel.is-card-view,
+html[data-theme="dark"] [data-list-tools].is-card-view,
+html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
+    border-color: transparent;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action {
+    color: #d3dee4;
+}
+
+html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action:hover,
+html[data-theme="dark"] .dk-dropdown-action.dk-profile-text-action:focus-visible {
+    color: #a8e4cb;
+}
+
 .dk-page-heading > div {
     padding: 10px 26px 9px !important;
 }
@@ -1631,8 +1667,10 @@ html[data-theme="dark"] .dk-period-card::after {
 }
 
 .dk-data-panel.is-card-view {
+    overflow: visible;
     border-color: transparent;
     background: transparent;
+    background-image: none;
     box-shadow: none;
     backdrop-filter: none;
 }
@@ -2095,7 +2133,11 @@ html[data-theme="dark"] .dk-inline-danger {
 
 html[data-theme="dark"] .dk-data-panel.is-card-view,
 html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
+    border-color: transparent;
     background: transparent;
+    background-image: none;
+    box-shadow: none;
+    backdrop-filter: none;
 }
 
 /* Refined dashboard, shared form/table surfaces, and accessible theme controls */
@@ -2110,19 +2152,34 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
 }
 
 .dk-topbar-controls {
-    position: fixed;
-    z-index: 55;
-    top: 11px;
-    right: max(26px, calc((100vw - 1530px) / 2 + 38px));
     display: flex;
     align-items: center;
-    gap: 10px;
-    border: 1px solid rgb(255 255 255 / 72%);
-    border-radius: 16px;
-    background: rgb(255 255 255 / 75%);
-    padding: 5px 8px;
-    box-shadow: 0 8px 24px rgb(28 48 66 / 8%);
-    backdrop-filter: blur(18px);
+    gap: 7px;
+    border: 1px solid rgb(255 255 255 / 58%);
+    border-radius: 14px;
+    background: rgb(255 255 255 / 48%);
+    padding: 3px 6px;
+    box-shadow: 0 4px 14px rgb(28 48 66 / 6%);
+    backdrop-filter: blur(12px);
+}
+
+.dk-heading-inner {
+    display: flex;
+    min-height: 58px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.dk-heading-layout {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.dk-heading-tools {
+    position: relative;
+    z-index: 35;
+    flex: 0 0 auto;
 }
 
 .dk-theme-toggle,
@@ -2186,6 +2243,29 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
 
 .dk-dropdown-action:hover {
     background: #fff3f2;
+}
+
+.dk-dropdown-action.dk-profile-text-action {
+    width: auto;
+    margin: 0 16px;
+    padding: 8px 0;
+    color: #53636e;
+    font-weight: 650;
+    text-align: left;
+}
+
+.dk-dropdown-action.dk-profile-text-action:hover,
+.dk-dropdown-action.dk-profile-text-action:focus-visible {
+    background: transparent;
+    color: var(--dk-green-dark);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.dk-dropdown-action.dk-profile-logout-action,
+.dk-dropdown-action.dk-profile-logout-action:hover,
+.dk-dropdown-action.dk-profile-logout-action:focus-visible {
+    color: #b23b39;
 }
 
 .dk-logout-backdrop {
@@ -2259,10 +2339,6 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
     border: 1px solid #b9443b;
     background: #c84e43;
     color: white;
-}
-
-.dk-page-heading > div {
-    padding-right: 245px !important;
 }
 
 .dk-dashboard-heading > div {
@@ -2613,7 +2689,7 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
 
 .dk-payment-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
     gap: 11px;
     padding: 13px;
 }
@@ -2652,6 +2728,11 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
     border-radius: 13px;
     background: var(--dk-paper);
     padding: 13px;
+    box-shadow: 0 12px 26px rgb(30 49 68 / 8%), 0 2px 6px rgb(30 49 68 / 4%);
+}
+
+.dk-loan-cards {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
 }
 
 .dk-payment-card > div {
@@ -2753,17 +2834,20 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
 
 .dk-loan-installment-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
     margin-top: 8px;
 }
 
 .dk-loan-installment-grid > div {
     display: grid;
+    min-width: 0;
+    min-height: 46px;
+    align-content: center;
     gap: 2px;
     border: 1px solid var(--dk-line);
     border-radius: 7px;
-    padding: 5px;
+    padding: 6px 4px;
     text-align: center;
 }
 
@@ -2773,8 +2857,9 @@ html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
 }
 
 .dk-loan-installment-grid strong {
-    overflow-wrap: anywhere;
-    font-size: 9px;
+    overflow-wrap: normal;
+    white-space: nowrap;
+    font-size: 10px;
 }
 
 html[data-theme="dark"] .dk-inline-danger {
@@ -2960,33 +3045,46 @@ html[data-theme="dark"] .dk-system-installment {
 
 @media (max-width: 800px) {
     .dk-topbar-controls {
-        position: absolute;
-        top: 13px;
-        right: 67px;
-        gap: 5px;
-        border: 0;
-        background: transparent;
-        padding: 0;
-        box-shadow: none;
-        backdrop-filter: none;
+        gap: 4px;
     }
 
     .dk-topbar-name {
-        display: none;
-    }
-
-    .dk-topbar-controls .dk-user-trigger {
         display: grid;
-        width: 33px;
-        height: 33px;
     }
 
-    .dk-page-heading > div {
-        padding-right: 20px !important;
+    .dk-page-heading {
+        position: relative;
     }
 }
 
 @media (max-width: 540px) {
+    .dk-heading-inner {
+        gap: 6px;
+    }
+
+    .dk-topbar-controls {
+        gap: 3px;
+        padding: 2px 4px;
+    }
+
+    .dk-topbar-controls .dk-profile-copy {
+        display: none;
+    }
+
+    .dk-topbar-controls .dk-user-trigger.dk-profile-trigger {
+        min-height: 34px;
+    }
+
+    .dk-theme-toggle,
+    .dk-topbar-controls .dk-notification-trigger {
+        width: 30px;
+        height: 30px;
+    }
+
+    .dk-loan-installment-grid {
+        gap: 5px;
+    }
+
     .dk-bonus-summary {
         grid-template-columns: 1fr;
     }
@@ -4086,6 +4184,16 @@ body.dk-guest-body {
         radial-gradient(ellipse at 75% 25%, rgb(208 149 57 / 18%), transparent 65%),
         linear-gradient(125deg, transparent 35%, rgb(20 157 117 / 16%) 36% 39%, transparent 40% 59%, rgb(85 118 190 / 13%) 60% 63%, transparent 64%);
     transform: rotate(-8deg);
+}
+
+html[data-theme="dark"] .dk-data-panel.is-card-view,
+html[data-theme="dark"] .dk-data-panel.is-card-view .dk-table-toolbar {
+    overflow: visible;
+    border-color: transparent;
+    background: transparent;
+    background-image: none;
+    box-shadow: none;
+    backdrop-filter: none;
 }
 
 .dk-password-toggle,

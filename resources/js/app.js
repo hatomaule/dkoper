@@ -6,6 +6,7 @@ window.Alpine = Alpine;
 
 Alpine.data('dkTheme', () => ({
     dark: localStorage.getItem('dk-theme') === 'dark',
+    showLogout: false,
     init() {
         document.documentElement.dataset.theme = this.dark ? 'dark' : 'light';
     },
@@ -212,7 +213,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-open-dialog]').forEach((button) => {
         button.addEventListener('click', () => {
-            document.getElementById(button.dataset.openDialog)?.showModal();
+            const target = button.dataset.openDialog;
+            const dialog = target?.startsWith('#') ? document.getElementById(target.slice(1)) : null;
+            if (!(dialog instanceof HTMLDialogElement)) {
+                console.error(`Unable to open dialog for selector "${target}".`);
+                return;
+            }
+            if (!dialog.open) dialog.showModal();
         });
     });
     document.querySelectorAll('[data-close-dialog]').forEach((button) => {

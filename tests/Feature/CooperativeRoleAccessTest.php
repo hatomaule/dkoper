@@ -31,6 +31,7 @@ class CooperativeRoleAccessTest extends TestCase
                 ->assertSee('aria-label="Buka menu akun"', false)
                 ->assertSee('class="dk-profile-copy"', false)
                 ->assertSee('>A</span>', false)
+                ->assertSeeInOrder(['<header class="dk-page-heading', 'dk-topbar-controls', '</header>'], false)
                 ->assertSee('Profil')
                 ->assertSee('Keluar')
                 ->assertDontSee('<circle cx="4" cy="10" r="1"/>', false);

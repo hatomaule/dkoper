@@ -57,7 +57,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="dk-payment-cards dk-table-view" data-table-view="cards" hidden>
+                <div class="dk-payment-cards dk-loan-cards dk-table-view" data-table-view="cards" hidden>
                     <article class="dk-payment-card dk-loan-total-card" data-table-row>
                         <strong>TOTAL SELURUH DATA</strong>
                         <b>Jumlah pinjaman: Rp {{ number_format((int) $loanTotals['principal'], 0, ',', '.') }}</b>
